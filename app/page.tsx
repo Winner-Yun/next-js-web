@@ -1,3 +1,4 @@
+import { AzureBackground } from "@/components/ui/azureBackground";
 import { AboutSection } from "@/components/welcome-page/about";
 import { Contact } from "@/components/welcome-page/contact";
 import { FeatureSection } from "@/components/welcome-page/feature-section";
@@ -9,18 +10,20 @@ export default function page() {
   return (
     <>
       <Header />
-      <main className="grow">
-        <HeroSection />
-      </main>
-      <section className="min-h-screen place-content-center px-4">
-        <AboutSection />
-      </section>
-      <section className="min-h-screen place-content-center px-4">
-        <FeatureSection />
-      </section>
-      <section className="min-h-screen place-content-center px-4">
-        <Contact />
-      </section>
+      <AzureBackground>
+        <main className="grow">
+          <HeroSection />
+        </main>
+        <section className="min-h-screen place-content-center px-4">
+          <AboutSection />
+        </section>
+        <section className="min-h-screen place-content-center px-4">
+          <FeatureSection />
+        </section>
+        <section className="min-h-screen place-content-center px-4">
+          <Contact />
+        </section>
+      </AzureBackground>
       <footer className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8">
         <Footer />
       </footer>

@@ -5,6 +5,7 @@ import { MobileNav } from "@/components/welcome-page/mobile-nav";
 import { useScroll } from "@/hooks/use-scroll";
 import { cn } from "@/lib/utils";
 import { ActivityIcon } from "lucide-react";
+import Link from "next/link";
 
 export const navLinks = [
   {
@@ -27,28 +28,35 @@ export function Header() {
   const scrollToSection = (id: string) => {
     const section = document.getElementById(id);
 
-    if (section) {
-      section.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+    if (!section) {
+      console.log("Section not found:", id);
+      return;
     }
+
+    const headerOffset = 80;
+
+    const sectionPosition =
+      section.getBoundingClientRect().top + window.scrollY;
+
+    window.scrollTo({
+      top: sectionPosition - headerOffset,
+      behavior: "smooth",
+    });
   };
 
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full border-b border-transparent transition-all duration-300 ease-in-out",
-        {
-          "border-border bg-background/80 backdrop-blur-md shadow-sm": scrolled,
-        },
+        "sticky top-0 z-50 w-full transition-all duration-300 ease-in-out",
+        scrolled &&
+          "border-b border-border bg-background/80 backdrop-blur-md shadow-sm",
       )}
     >
       <nav className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4">
-        {/* Brand */}
+        {/* Logo */}
         <button
           onClick={() => scrollToSection("hero")}
-          className="group flex items-center gap-2.5 rounded-md transition-opacity hover:opacity-80 cursor-pointer"
+          className="group flex cursor-pointer items-center gap-2.5 rounded-md transition-opacity hover:opacity-80"
         >
           <div className="flex size-8 items-center justify-center rounded-lg bg-linear-to-br from-brand to-brand-cyan-400 text-white shadow-sm">
             <ActivityIcon className="size-5" />
@@ -57,7 +65,7 @@ export function Header() {
           <span className="text-xl font-bold tracking-tight">Work Smart</span>
         </button>
 
-        {/* Desktop Navigation */}
+        {/* Desktop */}
         <div className="hidden items-center gap-6 md:flex">
           <div className="flex items-center gap-1">
             {navLinks.map((link) => (
@@ -66,28 +74,24 @@ export function Header() {
                 size="sm"
                 variant="ghost"
                 onClick={() => scrollToSection(link.id)}
-                className="text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+                className="cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
               >
                 {link.label}
               </Button>
             ))}
           </div>
 
-          {/* Action Buttons */}
+          {/* Actions */}
           <div className="flex items-center gap-3 border-l border-border pl-6">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="font-medium cursor-pointer"
-            >
-              Sign In
+            <Button asChild size="sm" variant="ghost">
+              <Link href="/auth">Sign In</Link>
             </Button>
 
             <Button
               size="sm"
-              className="bg-brand text-white shadow-sm hover:bg-brand-hover cursor-pointer"
+              className="cursor-pointer bg-brand text-white shadow-sm hover:bg-brand-hover"
             >
-              Get Started
+              <Link href="/auth">Get Started</Link>
             </Button>
           </div>
         </div>

@@ -90,6 +90,8 @@
 }
 
 .dark {
+  --brand: oklch(0.65 0.18 240);
+  --brand-cyan-400: oklab(75.876% -0.10945 -0.05898);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
