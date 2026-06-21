@@ -5,6 +5,7 @@ import {
   CalendarClockIcon,
   Clock3Icon,
   FileBarChart2Icon,
+  LayoutDashboardIcon,
   MapPinnedIcon,
   SettingsIcon,
   ShieldCheckIcon,
@@ -27,6 +28,18 @@ export type SidebarNavGroup = {
 };
 
 export const navGroups: SidebarNavGroup[] = [
+  {
+    label: "Overview",
+    items: [
+      {
+        title: "Dashboard",
+        path: "/dashboard",
+        icon: <LayoutDashboardIcon />,
+        isActive: true,
+      },
+    ],
+  },
+
   {
     label: "Workspace",
     items: [

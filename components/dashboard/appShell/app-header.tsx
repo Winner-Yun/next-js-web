@@ -1,11 +1,9 @@
-import { navLinks } from "@/components/dashboard/appShell/app-shared";
 import { CustomTrigger } from "@/components/dashboard/appShell/custom-trigger";
 import { NavUser } from "@/components/dashboard/appShell/nav-user";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbList,
-  BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -13,8 +11,6 @@ import { BellIcon, HelpCircleIcon } from "lucide-react";
 import { WorkspaceSwitcher } from "../dashboard-home/workspace-switcher";
 
 export function AppHeader() {
-  const activeItem = navLinks.find((item) => item.isActive);
-
   return (
     <header className="sticky top-0 z-50 flex h-(--app-header-height) w-full shrink-0 items-center justify-between gap-2 border-b bg-background px-4 md:px-6">
       <div className="flex items-center gap-3">
@@ -23,9 +19,7 @@ export function AppHeader() {
       </div>
       <Breadcrumb>
         <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>{activeItem?.title}</BreadcrumbPage>
-          </BreadcrumbItem>
+          <BreadcrumbItem></BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>{" "}
       <div className="flex items-center gap-3">
