@@ -1,18 +1,18 @@
-import { BillingHealth } from "@/components/dashboard/dashboard-home/billing-health";
-import { ChannelSalesChart } from "@/components/dashboard/dashboard-home/channel-sales-chart";
+import { AttendanceHealth } from "@/components/dashboard/dashboard-home/attendance-health";
+import { AttendanceStatusChart } from "@/components/dashboard/dashboard-home/attendanceStatusChart";
 import { DashboardActivity } from "@/components/dashboard/dashboard-home/dashboard-activity";
-import { DashboardInvoices } from "@/components/dashboard/dashboard-home/dashboard-invoices";
-import { NetRevenueChart } from "@/components/dashboard/dashboard-home/net-revenue-chart";
+import { DashboardAttendance } from "@/components/dashboard/dashboard-home/dashboard-attendance";
+import { AttendanceChart } from "@/components/dashboard/dashboard-home/attendanceChart-chart";
 import { DashboardStats } from "@/components/dashboard/dashboard-home/stats";
 
 export function DashboardPage() {
   return (
     <div className="grid grid-cols-1 gap-px bg-border p-px md:grid-cols-2 lg:grid-cols-4">
       <DashboardStats />
-      <NetRevenueChart />
-      <ChannelSalesChart />
-      <DashboardInvoices />
-      <BillingHealth />
+      <AttendanceChart />
+      <AttendanceStatusChart />
+      <DashboardAttendance />
+      <AttendanceHealth />
       <DashboardActivity />
     </div>
   );

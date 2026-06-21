@@ -19,57 +19,55 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useWorkspace } from "@/provider/workspace-provider"; // Import workspace hook
 import { useId } from "react";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 
 const VISIBLE_DAYS = 7;
 
-type ChannelSalesChartRow = {
+type AttendanceChartRow = {
   date: string;
-  retail: number;
-  online: number;
+  present: number;
+  absent: number;
 };
 
-const chartData: ChannelSalesChartRow[] = [
-  { date: "2026-03-15", retail: 198, online: 96 },
-  { date: "2026-03-16", retail: 176, online: 82 },
-  { date: "2026-03-17", retail: 184, online: 88 },
-  { date: "2026-03-18", retail: 170, online: 80 },
-  { date: "2026-03-19", retail: 188, online: 90 },
-  { date: "2026-03-20", retail: 180, online: 85 },
-  { date: "2026-03-21", retail: 192, online: 92 },
-  { date: "2026-03-22", retail: 172, online: 78 },
-  { date: "2026-03-23", retail: 166, online: 74 },
-  { date: "2026-03-24", retail: 174, online: 79 },
-  { date: "2026-03-25", retail: 158, online: 72 },
-  { date: "2026-03-26", retail: 168, online: 76 },
-  { date: "2026-03-27", retail: 152, online: 70 },
-  { date: "2026-03-28", retail: 160, online: 74 },
-  { date: "2026-03-29", retail: 146, online: 68 },
-  { date: "2026-03-30", retail: 154, online: 71 },
-  { date: "2026-03-31", retail: 142, online: 65 },
-  { date: "2026-04-01", retail: 140, online: 63 },
-  { date: "2026-04-02", retail: 132, online: 59 },
-  { date: "2026-04-03", retail: 124, online: 56 },
-  { date: "2026-04-04", retail: 128, online: 58 },
-  { date: "2026-04-05", retail: 116, online: 52 },
-  { date: "2026-04-06", retail: 84, online: 40 },
-  { date: "2026-04-07", retail: 82, online: 38 },
-  { date: "2026-04-08", retail: 96, online: 46 },
-  { date: "2026-04-09", retail: 92, online: 69 },
-  { date: "2026-04-10", retail: 96, online: 62 },
-  { date: "2026-04-11", retail: 112, online: 75 },
-  { date: "2026-04-12", retail: 101, online: 77 },
-  { date: "2026-04-13", retail: 112, online: 78 },
-];
+//  Separate data by workspace ID matching your provider
+const attendanceDataByWorkspace = {
+  worksmart: [
+    { date: "2026-04-07", present: 92, absent: 8 },
+    { date: "2026-04-08", present: 95, absent: 5 },
+    { date: "2026-04-09", present: 88, absent: 12 },
+    { date: "2026-04-10", present: 91, absent: 9 },
+    { date: "2026-04-11", present: 86, absent: 14 },
+    { date: "2026-04-12", present: 94, absent: 6 },
+    { date: "2026-04-13", present: 96, absent: 4 },
+  ],
+  school: [
+    { date: "2026-04-07", present: 97, absent: 3 },
+    { date: "2026-04-08", present: 95, absent: 5 },
+    { date: "2026-04-09", present: 96, absent: 4 },
+    { date: "2026-04-10", present: 94, absent: 6 },
+    { date: "2026-04-11", present: 98, absent: 2 },
+    { date: "2026-04-12", present: 92, absent: 8 },
+    { date: "2026-04-13", present: 95, absent: 5 },
+  ],
+  company: [
+    { date: "2026-04-07", present: 84, absent: 16 },
+    { date: "2026-04-08", present: 82, absent: 18 },
+    { date: "2026-04-09", present: 87, absent: 13 },
+    { date: "2026-04-10", present: 80, absent: 20 },
+    { date: "2026-04-11", present: 85, absent: 15 },
+    { date: "2026-04-12", present: 79, absent: 21 },
+    { date: "2026-04-13", present: 88, absent: 12 },
+  ],
+} as const;
 
-const chartRows = chartData.slice(-VISIBLE_DAYS);
-
-function rowTotal(row: ChannelSalesChartRow) {
-  return row.retail + row.online;
+function rowTotal(row: AttendanceChartRow) {
+  return row.present + row.absent;
 }
 
-function growthPctForWindow(rows: readonly ChannelSalesChartRow[]) {
+//  Move the calculation to handle dynamic arrays properly
+function growthPctForWindow(rows: readonly AttendanceChartRow[]) {
   const first = rows[0];
   const last = rows.at(-1);
 
@@ -83,29 +81,39 @@ function growthPctForWindow(rows: readonly ChannelSalesChartRow[]) {
   return ((b - a) / a) * 100;
 }
 
-const growthPctNum = growthPctForWindow(chartRows);
-
 const chartConfig = {
-  retail: {
-    label: "Retail",
+  present: {
+    label: "Present",
     color: "var(--brand)",
   },
-  online: {
-    label: "Online",
-    color: "var(--brand-cyan-400)",
+  absent: {
+    label: "Absent",
+    color: "var(--destructive)",
   },
 } satisfies ChartConfig;
 
-export function ChannelSalesChart() {
+export function AttendanceStatusChart() {
   const chartUid = useId().replace(/:/g, "");
-  const idLineGlow = `channel-sales-line-glow-${chartUid}`;
+  const idLineGlow = `attendance-line-glow-${chartUid}`;
+
+  //  Consume workspace details
+  const { workspace } = useWorkspace();
+
+  // Pick up selected dataset reactively or fall back to 'worksmart'
+  const activeData =
+    attendanceDataByWorkspace[
+      workspace.id as keyof typeof attendanceDataByWorkspace
+    ] ?? attendanceDataByWorkspace.worksmart;
+
+  const chartRows = activeData.slice(-VISIBLE_DAYS);
+  const growthPctNum = growthPctForWindow(chartRows);
 
   return (
     <DashboardCard className="gap-0 md:col-span-2">
       <CardHeader>
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <CardTitle>Channel sales</CardTitle>
+            <CardTitle>Attendance status</CardTitle>
 
             <Delta value={growthPctNum} variant="badge">
               <DeltaIcon variant="trend" />
@@ -114,7 +122,8 @@ export function ChannelSalesChart() {
           </div>
 
           <CardDescription>
-            Daily sales count by channel, last {VISIBLE_DAYS} days.
+            Worker attendance present and absent for {workspace.name}, last{" "}
+            {VISIBLE_DAYS} days.
           </CardDescription>
         </div>
       </CardHeader>
@@ -162,9 +171,9 @@ export function ChannelSalesChart() {
               </filter>
             </defs>
 
-            {/* RETAIL = BRAND */}
+            {/* PRESENT = BRAND */}
             <Line
-              dataKey="retail"
+              dataKey="present"
               dot={false}
               filter={`url(#${idLineGlow})`}
               stroke="currentColor"
@@ -173,15 +182,15 @@ export function ChannelSalesChart() {
               className="text-brand"
             />
 
-            {/* ONLINE = CYAN */}
+            {/* ABSENT = DESTRUCTIVE */}
             <Line
-              dataKey="online"
+              dataKey="absent"
               dot={false}
               filter={`url(#${idLineGlow})`}
               stroke="currentColor"
               strokeWidth={2}
               type="step"
-              className="text-brand-cyan-400"
+              className="text-destructive"
             />
           </LineChart>
         </ChartContainer>

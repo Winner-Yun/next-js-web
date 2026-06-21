@@ -1,8 +1,9 @@
 import { Poppins } from "next/font/google";
 import "./globals.css";
 
-import { ThemeProvider } from "@/provider/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/provider/theme-provider";
+import { WorkspaceProvider } from "@/provider/workspace-provider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -23,7 +24,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TooltipProvider>{children}</TooltipProvider>
+          <WorkspaceProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </WorkspaceProvider>
         </ThemeProvider>
       </body>
     </html>

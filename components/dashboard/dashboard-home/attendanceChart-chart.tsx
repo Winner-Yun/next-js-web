@@ -1,7 +1,7 @@
 "use client";
 
 import type * as React from "react";
-import { Bar, BarChart, XAxis } from "recharts";
+import { Bar, BarChart, XAxis, type BarProps } from "recharts";
 
 import {
   CardContent,
@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/card";
 
 import {
-  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  type ChartConfig,
 } from "@/components/ui/chart";
 
 import { DashboardCard } from "@/components/dashboard/dashboard-home/dashboard-card";
@@ -23,44 +23,59 @@ import {
   DeltaIcon,
   DeltaValue,
 } from "@/components/dashboard/dashboard-home/delta";
+import { useWorkspace } from "@/provider/workspace-provider";
 
-/** Demo: last 7 days. */
-const salesDaily7 = [
-  { day: "Mon", sales: 3200 },
-  { day: "Tue", sales: 3001 },
-  { day: "Wed", sales: 3780 },
-  { day: "Thu", sales: 4100 },
-  { day: "Fri", sales: 4520 },
-  { day: "Sat", sales: 4004 },
-  { day: "Sun", sales: 5340 },
-] as const;
+const attendanceByWorkspace = {
+  worksmart: [
+    { day: "Mon", attendance: 92 },
+    { day: "Tue", attendance: 88 },
+    { day: "Wed", attendance: 95 },
+    { day: "Thu", attendance: 90 },
+    { day: "Fri", attendance: 86 },
+    { day: "Sat", attendance: 78 },
+    { day: "Sun", attendance: 94 },
+  ],
 
-const chartRows = salesDaily7.map((row) => ({ ...row }));
+  school: [
+    { day: "Mon", attendance: 97 },
+    { day: "Tue", attendance: 95 },
+    { day: "Wed", attendance: 96 },
+    { day: "Thu", attendance: 94 },
+    { day: "Fri", attendance: 98 },
+    { day: "Sat", attendance: 92 },
+    { day: "Sun", attendance: 95 },
+  ],
 
-const firstDay = salesDaily7[0].sales;
-const lastDay = salesDaily7.at(-1)?.sales ?? firstDay;
-
-const growthPct = (((lastDay - firstDay) / firstDay) * 100).toFixed(1);
+  company: [
+    { day: "Mon", attendance: 84 },
+    { day: "Tue", attendance: 82 },
+    { day: "Wed", attendance: 87 },
+    { day: "Thu", attendance: 80 },
+    { day: "Fri", attendance: 85 },
+    { day: "Sat", attendance: 79 },
+    { day: "Sun", attendance: 88 },
+  ],
+} as const;
 
 const chartConfig = {
-  sales: {
-    label: "Sales",
+  attendance: {
+    label: "Attendance",
     color: "var(--brand)",
   },
 } satisfies ChartConfig;
 
 function CustomGradientBar(
-  props: React.SVGProps<SVGRectElement> & {
-    index?: number;
-    dataKey?: string | number;
-  },
+  props: React.SVGProps<SVGRectElement> &
+    Pick<BarProps, "dataKey"> & {
+      index?: number;
+    },
 ) {
   const {
     x = 0,
     y = 0,
     width = 0,
     height = 0,
-    dataKey = "sales",
+    dataKey = "attendance",
     index = 0,
   } = props;
 
@@ -70,26 +85,23 @@ function CustomGradientBar(
     <>
       <rect
         fill={`url(#${gid})`}
-        height={height}
-        stroke="none"
-        width={width}
-        x={x}
-        y={y}
+        x={Number(x)}
+        y={Number(y)}
+        width={Number(width)}
+        height={Number(height)}
       />
 
       <rect
         fill="currentColor"
+        x={Number(x)}
+        y={Number(y)}
+        width={Number(width)}
         height={2}
-        stroke="none"
-        width={width}
-        x={x}
-        y={y}
       />
 
       <defs>
         <linearGradient id={gid} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="currentColor" stopOpacity={0.5} />
-
           <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
         </linearGradient>
       </defs>
@@ -97,12 +109,23 @@ function CustomGradientBar(
   );
 }
 
-export function NetRevenueChart() {
+export function AttendanceChart() {
+  const { workspace } = useWorkspace();
+
+  const chartRows =
+    attendanceByWorkspace[workspace.id as keyof typeof attendanceByWorkspace] ??
+    attendanceByWorkspace.worksmart;
+
+  const firstDay = chartRows[0].attendance;
+  const lastDay = chartRows.at(-1)?.attendance ?? firstDay;
+
+  const growthPct = (((lastDay - firstDay) / firstDay) * 100).toFixed(1);
+
   return (
     <DashboardCard className="gap-0 md:col-span-2">
       <CardHeader className="gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <CardTitle>Net revenue</CardTitle>
+          <CardTitle>Daily attendance</CardTitle>
 
           <Delta value={Number(growthPct)} variant="badge">
             <DeltaIcon variant="trend" />
@@ -110,7 +133,9 @@ export function NetRevenueChart() {
           </Delta>
         </div>
 
-        <CardDescription>Daily net sales, last 7 days.</CardDescription>
+        <CardDescription>
+          Worker attendance percentage for {workspace.name}, last 7 days.
+        </CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -123,7 +148,6 @@ export function NetRevenueChart() {
               axisLine={false}
               dataKey="day"
               interval={0}
-              tickFormatter={(value) => String(value)}
               tickLine={false}
               tickMargin={10}
             />
@@ -134,7 +158,7 @@ export function NetRevenueChart() {
             />
 
             <Bar
-              dataKey="sales"
+              dataKey="attendance"
               className="bg-brand text-brand"
               fill="currentColor"
               shape={<CustomGradientBar />}

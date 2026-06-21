@@ -18,64 +18,65 @@ import {
 } from "lucide-react";
 
 const user = {
-  name: "Shaban Haider",
-  email: "shaban@efferd.com",
-  avatar: "https://github.com/shabanhr.png",
+  name: "Yun Winner",
+  email: "winnerlegendpvh1426@gmail.com",
+  avatar: "https://avatars.githubusercontent.com/u/156267229?v=4",
 };
 
 export function NavUser() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Avatar className="size-8">
-          <AvatarImage src={user.avatar} />
-          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-        </Avatar>
+        <button className="rounded-full outline-none ring-offset-background transition-all hover:ring-2 hover:ring-primary focus-visible:ring-2 focus-visible:ring-primary">
+          <Avatar className="size-8 cursor-pointer">
+            <AvatarImage src={user.avatar} alt={user.name} />
+            <AvatarFallback>{user.name[0]}</AvatarFallback>
+          </Avatar>
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuItem className="flex items-center justify-start gap-2">
-          <DropdownMenuLabel className="flex items-center gap-3">
+
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex items-center gap-3">
             <Avatar className="size-10">
-              <AvatarImage src={user.avatar} />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarFallback>{user.name[0]}</AvatarFallback>
             </Avatar>
-            <div>
-              <span className="font-medium text-foreground">{user.name}</span>{" "}
-              <br />
-              <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-muted-foreground text-xs">
+
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate font-medium text-sm">{user.name}</span>
+              <span className="truncate text-muted-foreground text-xs">
                 {user.email}
-              </div>
+              </span>
             </div>
-          </DropdownMenuLabel>
+          </div>
+        </DropdownMenuLabel>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuGroup>
+          <DropdownMenuItem className="cursor-pointer">
+            <UserIcon className="mr-2 size-4" />
+            <span>Account</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem className="cursor-pointer">
+            <SettingsIcon className="mr-2 size-4" />
+            <span>Settings</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem className="cursor-pointer">
+            <CreditCardIcon className="mr-2 size-4" />
+            <span>Plan & Billing</span>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
+          <LogOutIcon className="mr-2 size-4" />
+          <span>Log out</span>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <UserIcon />
-            Account
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <SettingsIcon />
-            Settings
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <CreditCardIcon />
-            Plan & Billing
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem
-            className="w-full cursor-pointer"
-            variant="destructive"
-          >
-            <LogOutIcon />
-            Log out
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

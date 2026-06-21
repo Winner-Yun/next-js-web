@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Particles } from "@/components/ui/particles";
 
 import { ChevronLeftIcon } from "lucide-react";
+import Image from "next/image";
 
 export function AuthPage() {
   return (
@@ -131,16 +132,12 @@ export function AuthPage() {
               text-center
               "
             >
-              <span
-                className="text-2xl font-bold bg-linear-to-r
-                    from-brand
-                    to-cyan-400
-                    bg-clip-text
-                    text-transparent
-					"
-              >
-                Work Smart
-              </span>
+              <Image
+                src="/worksmart.png"
+                alt="WorkSmart logo"
+                width={90}
+                height={90}
+              />
 
               <div className="space-y-2">
                 <h1 className="text-2xl font-bold tracking-tight">

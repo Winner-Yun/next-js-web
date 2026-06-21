@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/welcome-page/mobile-nav";
 import { useScroll } from "@/hooks/use-scroll";
 import { cn } from "@/lib/utils";
-import { ActivityIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export const navLinks = [
@@ -58,10 +58,12 @@ export function Header() {
           onClick={() => scrollToSection("hero")}
           className="group flex cursor-pointer items-center gap-2.5 rounded-md transition-opacity hover:opacity-80"
         >
-          <div className="flex size-8 items-center justify-center rounded-lg bg-linear-to-br from-brand to-brand-cyan-400 text-white shadow-sm">
-            <ActivityIcon className="size-5" />
-          </div>
-
+          <Image
+            src="/worksmart.png"
+            alt="WorkSmart logo"
+            width={30}
+            height={30}
+          />
           <span className="text-xl font-bold tracking-tight">Work Smart</span>
         </button>
 
@@ -88,6 +90,7 @@ export function Header() {
             </Button>
 
             <Button
+              asChild
               size="sm"
               className="cursor-pointer bg-brand text-white shadow-sm hover:bg-brand-hover"
             >

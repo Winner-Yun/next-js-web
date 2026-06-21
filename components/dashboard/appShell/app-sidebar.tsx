@@ -4,7 +4,6 @@ import { AppSearch } from "@/components/dashboard/appShell/app-search";
 import { navGroups } from "@/components/dashboard/appShell/app-shared";
 import { CustomTrigger } from "@/components/dashboard/appShell/custom-trigger";
 import { LatestChange } from "@/components/dashboard/appShell/latest-change";
-import { LogoIcon } from "@/components/dashboard/appShell/logo";
 import { ThemeSwitcher } from "@/components/dashboard/appShell/theme-switcher";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { SettingsIcon } from "lucide-react";
+import Image from "next/image";
 
 export function AppSidebar() {
   return (
@@ -32,13 +32,19 @@ export function AppSidebar() {
       collapsible="offcanvas"
       variant="sidebar"
     >
-      <SidebarHeader className="h-(--app-header-height,3rem) flex-row items-center justify-between">
+      <SidebarHeader className="h-(--app-header-height,3rem) flex-row items-center justify-between ">
         <Button asChild variant="ghost">
           <a href="#link">
-            <LogoIcon />
-            <span className="font-medium">Efferd</span>
+            <Image
+              src="/worksmart.png"
+              alt="WorkSmart logo"
+              width={30}
+              height={30}
+            />
+            <span className="font-medium text-brand pt-1">WorkSmart</span>
           </a>
         </Button>
+
         <CustomTrigger place="sidebar" />
       </SidebarHeader>
       <SidebarContent>
