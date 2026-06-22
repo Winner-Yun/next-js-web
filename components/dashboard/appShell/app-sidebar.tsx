@@ -21,8 +21,12 @@ import {
 import { cn } from "@/lib/utils";
 import { SettingsIcon } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function AppSidebar() {
+  const pathname = usePathname();
+
   return (
     <Sidebar
       className={cn(
@@ -34,47 +38,55 @@ export function AppSidebar() {
     >
       <SidebarHeader className="h-(--app-header-height,3rem) flex-row items-center justify-between ">
         <Button asChild variant="ghost">
-          <a href="#link">
+          <Link href="/dashboard">
             <Image
               src="/worksmart.png"
               alt="WorkSmart logo"
               width={30}
               height={30}
+              style={{ width: "auto", height: "auto" }}
             />
             <span className="font-medium text-brand pt-1">WorkSmart</span>
-          </a>
+          </Link>
         </Button>
 
         <CustomTrigger place="sidebar" />
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <AppSearch />
         </SidebarGroup>
+
         {navGroups.map((group) => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none">
               {group.label}
             </SidebarGroupLabel>
             <SidebarMenu>
-              {group.items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={item.isActive}
-                    tooltip={item.title}
-                  >
-                    <a href={item.path}>
-                      {item.icon}
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {group.items.map((item) => {
+                const isCurrentActive = pathname === item.path;
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isCurrentActive}
+                      tooltip={item.title}
+                    >
+                      <Link href={item.path || "#"}>
+                        {item.icon}
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroup>
         ))}
       </SidebarContent>
+
       <SidebarFooter className="px-4">
         <LatestChange />
         <div className="flex items-center pt-4 pb-2">
@@ -85,9 +97,9 @@ export function AppSidebar() {
             size="icon-sm"
             variant="ghost"
           >
-            <a aria-label="Settings" href="#">
+            <Link aria-label="Settings" href="/settings">
               <SettingsIcon />
-            </a>
+            </Link>
           </Button>
         </div>
       </SidebarFooter>

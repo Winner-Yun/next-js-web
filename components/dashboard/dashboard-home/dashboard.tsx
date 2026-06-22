@@ -1,8 +1,8 @@
 import { AttendanceHealth } from "@/components/dashboard/dashboard-home/attendance-health";
+import { AttendanceChart } from "@/components/dashboard/dashboard-home/attendanceChart-chart";
 import { AttendanceStatusChart } from "@/components/dashboard/dashboard-home/attendanceStatusChart";
 import { DashboardActivity } from "@/components/dashboard/dashboard-home/dashboard-activity";
 import { DashboardAttendance } from "@/components/dashboard/dashboard-home/dashboard-attendance";
-import { AttendanceChart } from "@/components/dashboard/dashboard-home/attendanceChart-chart";
 import { DashboardStats } from "@/components/dashboard/dashboard-home/stats";
 
 export function DashboardPage() {

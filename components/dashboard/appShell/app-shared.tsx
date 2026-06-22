@@ -1,5 +1,6 @@
 import {
   BellIcon,
+  BotIcon,
   Building2Icon,
   CalendarCheck2Icon,
   CalendarClockIcon,
@@ -7,9 +8,9 @@ import {
   FileBarChart2Icon,
   LayoutDashboardIcon,
   MapPinnedIcon,
+  MonitorSmartphoneIcon,
   SettingsIcon,
   ShieldCheckIcon,
-  UserCogIcon,
   UsersIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -35,7 +36,6 @@ export const navGroups: SidebarNavGroup[] = [
         title: "Dashboard",
         path: "/dashboard",
         icon: <LayoutDashboardIcon />,
-        isActive: true,
       },
     ],
   },
@@ -44,8 +44,8 @@ export const navGroups: SidebarNavGroup[] = [
     label: "Workspace",
     items: [
       {
-        title: "Workspace",
-        path: "/workspace",
+        title: "Workspaces",
+        path: "/workspaces",
         icon: <Building2Icon />,
       },
       {
@@ -54,9 +54,14 @@ export const navGroups: SidebarNavGroup[] = [
         icon: <UsersIcon />,
       },
       {
-        title: "Departments",
-        path: "/departments",
-        icon: <UserCogIcon />,
+        title: "Geofences",
+        path: "/geofencing",
+        icon: <MapPinnedIcon />,
+      },
+      {
+        title: "Workspaces Policies",
+        path: "/policies",
+        icon: <CalendarClockIcon />,
       },
     ],
   },
@@ -65,20 +70,11 @@ export const navGroups: SidebarNavGroup[] = [
     label: "Attendance",
     items: [
       {
-        title: "Attendance",
+        title: "Attendance Logs",
         path: "/attendance",
         icon: <Clock3Icon />,
       },
-      {
-        title: "Geofences",
-        path: "/geofences",
-        icon: <MapPinnedIcon />,
-      },
-      {
-        title: "Work Schedule",
-        path: "/schedule",
-        icon: <CalendarClockIcon />,
-      },
+
       {
         title: "Leave Requests",
         path: "/leave",
@@ -111,6 +107,16 @@ export const navGroups: SidebarNavGroup[] = [
   {
     label: "System",
     items: [
+      {
+        title: "Devices & Terminals",
+        path: "/devices",
+        icon: <MonitorSmartphoneIcon />,
+      },
+      {
+        title: "Bot Integrations",
+        path: "/integrations",
+        icon: <BotIcon />,
+      },
       {
         title: "Settings",
         path: "/settings",

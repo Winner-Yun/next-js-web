@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { BellIcon, HelpCircleIcon } from "lucide-react";
-import { WorkspaceSwitcher } from "../dashboard-home/workspace-switcher";
+import { WorkspaceSwitcher } from "../../ui/workspace-switcher";
 
 export function AppHeader() {
   return (

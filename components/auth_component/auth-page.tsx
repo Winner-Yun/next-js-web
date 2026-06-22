@@ -137,6 +137,7 @@ export function AuthPage() {
                 alt="WorkSmart logo"
                 width={90}
                 height={90}
+                style={{ width: "auto", height: "auto" }}
               />
 
               <div className="space-y-2">

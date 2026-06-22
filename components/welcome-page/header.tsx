@@ -63,6 +63,7 @@ export function Header() {
             alt="WorkSmart logo"
             width={30}
             height={30}
+            style={{ width: "auto", height: "auto" }}
           />
           <span className="text-xl font-bold tracking-tight">Work Smart</span>
         </button>
