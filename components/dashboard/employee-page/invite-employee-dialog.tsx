@@ -44,13 +44,16 @@ export function InviteEmployeeDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2 h-9 text-xs font-medium">
+        <Button
+          size="sm"
+          className="gap-2 h-9 bg-brand text-white hover:bg-brand/90 text-xs font-medium"
+        >
           <UserPlusIcon className="size-4" />
           Invite Member
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent className="sm:max-w-105">
         <form onSubmit={handleInviteSubmit} className="space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base">Invite Team Member</DialogTitle>
@@ -133,7 +136,11 @@ export function InviteEmployeeDialog() {
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" className="text-xs h-9">
+            <Button
+              type="submit"
+              size="sm"
+              className="text-xs h-9 bg-brand text-white hover:bg-brand/90 px-4"
+            >
               Send Invite
             </Button>
           </DialogFooter>

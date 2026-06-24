@@ -90,13 +90,13 @@ export function WorkspacesDirectory() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 border rounded-md px-2 h-9 bg-background">
+            <div className="flex items-center gap-1.5 border rounded-md px-2 h-9 bg-background ">
               <ArrowUpDownIcon className="size-3.5 text-muted-foreground" />
               <Select
                 value={sortBy}
                 onValueChange={(value) => setSortBy(value as SortOption)}
               >
-                <SelectTrigger className="border-0 p-0 h-auto focus:ring-0 w-30 text-xs shadow-none">
+                <SelectTrigger className="bg-transparent! border-0 p-0 h-auto focus:ring-0 w-30 text-xs shadow-none">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>

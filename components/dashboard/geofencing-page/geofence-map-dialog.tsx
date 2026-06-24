@@ -82,8 +82,8 @@ export function GeofenceMapDialog({ onAddGeofence }: GeofenceMapDialogProps) {
       <DialogContent
         className={`p-0 overflow-hidden bg-background transition-all duration-300 ease-in-out ${
           isConfirmingStep
-            ? "w-[90vw] sm:max-w-[460px]"
-            : "w-[95vw] sm:max-w-[600px] md:max-w-[800px] lg:max-w-[1000px]"
+            ? "w-[90vw] sm:max-w-115"
+            : "w-[95vw] sm:max-w-150 md.:max-w-[800px] lg:max-w-250"
         }`}
       >
         {!isConfirmingStep ? (
@@ -135,15 +135,14 @@ export function GeofenceMapDialog({ onAddGeofence }: GeofenceMapDialogProps) {
                 />
               </div>
 
-              <div className="relative w-full h-[240px] sm:h-[380px] md:h-[460px] rounded-lg  overflow-hidden shadow-inner">
+              <div className="relative w-full h-60 sm:h-95 md:h-115 rounded-lg  overflow-hidden shadow-inner">
                 <LocationPickerMap
                   radius={fenceRadius}
                   onLocationSelected={(loc) => setSelectedLocation(loc)}
                 />
               </div>
             </div>
-
-            <DialogFooter className="p-4 border-t border-muted bg-muted/20 flex items-center justify-end gap-2 shrink-0">
+            <DialogFooter className="pe-6 py-6! pt-3! border-t border-muted bg-muted/20 flex items-center justify-end gap-2 shrink-0">
               <Button
                 type="button"
                 variant="outline"
@@ -153,6 +152,7 @@ export function GeofenceMapDialog({ onAddGeofence }: GeofenceMapDialogProps) {
               >
                 Cancel
               </Button>
+
               <Button
                 type="submit"
                 size="sm"
@@ -186,7 +186,7 @@ export function GeofenceMapDialog({ onAddGeofence }: GeofenceMapDialogProps) {
                   <span className="text-foreground font-semibold">
                     Policy Name:
                   </span>
-                  <span className="font-semibold text-foreground bg-background px-2 py-0.5 rounded border border-muted truncate max-w-[200px]">
+                  <span className="font-semibold text-foreground bg-background px-2 py-0.5 rounded border border-muted truncate max-w-50">
                     {zoneName}
                   </span>
                 </p>
@@ -216,7 +216,7 @@ export function GeofenceMapDialog({ onAddGeofence }: GeofenceMapDialogProps) {
               </div>
             </div>
 
-            <DialogFooter className="p-4 border-t border-muted bg-muted/20 flex items-center justify-end gap-2 shrink-0">
+            <DialogFooter className="pe-6 py-6! pt-0! border-t border-muted bg-muted/20 flex items-center justify-end gap-2 shrink-0">
               <Button
                 type="button"
                 variant="outline"

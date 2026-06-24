@@ -60,8 +60,13 @@ export const navGroups: SidebarNavGroup[] = [
       },
       {
         title: "Workspaces Policies",
-        path: "/policies",
+        path: "/workpolicies",
         icon: <CalendarClockIcon />,
+      },
+      {
+        title: "Workspaces Holidays",
+        path: "/holidays",
+        icon: <CalendarCheck2Icon />,
       },
     ],
   },

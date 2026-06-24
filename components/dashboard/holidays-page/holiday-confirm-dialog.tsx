@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AlertTriangleIcon, CheckCircle2Icon } from "lucide-react";
 
-interface GeofenceConfirmDialogProps {
-  children: React.ReactNode; // The button or element that triggers the popup
+interface HolidayConfirmDialogProps {
+  children: React.ReactNode;
   title: string;
   description: string;
   confirmText: string;
@@ -22,18 +22,18 @@ interface GeofenceConfirmDialogProps {
   variant?: "brand" | "destructive";
 }
 
-export function GeofenceConfirmDialog({
+export function HolidayConfirmDialog({
   children,
   title,
   description,
   confirmText,
   onConfirm,
   variant = "brand",
-}: GeofenceConfirmDialogProps) {
+}: HolidayConfirmDialogProps) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
-      <AlertDialogContent className="sm:max-w-[420px] animate-in fade-in-50 zoom-in-95 duration-200">
+      <AlertDialogContent className="sm:max-w-105 animate-in fade-in-50 zoom-in-95 duration-200">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-sm font-bold flex items-center gap-2">
             {variant === "destructive" ? (

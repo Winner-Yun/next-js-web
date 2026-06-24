@@ -73,7 +73,7 @@ export function ManageAccessDialog() {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent className="sm:max-w-105">
         {!isConfirming ? (
           /* Step 1: Input target collection data */
           <form onSubmit={handleInitialSubmit} className="space-y-4">

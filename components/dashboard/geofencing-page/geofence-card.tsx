@@ -9,16 +9,21 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  AlertCircleIcon,
   CheckCircle2Icon,
   CompassIcon,
   TargetIcon,
   Trash2Icon,
   UsersIcon,
 } from "lucide-react";
-import type { GeofenceZone } from "./types";
-
-// Import your brand new custom confirmation manager
 import { GeofenceConfirmDialog } from "./geofence-confirm-dialog";
+import type { GeofenceZone } from "./types";
 
 interface GeofenceCardProps {
   zone: GeofenceZone;
@@ -35,7 +40,11 @@ export function GeofenceCard({
 
   return (
     <Card
-      className={`overflow-hidden transition-all duration-200 hover:shadow-md border flex flex-col ${isActive ? "border-brand/40 bg-brand/5" : "border-muted/80 bg-background/50"}`}
+      className={`overflow-hidden transition-all duration-200 hover:shadow-md border flex flex-col ${
+        isActive
+          ? "border-brand/40 bg-brand/5"
+          : "border-muted/80 bg-background/50"
+      }`}
     >
       <CardHeader className="p-4 flex flex-row items-start justify-between space-y-0 pb-2">
         <div className="space-y-1 min-w-0">
@@ -43,7 +52,9 @@ export function GeofenceCard({
             {zone.id}
           </span>
           <h3
-            className={`text-sm font-bold tracking-tight truncate pt-1 ${isActive ? "text-brand" : "text-foreground"}`}
+            className={`text-sm font-bold tracking-tight truncate pt-1 ${
+              isActive ? "text-brand" : "text-foreground"
+            }`}
           >
             {zone.zoneName}
           </h3>
@@ -52,7 +63,7 @@ export function GeofenceCard({
           variant="outline"
           className={`text-[10px] uppercase font-bold tracking-wider px-2 shadow-none ${
             isActive
-              ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border-emerald-500/20"
+              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
               : "bg-muted text-muted-foreground border-muted-foreground/10"
           }`}
         >
@@ -62,7 +73,9 @@ export function GeofenceCard({
 
       <CardContent className="p-4 pt-2 space-y-3.5 flex-1">
         <div
-          className={`flex items-center gap-2 text-xs font-medium ${isActive ? "text-brand" : "text-muted-foreground"}`}
+          className={`flex items-center gap-2 text-xs font-medium ${
+            isActive ? "text-brand" : "text-muted-foreground"
+          }`}
         >
           <UsersIcon className="size-3.5 shrink-0" />
           <span>Applies to All Workspace Members</span>
@@ -86,7 +99,9 @@ export function GeofenceCard({
               Radius Limit
             </span>
             <div
-              className={`flex items-center gap-1 font-mono font-semibold ${isActive ? "text-brand" : "text-foreground"}`}
+              className={`flex items-center gap-1 font-mono font-semibold ${
+                isActive ? "text-brand" : "text-foreground"
+              }`}
             >
               <TargetIcon
                 className={`size-3 ${isActive ? "text-brand/60" : "text-muted-foreground/50"}`}
@@ -98,7 +113,7 @@ export function GeofenceCard({
       </CardContent>
 
       <CardFooter className="p-3 bg-muted/30 border-t border-muted flex items-center justify-between gap-2">
-        {/* Switch Activation Action Hook Wrapper */}
+        {/* Switch Activation Action */}
         <GeofenceConfirmDialog
           title="Switch Active Policy?"
           description={`You are changing the live tracking criteria to ${zone.zoneName}. This will automatically deactivate any other running location boundary rules.`}
@@ -110,29 +125,50 @@ export function GeofenceCard({
             variant={isActive ? "secondary" : "outline"}
             size="sm"
             disabled={isActive}
-            className={`h-8 text-xs flex-1 ${isActive ? "opacity-50 cursor-default" : "hover:bg-brand hover:text-white border-brand/20"}`}
+            className={`h-8 text-xs flex-1 ${
+              isActive
+                ? "opacity-50 cursor-default"
+                : "hover:bg-brand hover:text-white border-brand/20"
+            }`}
           >
             <CheckCircle2Icon className="size-3.5 mr-1.5" />
             {isActive ? "Currently Active" : "Set as Active"}
           </Button>
         </GeofenceConfirmDialog>
 
-        {/* Drop Policy Destructive Action Hook Wrapper */}
-        <GeofenceConfirmDialog
-          title="Delete Policy Permanently?"
-          description={`Are you completely sure you want to delete ${zone.zoneName}? This action cannot be reversed, and location validation telemetry rules for this perimeter will be destroyed.`}
-          confirmText="Delete Policy"
-          onConfirm={() => onRemove(zone.id)}
-          variant="destructive"
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground  hover:bg-destructive/10 hover:text-destructive shrink-0"
-          >
-            <Trash2Icon className="size-4" />
-          </Button>
-        </GeofenceConfirmDialog>
+        {/* Delete Action with Safety Guard */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className={isActive ? "cursor-not-allowed" : ""}>
+                <GeofenceConfirmDialog
+                  title="Delete Policy Permanently?"
+                  description={`Are you sure you want to delete ${zone.zoneName}? This cannot be reversed.`}
+                  confirmText="Delete Policy"
+                  onConfirm={() => onRemove(zone.id)}
+                  variant="destructive"
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0"
+                    disabled={isActive}
+                  >
+                    <Trash2Icon className="size-4" />
+                  </Button>
+                </GeofenceConfirmDialog>
+              </div>
+            </TooltipTrigger>
+            {isActive && (
+              <TooltipContent className="text-xs">
+                <p className="flex items-center gap-1.5">
+                  <AlertCircleIcon className="size-3" /> Cannot delete active
+                  geofence
+                </p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </CardFooter>
     </Card>
   );

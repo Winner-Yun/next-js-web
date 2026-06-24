@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from "react";
 
 // Google Maps Configurations
 const mapLibraries: "places"[] = ["places"];
-const fallbackCenter = { lat: 37.7749, lng: -122.4194 }; // San Francisco
+const fallbackCenter = { lat: 11.5564, lng: 104.9282 }; // Phnom Penh
 const defaultMapOptions = {
   disableDefaultUI: false,
   clickableIcons: false,
@@ -41,14 +41,12 @@ export function LocationPickerMap({
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Isolate the script loader here so it only loads when this component mounts
   const { isLoaded, loadError } = useJsApiLoader({
     id: "google-maps-location-picker",
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
     libraries: mapLibraries,
   });
 
-  // Attach Google Places Autocomplete Engine
   useEffect(() => {
     if (!isLoaded || !searchInputRef.current) return;
 
@@ -98,9 +96,10 @@ export function LocationPickerMap({
     );
   }
 
+  const newLocal =
+    "w-full h-62.5 sm:h-95 md:h-[460px] rounded-lg overflow-hidden border border-muted bg-muted/10 relative flex items-center justify-center shadow-inner";
   return (
     <div className="space-y-4 w-full">
-      {/* Self-Contained Search Input */}
       <div className="space-y-1.5">
         <Label
           htmlFor="locationSearch"
@@ -123,8 +122,7 @@ export function LocationPickerMap({
         </div>
       </div>
 
-      {/* FIXED: Scaled up canvas container using a dynamic, responsive viewport height matrix */}
-      <div className="w-full h-[250px] sm:h-[380px] md:h-[460px] rounded-lg overflow-hidden border border-muted bg-muted/10 relative flex items-center justify-center shadow-inner">
+      <div className={newLocal}>
         {isLoaded ? (
           <GoogleMap
             mapContainerStyle={{ width: "100%", height: "100%" }}

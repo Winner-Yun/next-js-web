@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { CalendarX2Icon, Clock3Icon } from "lucide-react";
 
@@ -18,7 +19,7 @@ export function PluginAttendance({ employeeId }: { employeeId: string }) {
         <p className="text-xs font-semibold text-muted-foreground">
           No logs captured today
         </p>
-        <p className="text-[11px] text-muted-foreground/60 mt-0.5 max-w-[240px]">
+        <p className="text-[11px] text-muted-foreground/60 mt-0.5 max-w-60">
           No active check-ins detected via terminal configurations.
         </p>
       </div>

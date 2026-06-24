@@ -42,6 +42,12 @@ export function Header() {
       top: sectionPosition - headerOffset,
       behavior: "smooth",
     });
+
+    const navItem = navLinks.find((link) => link.id === id);
+
+    if (navItem) {
+      document.title = `${navItem.label} | WorkSmart`;
+    }
   };
 
   return (

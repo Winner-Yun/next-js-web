@@ -35,7 +35,10 @@ export function CreateWorkspaceDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
+        <Button
+          size="lg"
+          className="gap-2 bg-brand text-white hover:bg-brand/90"
+        >
           <PlusIcon className="size-4" />
           New Workspace
         </Button>
@@ -66,7 +69,12 @@ export function CreateWorkspaceDialog() {
             >
               Cancel
             </Button>
-            <Button type="submit">Create</Button>
+            <Button
+              type="submit"
+              className="bg-brand text-white hover:bg-brand/90"
+            >
+              Create
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

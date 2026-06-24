@@ -11,10 +11,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { AlertTriangleIcon, HelpCircleIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckCircle2Icon } from "lucide-react";
 
-interface WorkspaceConfirmDialogProps {
-  children: React.ReactNode;
+interface GeofenceConfirmDialogProps {
+  children: React.ReactNode; // The button or element that triggers the popup
   title: string;
   description: string;
   confirmText: string;
@@ -22,26 +22,24 @@ interface WorkspaceConfirmDialogProps {
   variant?: "brand" | "destructive";
 }
 
-export function WorkspaceConfirmDialog({
+export function GeofenceConfirmDialog({
   children,
   title,
   description,
   confirmText,
   onConfirm,
   variant = "brand",
-}: WorkspaceConfirmDialogProps) {
+}: GeofenceConfirmDialogProps) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
-      <AlertDialogContent className="sm:max-w-100 animate-in fade-in-50 zoom-in-95 duration-200">
+      <AlertDialogContent className="sm:max-w-105 animate-in fade-in-50 zoom-in-95 duration-200">
         <AlertDialogHeader>
-          <AlertDialogTitle
-            className={`text-sm font-bold flex items-center gap-2 ${variant === "destructive" ? "text-destructive" : "text-foreground"}`}
-          >
+          <AlertDialogTitle className="text-sm font-bold flex items-center gap-2">
             {variant === "destructive" ? (
-              <AlertTriangleIcon className="size-4 shrink-0" />
+              <AlertTriangleIcon className="size-4 text-destructive" />
             ) : (
-              <HelpCircleIcon className="size-4 text-brand shrink-0" />
+              <CheckCircle2Icon className="size-4 text-brand" />
             )}
             {title}
           </AlertDialogTitle>

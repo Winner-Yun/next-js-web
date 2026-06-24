@@ -1,4 +1,4 @@
-import type { Metadata } from "next"; // 1. Add this import
+import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 
@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/provider/theme-provider";
 import { WorkspaceProvider } from "@/provider/workspace-provider";
 
 export const metadata: Metadata = {
-  title: "WorkSmart",
+  title: "Welcome | WorkSmart",
   description: "AI Attendance System",
   icons: {
     icon: "/worksmart.png",
@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
+    <html lang="en" suppressHydrationWarning>
       <body className={poppins.className}>
         <ThemeProvider
           attribute="class"

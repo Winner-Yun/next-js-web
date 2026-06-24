@@ -22,7 +22,7 @@ export function EmployeeDetailsPanel({ employee }: { employee: Employee }) {
       <SheetHeader>
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="size-14 rounded-2xl bg-gradient-to-br from-muted/60 to-muted border border-muted flex items-center justify-center text-base font-bold text-foreground shadow-sm">
+            <div className="size-14 rounded-2xl bg-linear-to-br from-muted/60 to-muted border border-muted flex items-center justify-center text-base font-bold text-foreground shadow-sm">
               {employee.name.charAt(0)}
             </div>
             <div className="min-w-0">

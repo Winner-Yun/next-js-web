@@ -20,14 +20,14 @@ export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
 
   return (
     <DashboardCard
-      className="group relative cursor-pointer overflow-hidden border border-muted/60 bg-card p-5 transition-all duration-300 hover:border-brand/40 hover:bg-muted/5 hover:shadow-lg hover:shadow-brand/5 flex flex-col justify-between min-h-[210px] rounded-xl"
+      className="group relative cursor-pointer overflow-hidden border border-muted/60 bg-card p-5 transition-all duration-300 hover:border-brand/40 hover:bg-muted/5 hover:shadow-lg hover:shadow-brand/5 flex flex-col justify-between min-h-52.5 rounded-xl"
       onClick={onClick}
     >
       {/* Top Section: Avatar & Badging Status Context */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative shrink-0">
-            <div className="size-11 rounded-xl bg-gradient-to-br from-muted to-muted/40 flex items-center justify-center text-xs font-bold border border-muted-foreground/10 uppercase text-foreground shadow-sm transition-transform duration-300 group-hover:scale-105">
+            <div className="size-11 rounded-xl bg-linear-to-br from-muted to-muted/40 flex items-center justify-center text-xs font-bold border border-muted-foreground/10 uppercase text-foreground shadow-sm transition-transform duration-300 group-hover:scale-105">
               {employee.name.charAt(0)}
             </div>
             <span className="absolute -bottom-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-background border-2 border-background">
