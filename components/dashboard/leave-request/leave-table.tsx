@@ -104,7 +104,7 @@ export function LeaveTable({ requests, onRowClick }: LeaveTableProps) {
                     No leave requests found
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Modify your filters, search terms, or input configurations.
+                    Modify your filterss, search terms, or input configurations.
                   </p>
                 </td>
               </tr>
