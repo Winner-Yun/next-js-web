@@ -47,7 +47,7 @@ export function ConfirmDialog({
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="h-9 text-xs font-semibold text-white bg-destructive hover:bg-destructive/90"
+            className="h-9 text-xs font-semibold text-white bg-destructive! hover:bg-destructive/90"
           >
             Confirm Delete
           </AlertDialogAction>

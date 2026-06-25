@@ -1,6 +1,5 @@
 import {
   BellIcon,
-  BotIcon,
   Building2Icon,
   CalendarCheck2Icon,
   CalendarClockIcon,
@@ -10,7 +9,6 @@ import {
   MapPinnedIcon,
   MonitorSmartphoneIcon,
   SettingsIcon,
-  ShieldCheckIcon,
   UsersIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -76,13 +74,13 @@ export const navGroups: SidebarNavGroup[] = [
     items: [
       {
         title: "Attendance Logs",
-        path: "/attendance",
+        path: "/attendance-logs",
         icon: <Clock3Icon />,
       },
 
       {
         title: "Leave Requests",
-        path: "/leave",
+        path: "/leave-requests",
         icon: <CalendarCheck2Icon />,
       },
     ],
@@ -93,18 +91,13 @@ export const navGroups: SidebarNavGroup[] = [
     items: [
       {
         title: "Reports",
-        path: "/reports",
+        path: "/report-page",
         icon: <FileBarChart2Icon />,
       },
       {
         title: "Notifications",
         path: "/notifications",
         icon: <BellIcon />,
-      },
-      {
-        title: "Roles & Permissions",
-        path: "/roles",
-        icon: <ShieldCheckIcon />,
       },
     ],
   },
@@ -117,11 +110,7 @@ export const navGroups: SidebarNavGroup[] = [
         path: "/devices",
         icon: <MonitorSmartphoneIcon />,
       },
-      {
-        title: "Bot Integrations",
-        path: "/integrations",
-        icon: <BotIcon />,
-      },
+
       {
         title: "Settings",
         path: "/settings",

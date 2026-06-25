@@ -3,7 +3,6 @@
 import { AppSearch } from "@/components/dashboard/appShell/app-search";
 import { navGroups } from "@/components/dashboard/appShell/app-shared";
 import { CustomTrigger } from "@/components/dashboard/appShell/custom-trigger";
-import { LatestChange } from "@/components/dashboard/appShell/latest-change";
 import { ThemeSwitcher } from "@/components/dashboard/appShell/theme-switcher";
 import { Button } from "@/components/ui/button";
 import {
@@ -88,7 +87,6 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="px-4">
-        <LatestChange />
         <div className="flex items-center pt-4 pb-2">
           <ThemeSwitcher />
           <Button

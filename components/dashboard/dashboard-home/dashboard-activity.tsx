@@ -15,7 +15,6 @@ import {
   UserXIcon,
 } from "lucide-react";
 
-
 const activityByWorkspace = {
   worksmart: [
     {
@@ -39,6 +38,7 @@ const activityByWorkspace = {
       icon: <UserXIcon />,
     },
   ],
+
   school: [
     {
       title: "Sopheak Chan checked in",
@@ -55,8 +55,13 @@ const activityByWorkspace = {
       time: "About 30 minutes ago",
       icon: <UserCheckIcon />,
     },
-    { title: "Bona Ouk marked absent", time: "Yesterday", icon: <UserXIcon /> },
+    {
+      title: "Bona Ouk marked absent",
+      time: "Yesterday",
+      icon: <UserXIcon />,
+    },
   ],
+
   company: [
     {
       title: "Alice Dupont checked in",
@@ -76,36 +81,56 @@ const activityByWorkspace = {
   ],
 } as const;
 
-export function DashboardActivity() {
- 
-  const { workspace } = useWorkspace();
+interface DashboardActivityProps {
+  className?: string;
+}
 
+export function DashboardActivity({ className = "" }: DashboardActivityProps) {
+  const { workspace } = useWorkspace();
 
   const activeItems =
     activityByWorkspace[workspace.id as keyof typeof activityByWorkspace] ??
     activityByWorkspace.worksmart;
 
   return (
-    <DashboardCard className="gap-0">
+    <DashboardCard className={`w-full gap-0 ${className}`}>
       <CardHeader className="border-b">
         <CardTitle>Activity</CardTitle>
 
         <CardDescription>Latest updates for {workspace.name}.</CardDescription>
       </CardHeader>
 
-      <CardContent className="px-0">
-        <ul className="flex flex-col divide-y divide-border">
+      <CardContent className="px-0 w-full">
+        <ul className="flex flex-col divide-y divide-border w-full">
           {activeItems.map((item) => (
-            <li className="flex h-16 items-center gap-3 px-6" key={item.title}>
+            <li
+              key={item.title}
+              className="flex h-16 items-center gap-3 px-6 w-full"
+            >
               <span
                 aria-hidden="true"
-                className="flex size-10 shrink-0 items-center justify-center [&_svg]:size-4"
+                className="
+                  flex 
+                  size-10 
+                  shrink-0 
+                  items-center 
+                  justify-center
+                  [&_svg]:size-4
+                "
               >
                 {item.icon}
               </span>
 
               <div className="min-w-0 flex-1 space-y-1">
-                <p className="line-clamp-1 text-pretty text-foreground text-sm leading-snug">
+                <p
+                  className="
+                    line-clamp-1
+                    text-pretty
+                    text-foreground
+                    text-sm
+                    leading-snug
+                  "
+                >
                   {item.title}
                 </p>
 

@@ -19,7 +19,6 @@ export function PolicyDirectory() {
   const [editingPolicy, setEditingPolicy] =
     useState<WorkspacePolicyData | null>(null);
 
-  // State Dictionary Pattern keyed by Workspace ID
   const [policiesData, setPoliciesData] = useState<
     Record<string, WorkspacePolicyData[]>
   >({
@@ -27,8 +26,10 @@ export function PolicyDirectory() {
       {
         id: "POL-001",
         name: "Standard HQ Rules",
-        check_in_start: "08:00",
-        check_in_end: "17:00",
+        work_start_time: "08:00",
+        work_end_time: "17:00",
+        check_in_start: "07:30",
+        check_out_start: "16:45",
         late_buffer_minutes: 15,
         deadline_scan_minutes: 30,
         annual_leave_limit: 18,
@@ -38,8 +39,10 @@ export function PolicyDirectory() {
       {
         id: "POL-002",
         name: "Flexible Dev Shift",
-        check_in_start: "10:00",
-        check_in_end: "19:00",
+        work_start_time: "10:00",
+        work_end_time: "19:00",
+        check_in_start: "09:00",
+        check_out_start: "18:30",
         late_buffer_minutes: 30,
         deadline_scan_minutes: 60,
         annual_leave_limit: 21,
@@ -61,7 +64,6 @@ export function PolicyDirectory() {
     );
   }, [currentWorkspacePolicies, search]);
 
-  // Handle Add or Edit Execution
   const handleSavePolicy = (
     data: Omit<WorkspacePolicyData, "id" | "status">,
   ) => {
@@ -69,7 +71,6 @@ export function PolicyDirectory() {
       const existing = prev[workspace.id] || [];
 
       if (editingPolicy) {
-        // Edit Mode: Update item and preserve its current status
         return {
           ...prev,
           [workspace.id]: existing.map((p) =>
@@ -77,7 +78,6 @@ export function PolicyDirectory() {
           ),
         };
       } else {
-        // Create Mode: Make the new policy active and deactivate all others
         const newId = `POL-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
         const newPolicy: WorkspacePolicyData = {
           ...data,
@@ -105,7 +105,6 @@ export function PolicyDirectory() {
     setEditingPolicy(null);
   };
 
-  // Handle Permanent Removal
   const handleRemovePolicy = (id: string) => {
     setPoliciesData((prev) => ({
       ...prev,
@@ -114,7 +113,6 @@ export function PolicyDirectory() {
     toast.success("Policy permanently deleted.");
   };
 
-  // Handle Making a Policy Active
   const handleSetActivePolicy = (id: string) => {
     setPoliciesData((prev) => ({
       ...prev,
@@ -133,7 +131,6 @@ export function PolicyDirectory() {
 
   return (
     <div className="w-full space-y-6 p-px animate-in fade-in duration-300">
-      {/* Structural Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-muted/60 pb-5">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -167,7 +164,6 @@ export function PolicyDirectory() {
         </div>
       </div>
 
-      {/* Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {processedPolicies.map((policy) => (
           <PolicyCard
@@ -197,7 +193,6 @@ export function PolicyDirectory() {
         )}
       </div>
 
-      {/* Form Dialog Hook */}
       <PolicyFormDialog
         isOpen={isFormOpen}
         setIsOpen={setIsFormOpen}
