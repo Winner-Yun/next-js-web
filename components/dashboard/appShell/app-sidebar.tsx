@@ -22,9 +22,32 @@ import { SettingsIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo, useState } from "react";
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Filter the navigation items based on the search query
+  const filteredNavGroups = useMemo(() => {
+    if (!searchQuery.trim()) return navGroups;
+
+    const query = searchQuery.toLowerCase();
+
+    return (
+      navGroups
+        .map((group) => {
+          // Filter items within the group
+          const filteredItems = group.items.filter((item) =>
+            item.title.toLowerCase().includes(query),
+          );
+          // Return the group with only matching items
+          return { ...group, items: filteredItems };
+        })
+        // Only keep groups that have at least one matching item
+        .filter((group) => group.items.length > 0)
+    );
+  }, [searchQuery]);
 
   return (
     <Sidebar
@@ -54,36 +77,45 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <AppSearch />
+          {/* Pass state and setter to AppSearch */}
+          <AppSearch value={searchQuery} onChange={setSearchQuery} />
         </SidebarGroup>
 
-        {navGroups.map((group) => (
-          <SidebarGroup key={group.label}>
-            <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none">
-              {group.label}
-            </SidebarGroupLabel>
-            <SidebarMenu>
-              {group.items.map((item) => {
-                const isCurrentActive = pathname === item.path;
+        {/* Render dynamically filtered groups */}
+        {filteredNavGroups.length > 0 ? (
+          filteredNavGroups.map((group) => (
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none">
+                {group.label}
+              </SidebarGroupLabel>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const isCurrentActive = pathname === item.path;
 
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isCurrentActive}
-                      tooltip={item.title}
-                    >
-                      <Link href={item.path || "#"}>
-                        {item.icon}
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroup>
-        ))}
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isCurrentActive}
+                        tooltip={item.title}
+                      >
+                        <Link href={item.path || "#"}>
+                          {item.icon}
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroup>
+          ))
+        ) : (
+          // Empty state if nothing matches the search
+          <div className="py-6 px-4 text-center text-sm text-muted-foreground">
+            No pages found for &quot;{searchQuery}&quot;
+          </div>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="px-4">
@@ -95,7 +127,7 @@ export function AppSidebar() {
             size="icon-sm"
             variant="ghost"
           >
-            <Link aria-label="Settings" href="/settings">
+            <Link aria-label="Settings" href="/setting-page">
               <SettingsIcon />
             </Link>
           </Button>

@@ -83,7 +83,22 @@ export function DataExplorer({
                       </td>
 
                       <td className="p-3 text-right">
-                        <Badge variant="outline">{a.status}</Badge>
+                        <Badge
+                          variant="outline"
+                          className={
+                            a.status === "Present"
+                              ? "text-emerald-600 border-emerald-500/30 bg-emerald-500/10"
+                              : a.status === "Late"
+                                ? "text-amber-600 border-amber-500/30 bg-amber-500/10"
+                                : a.status === "Absent"
+                                  ? "text-red-600 border-red-500/30 bg-red-500/10"
+                                  : a.status === "Leave"
+                                    ? "text-blue-600 border-blue-500/30 bg-blue-500/10"
+                                    : "text-muted-foreground border-muted bg-muted/10"
+                          }
+                        >
+                          {a.status}
+                        </Badge>
                       </td>
                     </tr>
                   ))}
@@ -119,17 +134,17 @@ export function DataExplorer({
                   {workspaceData.leaves.map((l, index) => (
                     <tr key={l.id}>
                       {/* Generated number */}
-                      <td className="p-3 font-mono font-bold text-muted-foreground">
+                      <td className="p-3 font-mono  text-muted-foreground">
                         {index + 1}
                       </td>
 
-                      <td className="p-3 font-bold">{l.name}</td>
+                      <td className="p-3 ">{l.name}</td>
 
                       <td className="p-3">{l.type}</td>
 
                       <td className="p-3 font-mono">
                         {l.start} - {l.end}
-                        <span className="block font-bold">({l.days} Days)</span>
+                        <span className="block ">({l.days} Days)</span>
                       </td>
 
                       {/* Sick leave proof image */}

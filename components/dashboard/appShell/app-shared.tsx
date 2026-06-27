@@ -7,7 +7,7 @@ import {
   FileBarChart2Icon,
   LayoutDashboardIcon,
   MapPinnedIcon,
-  MonitorSmartphoneIcon,
+  MessageCircleIcon,
   SettingsIcon,
   UsersIcon,
 } from "lucide-react";
@@ -99,6 +99,11 @@ export const navGroups: SidebarNavGroup[] = [
         path: "/notifications",
         icon: <BellIcon />,
       },
+      {
+        title: "Chat & Messaging",
+        path: "/chat-page",
+        icon: <MessageCircleIcon />,
+      },
     ],
   },
 
@@ -106,14 +111,8 @@ export const navGroups: SidebarNavGroup[] = [
     label: "System",
     items: [
       {
-        title: "Devices & Terminals",
-        path: "/devices",
-        icon: <MonitorSmartphoneIcon />,
-      },
-
-      {
         title: "Settings",
-        path: "/settings",
+        path: "/setting-page",
         icon: <SettingsIcon />,
       },
     ],

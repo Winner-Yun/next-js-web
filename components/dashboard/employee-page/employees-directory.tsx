@@ -1,9 +1,16 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useWorkspace } from "@/provider/workspace-provider";
-import { SearchIcon, UsersIcon } from "lucide-react";
+import { ArrowDownUpIcon, SearchIcon, UsersIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { EmployeeCard } from "@/components/dashboard/employee-page/employee-card";
@@ -41,9 +48,12 @@ const mockEmployees: Record<string, Employee[]> = {
   ],
 };
 
+type SortOption = "name-asc" | "name-desc" | "status";
+
 export function EmployeesDirectory() {
   const { workspace } = useWorkspace();
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("name-asc");
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null,
   );
@@ -53,14 +63,32 @@ export function EmployeesDirectory() {
     [workspace.id],
   );
 
-  const filteredEmployees = useMemo(() => {
-    return employeesList.filter(
+  const processedEmployees = useMemo(() => {
+    // 1. Filter
+    let result = employeesList.filter(
       (emp) =>
         emp.name.toLowerCase().includes(search.toLowerCase()) ||
         emp.id.toLowerCase().includes(search.toLowerCase()) ||
         emp.email.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [employeesList, search]);
+
+    // 2. Sort
+    result = [...result].sort((a, b) => {
+      if (sortBy === "name-asc") {
+        return a.name.localeCompare(b.name);
+      }
+      if (sortBy === "name-desc") {
+        return b.name.localeCompare(a.name);
+      }
+      if (sortBy === "status") {
+        // Sorts 'active' before 'inactive' automatically via alphabetical locale compare
+        return a.status.localeCompare(b.status);
+      }
+      return 0;
+    });
+
+    return result;
+  }, [employeesList, search, sortBy]);
 
   return (
     <div className="w-full space-y-6 p-px animate-in fade-in duration-300">
@@ -77,7 +105,8 @@ export function EmployeesDirectory() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-          <div className="relative w-full sm:w-72">
+          {/* Search Input */}
+          <div className="relative w-full sm:w-64">
             <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               placeholder="Search by name, ID, email..."
@@ -87,16 +116,39 @@ export function EmployeesDirectory() {
             />
           </div>
 
-          {/* Clean Decoupled Dialog Component Button */}
-          <ManageAccessDialog />
+          {/* Sort Dropdown */}
+          <Select
+            value={sortBy}
+            onValueChange={(value) => setSortBy(value as SortOption)}
+          >
+            <SelectTrigger className="w-full sm:w-36 h-10 text-xs bg-muted/10">
+              <div className="flex items-center gap-2">
+                <ArrowDownUpIcon className="size-3.5 text-muted-foreground" />
+                <SelectValue placeholder="Sort by" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc" className="text-xs">
+                Name (A-Z)
+              </SelectItem>
+              <SelectItem value="name-desc" className="text-xs">
+                Name (Z-A)
+              </SelectItem>
+              <SelectItem value="status" className="text-xs">
+                Status
+              </SelectItem>
+            </SelectContent>
+          </Select>
 
+          {/* Action Buttons */}
+          <ManageAccessDialog />
           <InviteEmployeeDialog />
         </div>
       </div>
 
-      {/* Directory Grid Layout matching Workspace UI */}
+      {/* Directory Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        {filteredEmployees.map((emp) => (
+        {processedEmployees.map((emp) => (
           <EmployeeCard
             key={emp.id}
             employee={emp}
@@ -104,7 +156,7 @@ export function EmployeesDirectory() {
           />
         ))}
 
-        {filteredEmployees.length === 0 && (
+        {processedEmployees.length === 0 && (
           <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 flex flex-col items-center justify-center">
             <div className="rounded-full bg-muted/40 p-3 mb-3">
               <UsersIcon className="size-5 text-muted-foreground/70" />

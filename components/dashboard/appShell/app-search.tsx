@@ -11,13 +11,19 @@ import { useKeypress } from "@/hooks/use-keypress";
 import { SearchIcon } from "lucide-react";
 import { useRef } from "react";
 
-export function AppSearch() {
+interface AppSearchProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+export function AppSearch({ value, onChange }: AppSearchProps) {
   const groupRef = useRef<HTMLDivElement>(null);
   const { setOpen } = useSidebar();
 
   useKeypress({
-    combo: ["meta+k", "ctrl+k"],
-    callback: () => {
+    combo: ["meta+k", "ctrl+k", "k", "K"], // Added standard "k" keypress
+    callback: (e) => {
+      e?.preventDefault(); // Prevent typing 'k' into the input field immediately
       const input = groupRef.current?.querySelector<HTMLInputElement>(
         "[data-slot=input-group-control]",
       );
@@ -36,6 +42,8 @@ export function AppSearch() {
         name="q"
         placeholder="Search..."
         type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
       />
       <InputGroupAddon align="inline-end">
         <KbdGroup>

@@ -22,9 +22,12 @@ import { toast } from "sonner";
 type SortOption = "name-asc" | "name-desc" | "members-desc";
 
 export function WorkspacesDirectory() {
-  const { workspaces, deleteWorkspace } = useWorkspace(); // Assuming deleteWorkspace exists in provider
+  const { workspaces, deleteWorkspace } = useWorkspace();
   const [sortBy, setSortBy] = useState<SortOption>("name-asc");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // NEW: State to control visibility of member workspaces
+  const [showShared, setShowShared] = useState(true);
 
   // Filter and sort in a single memory pipeline
   const filteredAndSortedWorkspaces = useMemo(() => {
@@ -90,6 +93,22 @@ export function WorkspacesDirectory() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* NEW: Show Shared Toggle */}
+            <div className="flex items-center gap-2 border rounded-md px-3 h-9 bg-background">
+              <span className="text-xs text-muted-foreground font-medium">
+                Shared
+              </span>
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={showShared}
+                  onChange={() => setShowShared(!showShared)}
+                />
+                <div className="w-7 h-4 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-brand"></div>
+              </label>
+            </div>
+
             <div className="flex items-center gap-1.5 border rounded-md px-2 h-9 bg-background ">
               <ArrowUpDownIcon className="size-3.5 text-muted-foreground" />
               <Select
@@ -117,9 +136,14 @@ export function WorkspacesDirectory() {
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      {/* Adjust Grid dynamically based on showShared state */}
+      <div
+        className={`grid gap-8 ${showShared ? "lg:grid-cols-2" : "lg:grid-cols-1"}`}
+      >
         {/* Owned Column Block Layout */}
-        <div className="space-y-4 border-r pr-0 lg:pr-6 border-transparent lg:border-border">
+        <div
+          className={`space-y-4 ${showShared ? "border-r pr-0 lg:pr-6 border-transparent lg:border-border" : ""}`}
+        >
           <div className="flex items-center gap-2 border-b pb-2">
             <ShieldIcon className="size-4 text-blue-500" />
             <h2 className="text-base font-semibold tracking-tight">
@@ -127,7 +151,9 @@ export function WorkspacesDirectory() {
             </h2>
           </div>
           {ownedWorkspaces.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <div
+              className={`grid gap-4 sm:grid-cols-1 md:grid-cols-2 ${showShared ? "lg:grid-cols-1 xl:grid-cols-2" : "lg:grid-cols-3 xl:grid-cols-4"}`}
+            >
               {ownedWorkspaces.map((w) => (
                 <WorkspaceCard
                   key={w.id}
@@ -143,30 +169,32 @@ export function WorkspacesDirectory() {
           )}
         </div>
 
-        {/* Collaborating Column Block Layout */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 border-b pb-2">
-            <UsersIcon className="size-4 text-muted-foreground" />
-            <h2 className="text-base font-semibold tracking-tight">
-              Shared Contexts
-            </h2>
-          </div>
-          {memberWorkspaces.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-              {memberWorkspaces.map((w) => (
-                <WorkspaceCard
-                  key={w.id}
-                  workspaceItem={w}
-                  onRemove={handleRemoveWorkspace}
-                />
-              ))}
+        {/* Collaborating Column Block Layout - Conditionally Rendered */}
+        {showShared && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <UsersIcon className="size-4 text-muted-foreground" />
+              <h2 className="text-base font-semibold tracking-tight">
+                Shared Contexts
+              </h2>
             </div>
-          ) : (
-            <p className="text-xs text-muted-foreground py-8 text-center border border-dashed rounded-lg bg-muted/20">
-              No matching shared environments found.
-            </p>
-          )}
-        </div>
+            {memberWorkspaces.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                {memberWorkspaces.map((w) => (
+                  <WorkspaceCard
+                    key={w.id}
+                    workspaceItem={w}
+                    onRemove={handleRemoveWorkspace}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground py-8 text-center border border-dashed rounded-lg bg-muted/20">
+                No matching shared environments found.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

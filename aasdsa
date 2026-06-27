@@ -1,0 +1,13 @@
+[1mdiff --git a/components/dashboard/leave-request/leave-table.tsx b/components/dashboard/leave-request/leave-table.tsx[m
+[1mindex 0b92ece..790955d 100644[m
+[1m--- a/components/dashboard/leave-request/leave-table.tsx[m
+[1m+++ b/components/dashboard/leave-request/leave-table.tsx[m
+[36m@@ -104,7 +104,7 @@[m [mexport function LeaveTable({ requests, onRowClick }: LeaveTableProps) {[m
+                     No leave requests found[m
+                   </p>[m
+                   <p className="text-xs text-muted-foreground mt-0.5">[m
+[31m-                    Modify your filterss, search terms, or input configurations.[m
+[32m+[m[32m                    Modify your filters, search terms, or input configurations.[m
+                   </p>[m
+                 </td>[m
+               </tr>[m

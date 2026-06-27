@@ -17,7 +17,7 @@ export function ReportHeader({
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-muted/60 pb-5 print:border-b-2 print:border-black">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground print:text-black print:text-3xl">
+        <h1 className="text-2xl  tracking-tight text-foreground print:text-black print:text-3xl">
           Workspace Master Report
         </h1>
         <p className="text-muted-foreground text-xs mt-1 print:text-gray-600">
