@@ -10,6 +10,9 @@ import {
 import { useWorkspace } from "@/provider/workspace-provider";
 import { Building2 } from "lucide-react";
 
+// (Optional) Import Skeleton if you want a loading placeholder
+// import { Skeleton } from "@/components/ui/skeleton";
+
 const colors = [
   "text-blue-600",
   "text-sky-600",
@@ -32,20 +35,23 @@ const colors = [
 
 function getWorkspaceColor(id: string) {
   let hash = 0;
-
   for (let i = 0; i < id.length; i++) {
     hash = id.charCodeAt(i) + ((hash << 5) - hash);
   }
-
   return colors[Math.abs(hash) % colors.length];
 }
 
 export function WorkspaceSwitcher() {
-  const { workspace, setWorkspace, workspaces } = useWorkspace();
+  const { workspace, setWorkspace, workspaces, isLoading } = useWorkspace();
 
-  const ownerWorkspaces = workspaces.filter((w) => w.role === "owner");
+  // 1. Prevent crash while API is loading
+  if (isLoading) {
+    // You can replace this div with a <Skeleton className="h-10 w-[250px] rounded-xl" />
+    return <div className="h-10 w-62.5 animate-pulse rounded-xl bg-muted" />;
+  }
 
-  if (ownerWorkspaces.length === 0) {
+  // 2. Hide switcher if no workspaces exist or workspace failed to load
+  if (!workspaces || workspaces.length === 0 || !workspace) {
     return null;
   }
 
@@ -53,8 +59,7 @@ export function WorkspaceSwitcher() {
     <Select
       value={workspace.id}
       onValueChange={(value) => {
-        const selected = ownerWorkspaces.find((w) => w.id === value);
-
+        const selected = workspaces.find((w) => w.id === value);
         if (selected) {
           setWorkspace(selected);
         }
@@ -62,16 +67,17 @@ export function WorkspaceSwitcher() {
     >
       <SelectTrigger className="w-62.5 rounded-xl">
         <div className="flex items-center gap-2.5">
-          <SelectValue />
+          <SelectValue placeholder="Select a workspace" />
         </div>
       </SelectTrigger>
 
       <SelectContent className="rounded-xl">
-        {ownerWorkspaces.map((w) => (
+        {workspaces.map((w) => (
           <SelectItem key={w.id} value={w.id}>
             <div className="flex items-center gap-2.5">
               <Building2 className={`h-4 w-4 ${getWorkspaceColor(w.id)}`} />
-              {w.name}
+              {/* 3. Updated to match your API's "workspace_name" key */}
+              {w.workspace_name}
             </div>
           </SelectItem>
         ))}
