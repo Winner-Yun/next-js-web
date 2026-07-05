@@ -47,8 +47,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           },
         });
 
-        if (!res.ok) throw new Error("Failed to fetch workspaces");
-
         const data = await res.json();
 
         if (data.workspaces && data.workspaces.length > 0) {

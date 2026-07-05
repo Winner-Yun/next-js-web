@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   try {
     // 2. Safely call your backend from the Next.js server side (bypassing browser CORS)
     const backendResponse = await fetch(
-      `${BACKEND_URL.replace(/\/$/, "")}/workspace/workspaces/me`,
+      `${BACKEND_URL.replace(/\/$/, "")}/workspace/me`,
       {
         method: "GET",
         headers: {

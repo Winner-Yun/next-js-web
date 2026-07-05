@@ -4,7 +4,6 @@ import "./globals.css";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/provider/theme-provider";
-import { WorkspaceProvider } from "@/provider/workspace-provider";
 
 export const metadata: Metadata = {
   title: "Welcome | WorkSmart",
@@ -33,9 +32,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <WorkspaceProvider>
-            <TooltipProvider>{children}</TooltipProvider>
-          </WorkspaceProvider>
+          <TooltipProvider>{children}</TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -27,7 +27,7 @@ export async function GET(request: Request, { params }: { params: unknown }) {
 
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
     const backendResponse = await fetch(
-      `${cleanUrl}/workspace/workspaces/${workspaceId}/members`,
+      `${cleanUrl}/workspace/${workspaceId}/members`,
       {
         method: "GET",
         headers: {

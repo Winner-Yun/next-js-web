@@ -15,7 +15,7 @@ export function useDashboardData() {
       if (!workspace?.id) return;
 
       setIsLoading(true);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
 
       try {
         const headers = {
@@ -26,7 +26,7 @@ export function useDashboardData() {
         // Fetch through local Next.js Route Proxies to bypass browser CORS errors
         const [membersRes, attendanceRes] = await Promise.all([
           fetch(`/api/workspace/${workspace.id}/members`, { headers }),
-          fetch(`/api/workspace/attendance/${workspace.id}`, { headers }),
+          fetch(`/api/workspace/${workspace.id}/attendance`, { headers }),
         ]);
 
         const membersData = await membersRes.json();
