@@ -1,11 +1,6 @@
 "use client";
 
 import { DashboardCard } from "@/components/dashboard/dashboard-home/dashboard-card";
-import {
-  Delta,
-  DeltaIcon,
-  DeltaValue,
-} from "@/components/dashboard/dashboard-home/delta";
 import { formatDate } from "@/components/dashboard/dashboard-home/formater";
 import {
   CardContent,
@@ -24,12 +19,6 @@ import { useId } from "react";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 
 const VISIBLE_DAYS = 7;
-
-type AttendanceChartRow = {
-  date: string;
-  present: number;
-  absent: number;
-};
 
 //  Separate data by workspace ID matching your provider
 const attendanceDataByWorkspace = {
@@ -62,25 +51,6 @@ const attendanceDataByWorkspace = {
   ],
 } as const;
 
-function rowTotal(row: AttendanceChartRow) {
-  return row.present + row.absent;
-}
-
-//  Move the calculation to handle dynamic arrays properly
-function growthPctForWindow(rows: readonly AttendanceChartRow[]) {
-  const first = rows[0];
-  const last = rows.at(-1);
-
-  if (!first || !last) return 0;
-
-  const a = rowTotal(first);
-  const b = rowTotal(last);
-
-  if (!a) return 0;
-
-  return ((b - a) / a) * 100;
-}
-
 const chartConfig = {
   present: {
     label: "Present",
@@ -106,7 +76,6 @@ export function AttendanceStatusChart() {
     ] ?? attendanceDataByWorkspace.worksmart;
 
   const chartRows = activeData.slice(-VISIBLE_DAYS);
-  const growthPctNum = growthPctForWindow(chartRows);
 
   return (
     <DashboardCard className="gap-0 md:col-span-2">
@@ -114,11 +83,6 @@ export function AttendanceStatusChart() {
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <CardTitle>Attendance status</CardTitle>
-
-            <Delta value={growthPctNum} variant="badge">
-              <DeltaIcon variant="trend" />
-              <DeltaValue />
-            </Delta>
           </div>
 
           <CardDescription>

@@ -18,11 +18,7 @@ import {
 } from "@/components/ui/chart";
 
 import { DashboardCard } from "@/components/dashboard/dashboard-home/dashboard-card";
-import {
-  Delta,
-  DeltaIcon,
-  DeltaValue,
-} from "@/components/dashboard/dashboard-home/delta";
+
 import { useWorkspace } from "@/provider/workspace-provider";
 
 const attendanceByWorkspace = {
@@ -116,21 +112,11 @@ export function AttendanceChart() {
     attendanceByWorkspace[workspace.id as keyof typeof attendanceByWorkspace] ??
     attendanceByWorkspace.worksmart;
 
-  const firstDay = chartRows[0].attendance;
-  const lastDay = chartRows.at(-1)?.attendance ?? firstDay;
-
-  const growthPct = (((lastDay - firstDay) / firstDay) * 100).toFixed(1);
-
   return (
     <DashboardCard className="gap-0 md:col-span-2">
       <CardHeader className="gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <CardTitle>Daily attendance</CardTitle>
-
-          <Delta value={Number(growthPct)} variant="badge">
-            <DeltaIcon variant="trend" />
-            <DeltaValue />
-          </Delta>
         </div>
 
         <CardDescription>

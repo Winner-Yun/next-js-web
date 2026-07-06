@@ -1,15 +1,13 @@
-// app/api/workspace/[id]/members/route.ts
+// app/api/workspace/attendance/[id]/route.ts
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "https://smart-atd-backend.vercel.app";
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(request: Request, { params }: { params: unknown }) {
   try {
-    const { id: workspaceId } = await params;
+    const resolvedParams = await params;
+    const workspaceId = resolvedParams?.id;
 
     if (!workspaceId) {
       return NextResponse.json(
@@ -19,7 +17,6 @@ export async function GET(
     }
 
     const authHeader = request.headers.get("authorization");
-
     if (!authHeader) {
       return NextResponse.json(
         { detail: "Authorization token is required." },
@@ -27,15 +24,14 @@ export async function GET(
       );
     }
 
+    // Extract the query parameters from the incoming request
+    const { searchParams } = new URL(request.url);
+    const queryString = searchParams.toString();
+
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
 
-    // Forward any query parameters (page, limit, search, sort, etc.)
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.toString();
-
-    const targetUrl = `${cleanUrl}/workspace/${workspaceId}/members${
-      query ? `?${query}` : ""
-    }`;
+    // 2. Append the query string to the backend URL
+    const targetUrl = `${cleanUrl}/workspace/leaves/${workspaceId}${queryString ? `?${queryString}` : ""}`;
 
     const backendResponse = await fetch(targetUrl, {
       method: "GET",
@@ -45,13 +41,10 @@ export async function GET(
       },
     });
 
-    const contentType = backendResponse.headers.get("content-type") ?? "";
-
+    const contentType = backendResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
       const errorText = await backendResponse.text();
-
       console.error("Backend returned non-JSON response:", errorText);
-
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -59,20 +52,12 @@ export async function GET(
     }
 
     const data = await backendResponse.json();
-
-    return NextResponse.json(data, {
-      status: backendResponse.status,
-    });
+    return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("Proxy members fetch error:", error);
-
+    console.error("Proxy attendance fetch error:", error);
     return NextResponse.json(
-      {
-        detail: "Internal server error handling members proxy request.",
-      },
-      {
-        status: 500,
-      },
+      { detail: "Internal server error handling attendance proxy request." },
+      { status: 500 },
     );
   }
 }

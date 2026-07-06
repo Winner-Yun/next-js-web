@@ -1,28 +1,18 @@
-// components/dashboard/dashboard-home/stats.tsx
 "use client";
 
 import { DashboardCard } from "@/components/dashboard/dashboard-home/dashboard-card";
-import {
-  Delta,
-  DeltaIcon,
-  DeltaValue,
-} from "@/components/dashboard/dashboard-home/delta";
-import {
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardData } from "@/hooks/use-dashboard-data"; // Import the hook
 
 export function DashboardStats() {
-  const { members, attendance, isLoading } = useDashboardData();
+  // Extract all required data arrays from the hook
+  const { members, attendance, leaves, isLoading } = useDashboardData();
 
   if (isLoading) {
     return (
       <>
-        {/* Render some skeletons while loading */}
+        {/* Render loading skeletons */}
         {[1, 2, 3, 4].map((i) => (
           <DashboardCard key={i}>
             <CardHeader>
@@ -37,17 +27,22 @@ export function DashboardStats() {
     );
   }
 
-  // This is an example of how you calculate stats from your API arrays
   const totalEmployees = members.length;
-  const presentToday = attendance.filter((a) => a.status === "Present").length;
-  const lateArrivals = attendance.filter((a) => a.status === "Late").length;
-  const leaveRequests = attendance.filter((a) => a.status === "Leave").length; // Adjust based on your API
+
+  const absentToday = attendance.filter(
+    (item: unknown) => item.status === "absent",
+  ).length;
+  const lateArrivals = attendance.filter(
+    (item: unknown) => item.status === "late",
+  ).length;
+
+  const leaveRequests = leaves.length;
 
   const dynamicStats = [
-    { label: "Total Employees", value: totalEmployees.toString(), delta: 0 },
-    { label: "Present Today", value: presentToday.toString(), delta: 0 },
-    { label: "Late Arrivals", value: lateArrivals.toString(), delta: 0 },
-    { label: "Leave Requests", value: leaveRequests.toString(), delta: 0 },
+    { label: "Total Employees", value: totalEmployees.toString() },
+    { label: "Absent Today", value: absentToday.toString() },
+    { label: "Late Arrivals", value: lateArrivals.toString() },
+    { label: "Leave Requests", value: leaveRequests.toString() },
   ];
 
   return (
@@ -62,15 +57,6 @@ export function DashboardStats() {
           <CardContent className="flex flex-row items-center gap-2">
             <p className="font-semibold text-2xl tabular-nums">{s.value}</p>
           </CardContent>
-          <CardFooter className="gap-1 rounded-none bg-background text-xs">
-            <Delta value={s.delta}>
-              <DeltaIcon />
-              <DeltaValue />
-            </Delta>
-            <span className="text-muted-foreground">
-              compared with last week
-            </span>
-          </CardFooter>
         </DashboardCard>
       ))}
     </>

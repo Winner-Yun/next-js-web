@@ -5,28 +5,44 @@ const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "https://smart-atd-backend.vercel.app";
 
 export async function GET(request: Request) {
-  // 1. Forward the Authorization token sent from the browser
-  const authHeader = request.headers.get("authorization");
-
-  if (!authHeader) {
-    return NextResponse.json(
-      { detail: "Authorization token is required." },
-      { status: 401 },
-    );
-  }
-
   try {
-    // 2. Safely call your backend from the Next.js server side (bypassing browser CORS)
-    const backendResponse = await fetch(
-      `${BACKEND_URL.replace(/\/$/, "")}/workspace/me`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: authHeader,
-          "Content-Type": "application/json",
-        },
+    const authHeader = request.headers.get("authorization");
+
+    if (!authHeader) {
+      return NextResponse.json(
+        { detail: "Authorization token is required." },
+        { status: 401 },
+      );
+    }
+
+    const cleanUrl = BACKEND_URL.replace(/\/$/, "");
+
+    // Forward any query parameters (page, limit, search, etc.)
+    const { searchParams } = new URL(request.url);
+    const query = searchParams.toString();
+
+    const targetUrl = `${cleanUrl}/workspace/me${query ? `?${query}` : ""}`;
+
+    const backendResponse = await fetch(targetUrl, {
+      method: "GET",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
       },
-    );
+    });
+
+    const contentType = backendResponse.headers.get("content-type") ?? "";
+
+    if (!contentType.includes("application/json")) {
+      const errorText = await backendResponse.text();
+
+      console.error("Backend returned non-JSON response:", errorText);
+
+      return NextResponse.json(
+        { detail: "Backend service returned an invalid response format." },
+        { status: 502 },
+      );
+    }
 
     const data = await backendResponse.json();
 
@@ -35,6 +51,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Workspace proxy fetch error:", error);
+
     return NextResponse.json(
       { detail: "Unable to reach workspace backend service." },
       { status: 500 },

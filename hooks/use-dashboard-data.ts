@@ -2,54 +2,43 @@
 "use client";
 
 import { useWorkspace } from "@/provider/workspace-provider";
-import { useEffect, useState } from "react";
+import useSWR from "swr";
+
+const fetcher = async (url: string) => {
+  const token = localStorage.getItem("accessToken");
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) throw new Error("Failed to fetch data");
+  return res.json();
+};
 
 export function useDashboardData() {
   const { workspace } = useWorkspace();
-  const [members, setMembers] = useState<unknown[]>([]);
-  const [attendance, setAttendance] = useState<unknown[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const workspaceId = workspace?.id;
 
-  useEffect(() => {
-    async function fetchData() {
-      if (!workspace?.id) return;
+  const { data: members, isLoading: membersLoading } = useSWR(
+    workspaceId ? `/api/workspace/${workspaceId}/members` : null,
+    fetcher,
+  );
 
-      setIsLoading(true);
-      const token = localStorage.getItem("accessToken");
+  const { data: attendance, isLoading: attendanceLoading } = useSWR(
+    workspaceId ? `/api/workspace/${workspaceId}/attendance` : null,
+    fetcher,
+  );
 
-      try {
-        const headers = {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        };
+  const { data: leaves, isLoading: leavesLoading } = useSWR(
+    workspaceId ? `/api/workspace/${workspaceId}/leaves?status=pending` : null,
+    fetcher,
+  );
 
-        // Fetch through local Next.js Route Proxies to bypass browser CORS errors
-        const [membersRes, attendanceRes] = await Promise.all([
-          fetch(`/api/workspace/${workspace.id}/members`, { headers }),
-          fetch(`/api/workspace/${workspace.id}/attendance`, { headers }),
-        ]);
-
-        const membersData = await membersRes.json();
-        const attendanceData = await attendanceRes.json();
-
-        // Ensure we handle arrays correctly even if API returns unexpected formats
-        setMembers(
-          Array.isArray(membersData) ? membersData : membersData.members || [],
-        );
-        setAttendance(
-          Array.isArray(attendanceData)
-            ? attendanceData
-            : attendanceData.attendance || [],
-        );
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [workspace?.id]); // Re-run if workspace changes
-
-  return { members, attendance, isLoading };
+  return {
+    members: Array.isArray(members) ? members : members?.members || [],
+    attendance: Array.isArray(attendance) ? attendance : attendance?.data || [],
+    leaves: Array.isArray(leaves) ? leaves : leaves?.data || [],
+    isLoading: membersLoading || attendanceLoading || leavesLoading,
+  };
 }
