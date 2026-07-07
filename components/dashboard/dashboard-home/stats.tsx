@@ -12,7 +12,7 @@ export function DashboardStats() {
   if (isLoading) {
     return (
       <>
-        {/* Render loading skeletons */}
+      
         {[1, 2, 3, 4].map((i) => (
           <DashboardCard key={i}>
             <CardHeader>
@@ -29,11 +29,25 @@ export function DashboardStats() {
 
   const totalEmployees = members.length;
 
-  const absentToday = attendance.filter(
-    (item: unknown) => item.status === "absent",
+  // Get today's date in YYYY-MM-DD format (local time)
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(
+    today.getMonth() + 1,
+  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  // Filter attendance records to only today's data
+  const todayAttendance = attendance.filter((item: { date?: string }) => {
+    if (!item.date) return false;
+    // Normalize date string (could be ISO with time, take first 10 chars)
+    const itemDate = item.date.substring(0, 10);
+    return itemDate === todayStr;
+  });
+
+  const absentToday = todayAttendance.filter(
+    (item: { status?: string }) => item.status === "absent",
   ).length;
-  const lateArrivals = attendance.filter(
-    (item: unknown) => item.status === "late",
+  const lateArrivals = todayAttendance.filter(
+    (item: { status?: string }) => item.status === "late",
   ).length;
 
   const leaveRequests = leaves.length;

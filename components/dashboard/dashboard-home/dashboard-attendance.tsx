@@ -17,51 +17,99 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { useWorkspace } from "@/provider/workspace-provider";
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 
-const attendanceByWorkspace = {
-  worksmart: [
-    { id: "ws-01", worker: "John Smith", time: "08:02 AM", status: "Present" },
-    { id: "ws-02", worker: "Sarah Lee", time: "08:15 AM", status: "Late" },
-    { id: "ws-03", worker: "David Kim", time: "07:55 AM", status: "Present" },
-    { id: "ws-04", worker: "Michael Tan", time: "-", status: "Absent" },
-  ],
-  school: [
-    {
-      id: "sch-01",
-      worker: "Sopheak Chan",
-      time: "06:45 AM",
-      status: "Present",
-    },
-    { id: "sch-02", worker: "Sombath Reach", time: "07:12 AM", status: "Late" },
-    { id: "sch-03", worker: "Sophy Vann", time: "06:58 AM", status: "Present" },
-    { id: "sch-04", worker: "Bona Ouk", time: "-", status: "Absent" },
-  ],
-  company: [
-    {
-      id: "co-01",
-      worker: "Alice Dupont",
-      time: "08:55 AM",
-      status: "Present",
-    },
-    { id: "co-02", worker: "Bob Miller", time: "09:05 AM", status: "Late" },
-    {
-      id: "co-03",
-      worker: "Charlie Song",
-      time: "08:42 AM",
-      status: "Present",
-    },
-  ],
-} as const;
+type AttendanceRecord = {
+  _id?: string;
+  id?: string;
+  user_id?: string | { $oid?: string };
+  check_in?: string | null;
+  status?: string;
+  date?: string;
+};
+
+type MemberRecord = {
+  _id?: string;
+  id?: string;
+  user_id?: string | { $oid?: string };
+  name?: string;
+  full_name?: string;
+  email?: string;
+};
+
+const formatTime = (value?: string | null) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const formatStatus = (status?: string) => {
+  if (!status) return "-";
+  const normalized = status.toLowerCase();
+  if (normalized === "present") return "Present";
+  if (normalized === "late") return "Late";
+  if (normalized === "absent") return "Absent";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+const extractId = (value: unknown): string | undefined => {
+  if (!value) return undefined;
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && value !== null) {
+    const maybe = (value as { $oid?: string }).$oid;
+    if (maybe) return maybe;
+  }
+  return undefined;
+};
+
+const getMemberName = (member: MemberRecord): string => {
+  return member.name || member.full_name || member.email || "Unknown";
+};
 
 export function DashboardAttendance() {
   const { workspace } = useWorkspace();
+  const { attendance, members, isLoading } = useDashboardData();
 
-  const activeAttendance =
-    attendanceByWorkspace[workspace.id as keyof typeof attendanceByWorkspace] ??
-    attendanceByWorkspace.worksmart;
+  // Build a lookup map from user_id -> member name
+  const memberNameByUserId = new Map<string, string>();
+  for (const m of members as MemberRecord[]) {
+    const userId = extractId(m.user_id) ?? extractId(m._id) ?? extractId(m.id);
+    if (userId) {
+      memberNameByUserId.set(userId, getMemberName(m));
+    }
+  }
+
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(
+    today.getMonth() + 1,
+  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  // Filter attendance to today's records only
+  const todayAttendance = (attendance as AttendanceRecord[]).filter((item) => {
+    if (!item.date) return false;
+    return item.date.substring(0, 10) === todayStr;
+  });
+
+  // Map attendance records to display rows
+  const rows = todayAttendance.map((item) => {
+    const userId = extractId(item.user_id);
+    const workerName =
+      (userId ? memberNameByUserId.get(userId) : undefined) ?? "Unknown";
+    return {
+      id: item._id ?? item.id ?? `${userId ?? "row"}-${item.date ?? todayStr}`,
+      worker: workerName,
+      time: formatTime(item.check_in),
+      status: formatStatus(item.status),
+    };
+  });
 
   return (
     <DashboardCard className="relative gap-0 md:col-span-2">
@@ -93,21 +141,38 @@ export function DashboardAttendance() {
           </TableHeader>
 
           <TableBody>
-            {activeAttendance.map((item) => (
-              <TableRow className="h-12" key={item.id}>
-                <TableCell className="max-w-40 truncate ps-6 font-medium">
-                  {item.worker}
-                </TableCell>
-
-                <TableCell className="text-muted-foreground tabular-nums">
-                  {item.time}
-                </TableCell>
-
-                <TableCell className="pe-6 text-right tabular-nums">
-                  {item.status}
+            {isLoading && (
+              <TableRow className="h-12">
+                <TableCell className="ps-6 text-muted-foreground" colSpan={3}>
+                  Loading attendance...
                 </TableCell>
               </TableRow>
-            ))}
+            )}
+
+            {!isLoading && rows.length === 0 && (
+              <TableRow className="h-12">
+                <TableCell className="ps-6 text-muted-foreground" colSpan={3}>
+                  No attendance records for today.
+                </TableCell>
+              </TableRow>
+            )}
+
+            {!isLoading &&
+              rows.map((item) => (
+                <TableRow className="h-12" key={item.id}>
+                  <TableCell className="max-w-40 truncate ps-6 font-medium">
+                    {item.worker}
+                  </TableCell>
+
+                  <TableCell className="text-muted-foreground tabular-nums">
+                    {item.time}
+                  </TableCell>
+
+                  <TableCell className="pe-6 text-right tabular-nums">
+                    {item.status}
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </CardContent>

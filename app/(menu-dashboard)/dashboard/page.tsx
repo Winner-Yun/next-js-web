@@ -1,6 +1,6 @@
 // page.tsx
 import { AppShell } from "@/components/dashboard/appShell/app-shell";
-import { DashboardPage } from "@/components/dashboard/dashboard-home/dashboard";
+import { DashboardContent } from "@/components/dashboard/dashboard-home/dashboard-content";
 import { DashboardSplash } from "@/components/dashboard/dashboard-splash/dashboard-splash";
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export default function Dashboard() {
     
       <DashboardSplash>
         <AppShell>
-          <DashboardPage />
+          <DashboardContent />
         </AppShell>
       </DashboardSplash>
 

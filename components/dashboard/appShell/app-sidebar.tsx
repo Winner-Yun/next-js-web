@@ -18,6 +18,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { useWorkspace } from "@/provider/workspace-provider";
 import { SettingsIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,25 +29,24 @@ export function AppSidebar() {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter the navigation items based on the search query
+  const { workspaces, isLoading } = useWorkspace();
+  const hasWorkspace = workspaces && workspaces.length > 0;
+
   const filteredNavGroups = useMemo(() => {
     if (!searchQuery.trim()) return navGroups;
 
     const query = searchQuery.toLowerCase();
 
-    return (
-      navGroups
-        .map((group) => {
-          // Filter items within the group
-          const filteredItems = group.items.filter((item) =>
-            item.title.toLowerCase().includes(query),
-          );
-          // Return the group with only matching items
-          return { ...group, items: filteredItems };
-        })
-        // Only keep groups that have at least one matching item
-        .filter((group) => group.items.length > 0)
-    );
+    return navGroups
+      .map((group) => {
+        const filteredItems = group.items.filter((item) =>
+          item.title.toLowerCase().includes(query),
+        );
+
+        return { ...group, items: filteredItems };
+      })
+
+      .filter((group) => group.items.length > 0);
   }, [searchQuery]);
 
   return (
@@ -77,20 +77,30 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          {/* Pass state and setter to AppSearch */}
-          <AppSearch value={searchQuery} onChange={setSearchQuery} />
+          <AppSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            disabled={isLoading}
+          />
         </SidebarGroup>
 
-        {/* Render dynamically filtered groups */}
         {filteredNavGroups.length > 0 ? (
           filteredNavGroups.map((group) => (
             <SidebarGroup key={group.label}>
               <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none">
                 {group.label}
               </SidebarGroupLabel>
+
               <SidebarMenu>
                 {group.items.map((item) => {
                   const isCurrentActive = pathname === item.path;
+
+                  const isAllowedWhenEmpty =
+                    item.title === "Dashboard" ||
+                    item.title === "Workspaces" ||
+                    item.title === "Settings";
+                  const isDisabled =
+                    isLoading || (!hasWorkspace && !isAllowedWhenEmpty);
 
                   return (
                     <SidebarMenuItem key={item.title}>
@@ -98,8 +108,18 @@ export function AppSidebar() {
                         asChild
                         isActive={isCurrentActive}
                         tooltip={item.title}
+                        disabled={isDisabled}
                       >
-                        <Link href={item.path || "#"}>
+                        <Link
+                          href={isDisabled ? "#" : item.path || "#"}
+                          onClick={(e) => {
+                            if (isDisabled) e.preventDefault();
+                          }}
+                          className={cn(
+                            isDisabled &&
+                              "pointer-events-none opacity-50 cursor-not-allowed",
+                          )}
+                        >
                           {item.icon}
                           <span>{item.title}</span>
                         </Link>
@@ -111,7 +131,6 @@ export function AppSidebar() {
             </SidebarGroup>
           ))
         ) : (
-          // Empty state if nothing matches the search
           <div className="py-6 px-4 text-center text-sm text-muted-foreground">
             No pages found for &quot;{searchQuery}&quot;
           </div>
@@ -119,13 +138,19 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="px-4">
-        <div className="flex items-center pt-4 pb-2">
+        <div
+          className={cn(
+            "flex items-center pt-4 pb-2",
+            isLoading && "pointer-events-none opacity-50",
+          )}
+        >
           <ThemeSwitcher />
           <Button
             asChild
             className="text-muted-foreground"
             size="icon-sm"
             variant="ghost"
+            disabled={isLoading}
           >
             <Link aria-label="Settings" href="/setting-page">
               <SettingsIcon />

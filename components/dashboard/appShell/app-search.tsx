@@ -14,9 +14,10 @@ import { useRef } from "react";
 interface AppSearchProps {
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
-export function AppSearch({ value, onChange }: AppSearchProps) {
+export function AppSearch({ value, onChange, disabled }: AppSearchProps) {
   const groupRef = useRef<HTMLDivElement>(null);
   const { setOpen } = useSidebar();
 
@@ -44,6 +45,7 @@ export function AppSearch({ value, onChange }: AppSearchProps) {
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
       />
       <InputGroupAddon align="inline-end">
         <KbdGroup>

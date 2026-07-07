@@ -1,11 +1,11 @@
-// app/api/auth/me/route.ts
+// Proxy /auth/me to backend
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export async function GET(request: Request) {
-  // 1. Read the authorization token coming from your frontend client
+  // Read auth token from client
   const authHeader = request.headers.get("authorization");
 
   if (!authHeader) {
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    // 2. Forward the GET request cleanly to your external backend with the token header
+    // Proxy request to backend
     const backendResponse = await fetch(
       `${BACKEND_URL.replace(/\/$/, "")}/auth/me`,
       {
