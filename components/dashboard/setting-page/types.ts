@@ -2,7 +2,8 @@ export type SettingsTabId =
   | "profile"
   | "workspace"
   | "appearance"
-  | "notifications";
+  | "notifications"
+  | "general";
 
 export interface SettingsTab {
   id: SettingsTabId;

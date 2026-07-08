@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { DashboardCard } from "@/components/dashboard/dashboard-home/dashboard-card";
@@ -6,12 +7,13 @@ import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWorkspace } from "@/provider/workspace-provider";
 import {
   Building2Icon,
-  CheckCircle2Icon,
+  Loader2Icon,
   PencilIcon,
   ShieldIcon,
   Trash2Icon,
   UsersIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { WorkspaceConfirmDialog } from "./workspace-confirm-dialog";
 import { WorkspaceRenameDialog } from "./workspace-rename-dialog";
@@ -22,18 +24,20 @@ type WorkspaceCardProps = {
     name: string;
     role: "owner" | "member";
     memberCount?: number;
+    description?: string;
   };
-  onRemove: (id: string, name: string) => void;
 };
 
-export function WorkspaceCard({ workspaceItem, onRemove }: WorkspaceCardProps) {
+export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
   const {
     workspace: activeWorkspace,
     setWorkspace,
-    renameWorkspace,
+    fetchWorkspaces,
   } = useWorkspace();
 
-  const isActive = activeWorkspace.id === workspaceItem.id;
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const isActive = activeWorkspace?.id === workspaceItem.id;
   const isOwner = workspaceItem.role === "owner";
 
   const handleSwitch = () => {
@@ -41,109 +45,166 @@ export function WorkspaceCard({ workspaceItem, onRemove }: WorkspaceCardProps) {
       toast.error("Only workspace owners can switch workspaces.");
       return;
     }
-    setWorkspace(workspaceItem);
+    setWorkspace({
+      id: workspaceItem.id,
+      workspace_name: workspaceItem.name,
+      description: workspaceItem.description,
+    });
     toast.success(`Switched context to ${workspaceItem.name}`);
+  };
+
+  const handleRename = async (
+    id: string,
+    newName: string,
+    newDescription?: string,
+  ) => {
+    // Safeguard: Prevent editing if it's the active workspace
+    if (isActive) {
+      toast.error("You cannot edit the currently active workspace.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch(`/api/workspace/${id}/update-workspace`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          workspace_name: newName,
+          description: newDescription,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update");
+
+      toast.success("Workspace updated successfully");
+      await fetchWorkspaces(); // Refresh the provider state
+    } catch (error) {
+      toast.error("Failed to rename workspace.");
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    // Safeguard: Prevent deleting if it's the active workspace
+    if (isActive) {
+      toast.error("You cannot delete the currently active workspace.");
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch(`/api/workspace/${id}/delete-workspace`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Failed to delete");
+
+      toast.success(`Removed: ${name}`);
+      await fetchWorkspaces(); // Refresh the provider state
+    } catch (error) {
+      toast.error("Failed to delete workspace.");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
     <DashboardCard
-      className={`relative overflow-hidden border transition-all duration-200 ${
+      className={`relative flex flex-col h-full border transition-all ${
         isActive
-          ? "border-brand ring-1 ring-brand/30 bg-brand/5 dark:bg-brand/10 shadow-sm"
-          : "hover:border-muted-foreground/30 hover:shadow-sm"
+          ? "border-brand ring-1 ring-brand/30 bg-brand/5"
+          : "hover:border-muted-foreground/30"
       }`}
     >
-      <CardHeader className="p-4 flex flex-row items-start justify-between space-y-0 pb-2">
+      <CardHeader className="p-4 pb-2 space-y-0 flex flex-row items-start justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <Building2Icon
-            className={`size-4 shrink-0 ${isActive ? "text-brand" : "text-muted-foreground"}`}
-          />
-          <CardTitle className="text-sm font-bold tracking-tight text-foreground truncate">
+          <Building2Icon className="size-4 shrink-0 text-muted-foreground" />
+          <CardTitle className="text-sm font-bold truncate">
             {workspaceItem.name}
           </CardTitle>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
           {isOwner ? (
-            <span className="inline-flex items-center gap-1 rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-500 dark:bg-blue-500/20">
+            <span className="inline-flex items-center gap-1 rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-blue-500">
               <ShieldIcon className="size-3" /> Owner
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
               <UsersIcon className="size-3" /> Member
-            </span>
-          )}
-
-          {isActive && (
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-brand animate-in fade-in zoom-in duration-300">
-              <CheckCircle2Icon className="size-3.5" /> Active
             </span>
           )}
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 pt-2">
-        <div className="mb-4 flex flex-col gap-1 font-medium">
-          <p className="font-mono text-[11px] text-muted-foreground">
-            ID: {workspaceItem.id}
+      <CardContent className="p-4 pt-2 flex flex-col flex-1">
+        {/* Description Section */}
+        <div className="flex-1 mb-4">
+          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+            {workspaceItem.description || "No description provided."}
           </p>
-          <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+
+          <div className="flex items-center gap-1.5 mt-2 text-[11px] text-muted-foreground font-medium">
             <UsersIcon className="size-3" />
-            {workspaceItem.memberCount ?? 0}{" "}
-            {workspaceItem.memberCount === 1 ? "member" : "members"}
-          </p>
+            {workspaceItem.memberCount || 1} members
+          </div>
         </div>
 
-        <div className="flex gap-2">
+        {/* Action Buttons */}
+        <div className="flex gap-2 mt-auto">
           <Button
             size="sm"
             variant={isActive ? "default" : "outline"}
-            className="h-8 flex-1 text-xs font-medium transition-all"
+            className="h-8 flex-1 text-xs"
             onClick={handleSwitch}
             disabled={isActive || !isOwner}
           >
-            {isActive
-              ? "Currently Active"
-              : isOwner
-                ? "Switch Context"
-                : "Access Restricted"}
+            {isActive ? "Active" : "Switch Context"}
           </Button>
 
           {isOwner && (
             <>
-              {/* Refactored Workspace Rename Modal Trigger */}
               <WorkspaceRenameDialog
                 workspaceId={workspaceItem.id}
                 currentName={workspaceItem.name}
-                onRename={(id, val) => {
-                  renameWorkspace(id, val);
-                  toast.success("Workspace renamed successfully");
-                }}
+                currentDescription={workspaceItem.description}
+                onRename={handleRename}
               >
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="size-8 text-muted-foreground hover:text-foreground shrink-0 border border-muted"
+                  className="size-8 border"
+                  disabled={isActive} // Disabled if active
                 >
                   <PencilIcon className="size-3.5" />
                 </Button>
               </WorkspaceRenameDialog>
 
-              {/* CLEAN IMPLEMENTATION: Custom Shared Confirm Dialog Wrapper */}
               <WorkspaceConfirmDialog
-                title="Destroy Workspace Environment?"
-                description={`Are you sure you want to completely erase ${workspaceItem.name}? All linked cloud pipelines, environment variables, and records will clear permanently.`}
-                confirmText="Confirm Deletion"
+                title="Delete Workspace"
+                description={`Permanently remove ${workspaceItem.name}?`}
+                confirmText="Delete"
                 variant="destructive"
-                onConfirm={() => onRemove(workspaceItem.id, workspaceItem.name)}
+                onConfirm={() =>
+                  handleDelete(workspaceItem.id, workspaceItem.name)
+                }
               >
                 <Button
                   size="icon"
                   variant="ghost"
-                  disabled={isActive}
-                  className="size-8 text-muted-foreground hover:bg-destructive/10! hover:text-destructive shrink-0 border border-muted disabled:opacity-30"
+                  className="size-8 border hover:text-destructive"
+                  disabled={isActive || isDeleting} // Disabled if active or currently deleting
                 >
-                  <Trash2Icon className="size-3.5" />
+                  {isDeleting ? (
+                    <Loader2Icon className="size-3.5 animate-spin" />
+                  ) : (
+                    <Trash2Icon className="size-3.5" />
+                  )}
                 </Button>
               </WorkspaceConfirmDialog>
             </>

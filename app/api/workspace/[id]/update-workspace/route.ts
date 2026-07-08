@@ -1,10 +1,12 @@
-// app/api/workspace/me/route.ts
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "https://smart-atd-backend.vercel.app";
 
-export async function GET(request: Request) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }, //  Changed to a Promise type
+) {
   try {
     const authHeader = request.headers.get("authorization");
 
@@ -15,35 +17,44 @@ export async function GET(request: Request) {
       );
     }
 
-    const cleanUrl = BACKEND_URL.replace(/\/$/, "");
+    // 1. Unwrap the dynamic route parameters safely using await
+    const { id: workspaceId } = await params;
 
-    // Forward any query parameters (page, limit, search, etc.)
-    const { searchParams } = new URL(request.url);
+    // 2. Parse request body JSON payload
+    const { workspace_name, description } = await request.json();
 
-    // Map common search-related params to what the backend expects
-    const searchValue = searchParams.get("search");
-    const forwardParams = new URLSearchParams();
-    if (searchValue !== null) {
-      // The backend typically uses `q` for search queries
-      forwardParams.set("q", searchValue);
+    if (!workspaceId) {
+      return NextResponse.json(
+        { detail: "Workspace ID is required." },
+        { status: 400 },
+      );
     }
 
-    // Forward any other unrelated params as-is
-    searchParams.forEach((value, key) => {
-      if (key !== "search") {
-        forwardParams.set(key, value);
-      }
-    });
+    if (!workspace_name && !description) {
+      return NextResponse.json(
+        {
+          detail:
+            "At least one of workspace_name or description is required for update.",
+        },
+        { status: 400 },
+      );
+    }
 
-    const query = forwardParams.toString();
-    const targetUrl = `${cleanUrl}/workspace/me${query ? `?${query}` : ""}`;
+    const cleanUrl = BACKEND_URL.replace(/\/$/, "");
+
+    const targetUrl = `${cleanUrl}/workspace/${workspaceId}`;
+
+    const payload: { workspace_name?: string; description?: string } = {};
+    if (workspace_name) payload.workspace_name = workspace_name;
+    if (description) payload.description = description;
 
     const backendResponse = await fetch(targetUrl, {
-      method: "GET",
+      method: "PATCH",
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify(payload),
     });
 
     const contentType = backendResponse.headers.get("content-type") ?? "";
@@ -65,7 +76,7 @@ export async function GET(request: Request) {
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error("Workspace proxy fetch error:", error);
+    console.error("Workspace update proxy fetch error:", error);
 
     return NextResponse.json(
       { detail: "Unable to reach workspace backend service." },

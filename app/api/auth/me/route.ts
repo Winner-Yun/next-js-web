@@ -4,10 +4,11 @@ import { NextResponse } from "next/server";
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
-export async function GET(request: Request) {
-  // Read auth token from client
+async function proxyAuthMe(
+  request: Request,
+  method: "GET" | "PATCH",
+): Promise<NextResponse> {
   const authHeader = request.headers.get("authorization");
-
   if (!authHeader) {
     return NextResponse.json(
       { detail: "Authorization token is required." },
@@ -16,20 +17,25 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Proxy request to backend
+    const init: RequestInit = {
+      method,
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+    };
+
+    if (method === "PATCH") {
+      const body = await request.text();
+      if (body) init.body = body;
+    }
+
     const backendResponse = await fetch(
       `${BACKEND_URL.replace(/\/$/, "")}/auth/me`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: authHeader,
-          "Content-Type": "application/json",
-        },
-      },
+      init,
     );
 
     const text = await backendResponse.text();
-
     return new NextResponse(text, {
       status: backendResponse.status,
       headers: {
@@ -38,10 +44,18 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Proxy auth/me fetch error:", error);
+    console.error(`Proxy auth/me ${method} fetch error:`, error);
     return NextResponse.json(
       { detail: "Unable to connect to the authentication service." },
       { status: 502 },
     );
   }
+}
+
+export async function GET(request: Request) {
+  return proxyAuthMe(request, "GET");
+}
+
+export async function PATCH(request: Request) {
+  return proxyAuthMe(request, "PATCH");
 }

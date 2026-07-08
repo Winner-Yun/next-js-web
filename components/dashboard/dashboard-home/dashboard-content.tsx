@@ -11,10 +11,7 @@ export function DashboardContent() {
   const { workspaces, isLoading } = useWorkspace();
   const router = useRouter();
 
-  // Unified loading screen container centering
-  if (isLoading) {
-    return <DashboardSkeleton />;
-  }
+  if (isLoading) return <DashboardSkeleton />;
 
   if (workspaces.length === 0) {
     return (
@@ -27,29 +24,21 @@ export function DashboardContent() {
         >
           <div className="relative mb-6 flex items-center justify-center">
             <div className="absolute inset-0 rounded-full bg-primary/10 blur-3xl" />
-
             <motion.div
               animate={{ y: [0, -8, 0] }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="relative flex h-28 w-28 items-center justify-center rounded-full bg-linear-to-b from-muted/60 to-muted shadow-sm"
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="relative flex h-28 w-28 items-center justify-center rounded-full bg-linear-to-b from-muted/60 to-muted "
             >
               <FolderX className="h-12 w-12 text-primary/70" />
             </motion.div>
           </div>
-
           <h1 className="text-4xl font-bold tracking-tight">
             No Workspace Found
           </h1>
-
           <p className="mt-4 max-w-sm text-base leading-7 text-muted-foreground">
             You aren&apos;t a member of any workspace yet. Create your first
             workspace to start managing attendance, employees, and reports.
           </p>
-
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.98 }}

@@ -1,6 +1,11 @@
 "use client";
 
-import { BellIcon, BuildingIcon, PaletteIcon, UserIcon } from "lucide-react";
+import {
+  BellIcon,
+  LayoutDashboardIcon,
+  PaletteIcon,
+  UserIcon,
+} from "lucide-react";
 import type { SettingsTab, SettingsTabId } from "./types";
 
 const TABS: SettingsTab[] = [
@@ -10,12 +15,7 @@ const TABS: SettingsTab[] = [
     icon: UserIcon,
     description: "Manage your personal information.",
   },
-  {
-    id: "workspace",
-    label: "Workspace",
-    icon: BuildingIcon,
-    description: "Manage team and billing.",
-  },
+
   {
     id: "appearance",
     label: "Appearance",
@@ -27,6 +27,12 @@ const TABS: SettingsTab[] = [
     label: "Notifications",
     icon: BellIcon,
     description: "Configure your alerts.",
+  },
+  {
+    id: "general",
+    label: "General",
+    icon: LayoutDashboardIcon,
+    description: "Manage general application preferences.",
   },
 ];
 

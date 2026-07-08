@@ -1,10 +1,9 @@
-// app/api/workspace/me/route.ts
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "https://smart-atd-backend.vercel.app";
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
 
@@ -15,35 +14,26 @@ export async function GET(request: Request) {
       );
     }
 
-    const cleanUrl = BACKEND_URL.replace(/\/$/, "");
+    const { workspace_name, description } = await request.json();
 
-    // Forward any query parameters (page, limit, search, etc.)
-    const { searchParams } = new URL(request.url);
-
-    // Map common search-related params to what the backend expects
-    const searchValue = searchParams.get("search");
-    const forwardParams = new URLSearchParams();
-    if (searchValue !== null) {
-      // The backend typically uses `q` for search queries
-      forwardParams.set("q", searchValue);
+    if (!workspace_name) {
+      return NextResponse.json(
+        { detail: "Workspace name is required." },
+        { status: 400 },
+      );
     }
 
-    // Forward any other unrelated params as-is
-    searchParams.forEach((value, key) => {
-      if (key !== "search") {
-        forwardParams.set(key, value);
-      }
-    });
+    const cleanUrl = BACKEND_URL.replace(/\/$/, "");
 
-    const query = forwardParams.toString();
-    const targetUrl = `${cleanUrl}/workspace/me${query ? `?${query}` : ""}`;
+    const targetUrl = `${cleanUrl}/workspace/create`;
 
     const backendResponse = await fetch(targetUrl, {
-      method: "GET",
+      method: "POST",
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({ workspace_name, description }),
     });
 
     const contentType = backendResponse.headers.get("content-type") ?? "";
@@ -65,7 +55,7 @@ export async function GET(request: Request) {
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error("Workspace proxy fetch error:", error);
+    console.error("Workspace creation proxy fetch error:", error);
 
     return NextResponse.json(
       { detail: "Unable to reach workspace backend service." },

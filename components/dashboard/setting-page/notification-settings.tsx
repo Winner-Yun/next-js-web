@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 export function NotificationSettings() {
-  const [alertsEnabled, setAlertsEnabled] = useState(true);
+  const [alertsEnabled, setAlertsEnabled] = useLocalStorage(
+    "alertsEnabled",
+    true,
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">

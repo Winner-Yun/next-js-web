@@ -14,6 +14,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogOutIcon, SettingsIcon, UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 const profileFetcher = async (url: string) => {
@@ -34,6 +35,7 @@ const profileFetcher = async (url: string) => {
 
 export function NavUser() {
   const router = useRouter();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const {
     data: user,
@@ -44,13 +46,28 @@ export function NavUser() {
     shouldRetryOnError: false,
   });
 
+  // Listen for the custom events fired from ProfileSettings
+  useEffect(() => {
+    const handleUpdating = () => setIsUpdating(true);
+    const handleUpdated = () => setIsUpdating(false);
+
+    window.addEventListener("profile-updating", handleUpdating);
+    window.addEventListener("profile-updated", handleUpdated);
+
+    return () => {
+      window.removeEventListener("profile-updating", handleUpdating);
+      window.removeEventListener("profile-updated", handleUpdated);
+    };
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     router.push("/auth");
     router.refresh();
   };
 
-  if (isLoading) {
+  // Prevent interaction and show loading skeleton during initial load OR update process
+  if (isLoading || isUpdating) {
     return <Skeleton className="size-8 rounded-full" />;
   }
 
