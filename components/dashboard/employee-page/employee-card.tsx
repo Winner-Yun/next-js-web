@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardCard } from "@/components/dashboard/dashboard-home/dashboard-card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   BriefcaseIcon,
@@ -17,56 +18,67 @@ interface EmployeeCardProps {
 
 export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
   const isActive = employee.status === "active";
+  const isSuspended = employee.status === "suspended"; // ADDED: Check for suspended status
+  const initials = employee.name ? employee.name[0].toUpperCase() : "?";
 
   return (
     <DashboardCard
       className="group relative cursor-pointer overflow-hidden border border-muted/60 bg-card p-5 transition-all duration-300 hover:border-brand/40 hover:bg-muted/5 hover:shadow-lg hover:shadow-brand/5 flex flex-col justify-between min-h-52.5 rounded-xl"
       onClick={onClick}
     >
-      {/* Top Section: Avatar & Badging Status Context */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative shrink-0">
-            <div className="size-11 rounded-xl bg-linear-to-br from-muted to-muted/40 flex items-center justify-center text-xs font-bold border border-muted-foreground/10 uppercase text-foreground shadow-sm transition-transform duration-300 group-hover:scale-105">
-              {employee.name.charAt(0)}
-            </div>
-            <span className="absolute -bottom-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-background border-2 border-background">
-              <span
-                className={`size-2 rounded-full ${
-                  isActive
-                    ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]"
-                    : "bg-muted-foreground/50"
-                }`}
-              />
-            </span>
+            <Avatar className="size-11 rounded-xl border border-muted-foreground/10 shadow-sm">
+              {employee.avatar ? (
+                <AvatarImage
+                  src={employee.avatar}
+                  alt={employee.name}
+                  className="object-cover"
+                />
+              ) : null}
+              <AvatarFallback className="rounded-xl bg-linear-to-br from-muted to-muted/40 font-bold uppercase text-foreground">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
           </div>
 
-          <div className="min-w-0 space-y-0.5">
-            <h3 className="font-semibold text-sm text-foreground tracking-tight group-hover:text-brand transition-colors truncate">
-              {employee.name}
+          <div className="min-w-0 flex flex-col">
+            <h3 className="truncate font-bold text-sm text-foreground tracking-tight group-hover:text-brand transition-colors">
+              {employee.name || "Pending User"}
             </h3>
-            <span className="inline-block font-mono bg-muted/80 text-muted-foreground border border-muted px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider">
-              {employee.id}
+            <span className="text-[11px] font-medium text-muted-foreground capitalize">
+              {employee.role}
             </span>
           </div>
         </div>
 
+        {/* UPDATED: Badge handles "suspended" variant and text string */}
         <Badge
-          variant={isActive ? "default" : "secondary"}
-          className={`text-[9px] px-2 py-0.5 shadow-none border font-bold uppercase tracking-wider rounded-md shrink-0 transition-colors ${
-            isActive
-              ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border-emerald-500/20"
-              : "bg-muted text-muted-foreground border-muted-foreground/10"
-          }`}
+          variant={
+            isActive ? "success" : isSuspended ? "destructive" : "secondary"
+          }
+          className="text-[10px] px-2 py-0.5 rounded-md font-semibold tracking-wide shrink-0 shadow-xs"
         >
           <CircleIcon
-            className={`size-1 fill-current mr-1 ${isActive ? "text-emerald-500" : "text-muted-foreground/40"}`}
+            className={`mr-1 size-1.5 fill-current ${
+              isActive
+                ? "text-emerald-500"
+                : isSuspended
+                  ? "text-amber-500"
+                  : "text-muted-foreground"
+            }`}
           />
-          {employee.status}
+          {employee.is_pending
+            ? "Pending"
+            : isActive
+              ? "Active"
+              : isSuspended
+                ? "Suspended"
+                : "Inactive"}
         </Badge>
       </div>
 
-      {/* Center Section: Core Structural Details Metadata */}
       <div className="space-y-2.5 my-4 border-t border-b border-muted/40 py-3">
         <div className="flex items-center gap-2 min-w-0 text-muted-foreground">
           <MailIcon className="size-3.5 shrink-0 text-muted-foreground/60" />
@@ -76,23 +88,22 @@ export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
         </div>
         <div className="flex items-center gap-2 min-w-0 text-muted-foreground">
           <BriefcaseIcon className="size-3.5 shrink-0 text-muted-foreground/60" />
-          <span className="text-xs truncate font-medium text-foreground/80">
-            {employee.role}
+          <span className="text-xs truncate font-medium text-foreground/80 capitalize">
+            {employee.role || "Member"}
           </span>
         </div>
       </div>
 
-      {/* Bottom Section: Footer Department context callout */}
       <div className="flex items-center justify-between text-xs pt-1">
         <span className="text-muted-foreground text-[11px]">
-          Dept:{" "}
-          <span className="text-foreground font-semibold ml-0.5">
-            {employee.department}
+          Auth:{" "}
+          <span className="text-foreground font-semibold ml-0.5 uppercase">
+            {employee.role}
           </span>
         </span>
 
         <div className="flex size-7 items-center justify-center rounded-lg border border-transparent transition-all duration-300 group-hover:border-muted group-hover:bg-muted/40">
-          <ChevronRightIcon className="size-4 text-muted-foreground transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-foreground" />
+          <ChevronRightIcon className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
     </DashboardCard>

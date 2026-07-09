@@ -3,21 +3,13 @@ import { NextResponse } from "next/server";
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "https://smart-atd-backend.vercel.app";
 
-export async function DELETE(
+export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const authHeader = request.headers.get("authorization");
-
-    if (!authHeader) {
-      return NextResponse.json(
-        { detail: "Authorization token is required." },
-        { status: 401 },
-      );
-    }
-
-    const { id: workspaceId } = await params;
+    const resolvedParams = await params;
+    const workspaceId = resolvedParams?.id;
 
     if (!workspaceId) {
       return NextResponse.json(
@@ -26,25 +18,40 @@ export async function DELETE(
       );
     }
 
-    const cleanUrl = BACKEND_URL.replace(/\/$/, "");
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader) {
+      return NextResponse.json(
+        { detail: "Authorization token is required." },
+        { status: 401 },
+      );
+    }
 
-    const targetUrl = `${cleanUrl}/workspace/${workspaceId}`;
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { detail: "Invalid JSON request body." },
+        { status: 400 },
+      );
+    }
+
+    const cleanUrl = BACKEND_URL.replace(/\/$/, "");
+    const targetUrl = `${cleanUrl}/workspace/${workspaceId}/invite`;
 
     const backendResponse = await fetch(targetUrl, {
-      method: "DELETE",
+      method: "POST",
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify(body),
     });
 
-    const contentType = backendResponse.headers.get("content-type") ?? "";
-
+    const contentType = backendResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
       const errorText = await backendResponse.text();
-
       console.error("Backend returned non-JSON response:", errorText);
-
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -52,15 +59,11 @@ export async function DELETE(
     }
 
     const data = await backendResponse.json();
-
-    return NextResponse.json(data, {
-      status: backendResponse.status,
-    });
+    return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("Workspace deletion proxy fetch error:", error);
-
+    console.error("Proxy invite error:", error);
     return NextResponse.json(
-      { detail: "Unable to reach workspace backend service." },
+      { detail: "Internal server error handling invite proxy request." },
       { status: 500 },
     );
   }

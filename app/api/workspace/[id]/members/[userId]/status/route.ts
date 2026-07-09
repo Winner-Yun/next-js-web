@@ -3,13 +3,23 @@ import { NextResponse } from "next/server";
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "https://smart-atd-backend.vercel.app";
 
-export async function DELETE(
+export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string; userId: string }> },
 ) {
   try {
-    const authHeader = request.headers.get("authorization");
+    const resolvedParams = await params;
+    const workspaceId = resolvedParams?.id;
+    const userId = resolvedParams?.userId;
 
+    if (!workspaceId || !userId) {
+      return NextResponse.json(
+        { detail: "Workspace ID and User ID are required." },
+        { status: 400 },
+      );
+    }
+
+    const authHeader = request.headers.get("authorization");
     if (!authHeader) {
       return NextResponse.json(
         { detail: "Authorization token is required." },
@@ -17,34 +27,32 @@ export async function DELETE(
       );
     }
 
-    const { id: workspaceId } = await params;
-
-    if (!workspaceId) {
+    let body;
+    try {
+      body = await request.json();
+    } catch {
       return NextResponse.json(
-        { detail: "Workspace ID is required." },
+        { detail: "Invalid JSON request body." },
         { status: 400 },
       );
     }
 
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
-
-    const targetUrl = `${cleanUrl}/workspace/${workspaceId}`;
+    const targetUrl = `${cleanUrl}/workspace/${workspaceId}/members/${userId}/status`;
 
     const backendResponse = await fetch(targetUrl, {
-      method: "DELETE",
+      method: "PATCH",
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify(body),
     });
 
-    const contentType = backendResponse.headers.get("content-type") ?? "";
-
+    const contentType = backendResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
       const errorText = await backendResponse.text();
-
       console.error("Backend returned non-JSON response:", errorText);
-
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -52,15 +60,11 @@ export async function DELETE(
     }
 
     const data = await backendResponse.json();
-
-    return NextResponse.json(data, {
-      status: backendResponse.status,
-    });
+    return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("Workspace deletion proxy fetch error:", error);
-
+    console.error("Proxy member status update error:", error);
     return NextResponse.json(
-      { detail: "Unable to reach workspace backend service." },
+      { detail: "Internal server error handling member status patch request." },
       { status: 500 },
     );
   }

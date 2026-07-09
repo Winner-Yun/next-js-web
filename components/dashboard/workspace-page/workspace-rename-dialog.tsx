@@ -61,10 +61,26 @@ export function WorkspaceRenameDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        // Prevent closing via programmatic hooks if submission is running
+        if (!open && isLoading) return;
+        setIsOpen(open);
+      }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
 
-      <DialogContent className="sm:max-w-100">
+      <DialogContent
+        className="sm:max-w-100"
+        // Block interaction closures during API calls
+        onInteractOutside={(e) => {
+          if (isLoading) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isLoading) e.preventDefault();
+        }}
+      >
         <form onSubmit={handleSubmit} className="space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold">
