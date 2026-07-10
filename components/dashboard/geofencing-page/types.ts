@@ -1,9 +1,10 @@
 export interface GeofenceZone {
   id: string;
-  assignedEmail: string;
-  zoneName: string;
-  lat: number;
-  lng: number;
-  radius: number;
-  status: "active" | "breached" | "inactive";
+  workspace_id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  radius_meters: number;
+  status: "active" | "inactive";
+  created_at?: string;
 }

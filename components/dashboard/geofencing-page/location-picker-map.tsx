@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { Input } from "@/components/ui/input";
@@ -28,14 +29,16 @@ export interface LocationData {
 
 interface LocationPickerMapProps {
   radius: number;
+  initialLocation?: { lat: number; lng: number }; // Added to support Edit state tracking
   onLocationSelected: (location: LocationData) => void;
 }
 
 export function LocationPickerMap({
   radius,
+  initialLocation,
   onLocationSelected,
 }: LocationPickerMapProps) {
-  const [mapCenter, setMapCenter] = useState(fallbackCenter);
+  const [mapCenter, setMapCenter] = useState(initialLocation || fallbackCenter);
   const [searchAddress, setSearchAddress] = useState("");
 
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -46,6 +49,16 @@ export function LocationPickerMap({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
     libraries: mapLibraries,
   });
+
+  // Synchronize map position whenever the initial coordinates load or shift
+  useEffect(() => {
+    if (initialLocation) {
+      setMapCenter(initialLocation);
+      setSearchAddress(
+        `${initialLocation.lat.toFixed(5)}, ${initialLocation.lng.toFixed(5)}`,
+      );
+    }
+  }, [initialLocation, initialLocation.lat, initialLocation.lng]);
 
   useEffect(() => {
     if (!isLoaded || !searchInputRef.current) return;

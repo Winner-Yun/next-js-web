@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -89,6 +90,10 @@ export function WorkspaceRenameDialog({
           </DialogHeader>
 
           <div className="grid gap-4 py-2">
+            <Label htmlFor="WorkspaceName" className="text-xs font-medium">
+              Workspace Name
+              <span className="text-muted-foreground ml-1">(Required)</span>
+            </Label>
             <Input
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
@@ -98,12 +103,28 @@ export function WorkspaceRenameDialog({
               required
               disabled={isLoading}
             />
+            <Label
+              htmlFor="workspaceDescription"
+              className="text-xs font-medium"
+            >
+              Description
+              <span className="text-muted-foreground ml-1">
+                {!currentDescription || currentDescription.length === 0
+                  ? "(Optional)"
+                  : "(Required)"}
+              </span>
+            </Label>
             <Input
               value={descriptionValue}
               onChange={(e) => setDescriptionValue(e.target.value)}
               maxLength={100}
-              placeholder="Description (optional)"
+              placeholder={
+                currentDescription.length == 0
+                  ? "Description (optional)"
+                  : "Description (required)"
+              }
               className="text-xs h-9 bg-background"
+              required={currentDescription.length == 0 ? false : true}
               disabled={isLoading}
             />
           </div>

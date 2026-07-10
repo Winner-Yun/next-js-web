@@ -4,8 +4,15 @@
 import { DashboardCard } from "@/components/dashboard/dashboard-home/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useWorkspace } from "@/provider/workspace-provider";
 import {
+  AlertCircleIcon,
   Building2Icon,
   Loader2Icon,
   PencilIcon,
@@ -58,7 +65,6 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
     newName: string,
     newDescription?: string,
   ) => {
-    // Safeguard: Prevent editing if it's the active workspace
     if (isActive) {
       toast.error("You cannot edit the currently active workspace.");
       return;
@@ -81,14 +87,13 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
       if (!res.ok) throw new Error("Failed to update");
 
       toast.success("Workspace updated successfully");
-      await fetchWorkspaces(); // Refresh the provider state
+      await fetchWorkspaces();
     } catch (error) {
       toast.error("Failed to rename workspace.");
     }
   };
 
   const handleDelete = async (id: string, name: string) => {
-    // Safeguard: Prevent deleting if it's the active workspace
     if (isActive) {
       toast.error("You cannot delete the currently active workspace.");
       return;
@@ -105,7 +110,7 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
       if (!res.ok) throw new Error("Failed to delete");
 
       toast.success(`Removed: ${name}`);
-      await fetchWorkspaces(); // Refresh the provider state
+      await fetchWorkspaces();
     } catch (error) {
       toast.error("Failed to delete workspace.");
     } finally {
@@ -155,58 +160,116 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons with Tooltip Guard Layers */}
         <div className="flex gap-2 mt-auto">
-          <Button
-            size="sm"
-            variant={isActive ? "default" : "outline"}
-            className="h-8 flex-1 text-xs"
-            onClick={handleSwitch}
-            disabled={isActive || !isOwner}
-          >
-            {isActive ? "Active" : "Switch Context"}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className={`flex-1 ${isActive || !isOwner ? "cursor-not-allowed" : ""}`}
+                >
+                  <Button
+                    size="sm"
+                    variant={isActive ? "default" : "outline"}
+                    className="h-8 w-full text-xs"
+                    onClick={handleSwitch}
+                    disabled={isActive || !isOwner}
+                  >
+                    {isActive ? "Active" : "Switch Context"}
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              {(isActive || !isOwner) && (
+                <TooltipContent className="text-xs">
+                  <p className="flex items-center gap-1.5">
+                    <AlertCircleIcon className="size-3" />
+                    {isActive
+                      ? "This is your currently active workspace context"
+                      : "Only workspace owners can switch context flags"}
+                  </p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
 
           {isOwner && (
             <>
-              <WorkspaceRenameDialog
-                workspaceId={workspaceItem.id}
-                currentName={workspaceItem.name}
-                currentDescription={workspaceItem.description}
-                onRename={handleRename}
-              >
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="size-8 border"
-                  disabled={isActive} // Disabled if active
-                >
-                  <PencilIcon className="size-3.5" />
-                </Button>
-              </WorkspaceRenameDialog>
-
-              <WorkspaceConfirmDialog
-                title="Delete Workspace"
-                description={`Permanently remove ${workspaceItem.name}?`}
-                confirmText="Delete"
-                variant="destructive"
-                onConfirm={() =>
-                  handleDelete(workspaceItem.id, workspaceItem.name)
-                }
-              >
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="size-8 border hover:text-destructive"
-                  disabled={isActive || isDeleting} // Disabled if active or currently deleting
-                >
-                  {isDeleting ? (
-                    <Loader2Icon className="size-3.5 animate-spin" />
-                  ) : (
-                    <Trash2Icon className="size-3.5" />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={isActive ? "cursor-not-allowed" : ""}>
+                      <WorkspaceRenameDialog
+                        workspaceId={workspaceItem.id}
+                        currentName={workspaceItem.name}
+                        currentDescription={workspaceItem.description}
+                        onRename={handleRename}
+                      >
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-8 border"
+                          disabled={isActive}
+                        >
+                          <PencilIcon className="size-3.5" />
+                        </Button>
+                      </WorkspaceRenameDialog>
+                    </div>
+                  </TooltipTrigger>
+                  {isActive && (
+                    <TooltipContent className="text-xs">
+                      <p className="flex items-center gap-1.5">
+                        <AlertCircleIcon className="size-3" /> Cannot modify the
+                        active workspace
+                      </p>
+                    </TooltipContent>
                   )}
-                </Button>
-              </WorkspaceConfirmDialog>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={
+                        isActive || isDeleting ? "cursor-not-allowed" : ""
+                      }
+                    >
+                      <WorkspaceConfirmDialog
+                        title="Delete Workspace"
+                        description={`Permanently remove ${workspaceItem.name}?`}
+                        confirmText="Delete"
+                        variant="destructive"
+                        onConfirm={() =>
+                          handleDelete(workspaceItem.id, workspaceItem.name)
+                        }
+                      >
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-8 border hover:text-destructive"
+                          disabled={isActive || isDeleting}
+                        >
+                          {isDeleting ? (
+                            <Loader2Icon className="size-3.5 animate-spin" />
+                          ) : (
+                            <Trash2Icon className="size-3.5" />
+                          )}
+                        </Button>
+                      </WorkspaceConfirmDialog>
+                    </div>
+                  </TooltipTrigger>
+                  {(isActive || isDeleting) && (
+                    <TooltipContent className="text-xs">
+                      <p className="flex items-center gap-1.5">
+                        <AlertCircleIcon className="size-3" />
+                        {isDeleting
+                          ? "Processing background deletion removal..."
+                          : "Cannot delete your currently active workspace context"}
+                      </p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             </>
           )}
         </div>

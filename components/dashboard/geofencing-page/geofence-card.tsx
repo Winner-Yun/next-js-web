@@ -18,23 +18,32 @@ import {
   AlertCircleIcon,
   CheckCircle2Icon,
   CompassIcon,
+  MapPinIcon,
   TargetIcon,
   Trash2Icon,
   UsersIcon,
 } from "lucide-react";
 import { GeofenceConfirmDialog } from "./geofence-confirm-dialog";
+import { GeofenceMapDialog } from "./geofence-map-dialog";
 import type { GeofenceZone } from "./types";
 
 interface GeofenceCardProps {
   zone: GeofenceZone;
-  onRemove: (id: string) => void;
-  onActivate: (id: string) => void;
+  onRemove: (id: string) => Promise<void>;
+  onActivate: (id: string) => Promise<void>;
+  onUpdate: (
+    id: string,
+    data: Omit<GeofenceZone, "id" | "workspace_id" | "created_at">,
+  ) => Promise<void>;
+  isProcessing?: boolean;
 }
 
 export function GeofenceCard({
   zone,
   onRemove,
   onActivate,
+  onUpdate,
+  isProcessing,
 }: GeofenceCardProps) {
   const isActive = zone.status === "active";
 
@@ -47,21 +56,21 @@ export function GeofenceCard({
       }`}
     >
       <CardHeader className="p-4 flex flex-row items-start justify-between space-y-0 pb-2">
-        <div className="space-y-1 min-w-0">
-          <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground bg-background px-1.5 py-0.5 rounded border border-muted">
-            {zone.id}
-          </span>
-          <h3
-            className={`text-sm font-bold tracking-tight truncate pt-1 ${
-              isActive ? "text-brand" : "text-foreground"
-            }`}
-          >
-            {zone.zoneName}
-          </h3>
+        <div className="space-y-1 min-w-0 pr-2">
+          <div className="flex items-center gap-2">
+            <MapPinIcon className="size-4 text-muted-foreground/50" />
+            <h3
+              className={`text-sm font-bold tracking-tight truncate pt-1 ${
+                isActive ? "text-brand" : "text-foreground"
+              }`}
+            >
+              {zone.name}
+            </h3>
+          </div>
         </div>
         <Badge
           variant="outline"
-          className={`text-[10px] uppercase font-bold tracking-wider px-2 shadow-none ${
+          className={`text-[10px] uppercase font-bold tracking-wider px-2 shadow-none shrink-0 ${
             isActive
               ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
               : "bg-muted text-muted-foreground border-muted-foreground/10"
@@ -89,7 +98,7 @@ export function GeofenceCard({
             <div className="flex items-center gap-1 font-mono font-semibold text-foreground">
               <CompassIcon className="size-3 text-muted-foreground/50" />
               <span>
-                {zone.lat.toFixed(3)}, {zone.lng.toFixed(3)}
+                {zone.latitude.toFixed(3)}, {zone.longitude.toFixed(3)}
               </span>
             </div>
           </div>
@@ -106,17 +115,16 @@ export function GeofenceCard({
               <TargetIcon
                 className={`size-3 ${isActive ? "text-brand/60" : "text-muted-foreground/50"}`}
               />
-              <span>{zone.radius} Meters</span>
+              <span>{zone.radius_meters} Meters</span>
             </div>
           </div>
         </div>
       </CardContent>
 
       <CardFooter className="p-3 bg-muted/30 border-t border-muted flex items-center justify-between gap-2">
-        {/* Switch Activation Action */}
         <GeofenceConfirmDialog
           title="Switch Active Policy?"
-          description={`You are changing the live tracking criteria to ${zone.zoneName}. This will automatically deactivate any other running location boundary rules.`}
+          description={`You are changing the live tracking criteria to ${zone.name}. This will automatically apply new rules.`}
           confirmText="Confirm Switch"
           onConfirm={() => onActivate(zone.id)}
           variant="brand"
@@ -124,7 +132,7 @@ export function GeofenceCard({
           <Button
             variant={isActive ? "secondary" : "outline"}
             size="sm"
-            disabled={isActive}
+            disabled={isActive || isProcessing}
             className={`h-8 text-xs flex-1 ${
               isActive
                 ? "opacity-50 cursor-default"
@@ -136,39 +144,73 @@ export function GeofenceCard({
           </Button>
         </GeofenceConfirmDialog>
 
-        {/* Delete Action with Safety Guard */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className={isActive ? "cursor-not-allowed" : ""}>
-                <GeofenceConfirmDialog
-                  title="Delete Policy Permanently?"
-                  description={`Are you sure you want to delete ${zone.zoneName}? This cannot be reversed.`}
-                  confirmText="Delete Policy"
-                  onConfirm={() => onRemove(zone.id)}
-                  variant="destructive"
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Edit Button Configuration with Active Guard Disabling */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className={
+                    isActive || isProcessing ? "cursor-not-allowed" : ""
+                  }
                 >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0"
-                    disabled={isActive}
+                  <GeofenceMapDialog
+                    zoneToEdit={zone}
+                    onAction={(data) => onUpdate(zone.id, data)}
+                    isSubmitting={isProcessing}
+                    isDisabled={isActive || isProcessing}
+                  />
+                </div>
+              </TooltipTrigger>
+              {isActive && (
+                <TooltipContent className="text-xs">
+                  <p className="flex items-center gap-1.5">
+                    <AlertCircleIcon className="size-3" /> Cannot modify an
+                    active policy
+                  </p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+
+          {/* Delete Button Configuration */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className={
+                    isActive || isProcessing ? "cursor-not-allowed" : ""
+                  }
+                >
+                  <GeofenceConfirmDialog
+                    title="Delete Policy Permanently?"
+                    description={`Are you sure you want to delete ${zone.name}? This cannot be reversed.`}
+                    confirmText="Delete Policy"
+                    onConfirm={() => onRemove(zone.id)}
+                    variant="destructive"
                   >
-                    <Trash2Icon className="size-4" />
-                  </Button>
-                </GeofenceConfirmDialog>
-              </div>
-            </TooltipTrigger>
-            {isActive && (
-              <TooltipContent className="text-xs">
-                <p className="flex items-center gap-1.5">
-                  <AlertCircleIcon className="size-3" /> Cannot delete active
-                  geofence
-                </p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0"
+                      disabled={isActive || isProcessing}
+                    >
+                      <Trash2Icon className="size-4" />
+                    </Button>
+                  </GeofenceConfirmDialog>
+                </div>
+              </TooltipTrigger>
+              {isActive && (
+                <TooltipContent className="text-xs">
+                  <p className="flex items-center gap-1.5">
+                    <AlertCircleIcon className="size-3" /> Cannot delete active
+                    geofence
+                  </p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </CardFooter>
     </Card>
   );

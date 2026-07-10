@@ -1,112 +1,192 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/provider/workspace-provider";
 import { MapPinIcon, SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import useSWR from "swr";
 
 import { GeofenceCard } from "./geofence-card";
 import { GeofenceMapDialog } from "./geofence-map-dialog";
 import type { GeofenceZone } from "./types";
 
+const fetcher = async (url: string) => {
+  const token = localStorage.getItem("accessToken");
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) throw new Error("Failed to fetch geofences");
+  return res.json();
+};
+
 export function GeofencingDirectory() {
   const { workspace } = useWorkspace();
   const [search, setSearch] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const [geofencesData, setGeofencesData] = useState<
-    Record<string, GeofenceZone[]>
-  >({
-    worksmart: [
-      {
-        id: "POL-001",
-        zoneName: "Headquarters Main Campus",
-        lat: 37.7749,
-        lng: -122.4194,
-        radius: 300,
-        status: "active",
-      },
-      {
-        id: "POL-002",
-        zoneName: "Logistics Hub Alpha",
-        lat: 34.0522,
-        lng: -118.2437,
-        radius: 450,
-        status: "inactive",
-      }, // Changed to inactive for testing
-    ],
-  });
-
-  const currentWorkspaceZones = useMemo(() => {
-    return geofencesData[workspace.id] || [];
-  }, [geofencesData, workspace.id]);
+  const {
+    data: zonesData,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<GeofenceZone[]>(
+    workspace?.id ? `/api/workspace/${workspace.id}/geofences` : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
 
   const processedZones = useMemo(() => {
-    return currentWorkspaceZones.filter(
+    if (!zonesData) return [];
+    return zonesData.filter(
       (zone) =>
-        zone.zoneName.toLowerCase().includes(search.toLowerCase()) ||
+        zone.name.toLowerCase().includes(search.toLowerCase()) ||
         zone.id.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [currentWorkspaceZones, search]);
+  }, [zonesData, search]);
 
-  // Handle adding a new policy
-  const handleAddGeofence = (data: {
-    zoneName: string;
-    lat: number;
-    lng: number;
-    radius: number;
-  }) => {
-    // Generate a random ID instead of using array length to prevent duplicates when deleting
-    const newId = `POL-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+  const activePolicyName = useMemo(() => {
+    return (
+      zonesData?.find((z) => z.status === "active")?.name || "None Configured"
+    );
+  }, [zonesData]);
 
-    const newZone: GeofenceZone = {
-      id: newId,
-      zoneName: data.zoneName,
-      lat: data.lat,
-      lng: data.lng,
-      radius: data.radius,
-      status: "active", // Force new policies to be active by default
-    };
+  // --- ACTIONS ---
 
-    setGeofencesData((prev) => {
-      const existing = prev[workspace.id] || [];
-      // Deactivate all existing rules, only the newly created one remains active
-      const updatedExisting = existing.map((z) => ({
-        ...z,
-        status: "inactive" as const,
-      }));
-      return {
-        ...prev,
-        [workspace.id]: [newZone, ...updatedExisting],
-      };
-    });
+  const handleAddGeofence = async (
+    payload: Omit<GeofenceZone, "id" | "workspace_id" | "created_at">,
+  ) => {
+    if (!workspace?.id) return;
+    try {
+      setIsProcessing(true);
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch(`/api/workspace/${workspace.id}/geofence`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    toast.success(`Global policy "${data.zoneName}" activated successfully!`);
+      if (!res.ok) throw new Error("Failed to deploy workspace geofence");
+
+      toast.success(`Global policy "${payload.name}" created successfully!`);
+      await mutate(undefined, { revalidate: true });
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to process geofence request.",
+      );
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  // Handle removing a policy
-  const handleRemoveGeofence = (id: string) => {
-    setGeofencesData((prev) => ({
-      ...prev,
-      [workspace.id]: (prev[workspace.id] || []).filter(
-        (zone) => zone.id !== id,
-      ),
-    }));
-    toast.success("Policy permanently deleted.");
+  const handleUpdateGeofence = async (
+    id: string,
+    payload: Omit<GeofenceZone, "id" | "workspace_id" | "created_at">,
+  ) => {
+    if (!workspace?.id) return;
+    try {
+      setIsProcessing(true);
+      const token = localStorage.getItem("accessToken");
+
+      const res = await fetch(`/api/workspace/${workspace.id}/geofence/${id}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        // Attempt to extract explicit detail from backend
+        const errData = await res.json().catch(() => null);
+        throw new Error(
+          errData?.detail || "Failed to update workspace configuration",
+        );
+      }
+
+      toast.success(`Policy "${payload.name}" updated successfully!`);
+      await mutate(undefined, { revalidate: true });
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update policy.",
+      );
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  // Handle switching the active policy
-  const handleSetActiveGeofence = (id: string) => {
-    setGeofencesData((prev) => ({
-      ...prev,
-      [workspace.id]: (prev[workspace.id] || []).map((zone) => ({
-        ...zone,
-        // The one clicked becomes "active", EVERYTHING else becomes "inactive"
-        status: zone.id === id ? "active" : "inactive",
-      })),
-    }));
-    toast.success("Active location tracking policy updated.");
+  const handleRemoveGeofence = async (id: string) => {
+    if (!workspace?.id) return;
+    try {
+      setIsProcessing(true);
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch(`/api/workspace/${workspace.id}/geofence/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Failed to delete policy configuration");
+
+      toast.success("Policy permanently deleted.");
+      await mutate(undefined, { revalidate: true });
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete policy.",
+      );
+    } finally {
+      setIsProcessing(false);
+    }
   };
+
+  const handleSetActiveGeofence = async (id: string) => {
+    if (!workspace?.id || !zonesData) return;
+    const targetZone = zonesData.find((z) => z.id === id);
+    if (!targetZone) return;
+
+    try {
+      setIsProcessing(true);
+      const token = localStorage.getItem("accessToken");
+
+      const res = await fetch(
+        `/api/workspace/${workspace.id}/geofence/${id}/activate`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (!res.ok)
+        throw new Error("Failed to activate target location tracking policy");
+
+      toast.success(
+        `Active location tracking applied to "${targetZone.name}".`,
+      );
+      await mutate(undefined, { revalidate: true });
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update tracking policy.",
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // --- RENDER ---
 
   return (
     <div className="w-full space-y-6 p-px animate-in fade-in duration-300">
@@ -115,10 +195,18 @@ export function GeofencingDirectory() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Workspace Geofencing
           </h1>
-          <p className="text-muted-foreground text-xs mt-1">
-            Active Context Directory:{" "}
-            <span className="font-semibold text-brand">{workspace.name}</span>
-          </p>
+          <div className="text-muted-foreground text-xs mt-1 space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <span>Active Policy:</span>
+              {isLoading ? (
+                <Skeleton className="h-3 w-24" />
+              ) : (
+                <span className="font-semibold text-brand">
+                  {activePolicyName}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
@@ -127,38 +215,53 @@ export function GeofencingDirectory() {
             <Input
               placeholder="Search by zone name or policy ID..."
               value={search}
-              onChange={(e) =>
-                setSearch(setSearch === undefined ? "" : e.target.value)
-              }
+              onChange={(e) => setSearch(e.target.value)}
               className="pl-9 bg-muted/10 h-10 text-xs"
             />
           </div>
 
-          <GeofenceMapDialog onAddGeofence={handleAddGeofence} />
+          <GeofenceMapDialog
+            onAction={handleAddGeofence}
+            isSubmitting={isProcessing}
+          />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        {processedZones.map((zone) => (
-          <GeofenceCard
-            key={zone.id}
-            zone={zone}
-            onRemove={handleRemoveGeofence}
-            onActivate={handleSetActiveGeofence}
-          />
-        ))}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-44 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="py-16 text-center text-xs text-destructive bg-destructive/5 rounded-xl border border-destructive/20">
+          Failed to load configuration limits from server. Check your session.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {processedZones.map((zone) => (
+            <GeofenceCard
+              key={zone.id}
+              zone={zone}
+              onRemove={handleRemoveGeofence}
+              onActivate={handleSetActiveGeofence}
+              onUpdate={handleUpdateGeofence}
+              isProcessing={isProcessing}
+            />
+          ))}
 
-        {processedZones.length === 0 && (
-          <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 flex flex-col items-center justify-center">
-            <div className="rounded-full bg-muted/40 p-3 mb-3">
-              <MapPinIcon className="size-5 text-muted-foreground/70" />
+          {processedZones.length === 0 && (
+            <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 flex flex-col items-center justify-center">
+              <div className="rounded-full bg-muted/40 p-3 mb-3">
+                <MapPinIcon className="size-5 text-muted-foreground/70" />
+              </div>
+              <p className="text-sm font-medium">
+                No workspace location policies configured
+              </p>
             </div>
-            <p className="text-sm font-medium">
-              No workspace location policies configured
-            </p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

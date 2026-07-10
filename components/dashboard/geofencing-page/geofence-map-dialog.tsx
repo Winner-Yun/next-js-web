@@ -13,20 +13,32 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { PlusIcon, ShieldAlertIcon } from "lucide-react";
+import {
+  Loader2Icon,
+  PencilIcon,
+  PlusIcon,
+  ShieldAlertIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { LocationPickerMap, type LocationData } from "./location-picker-map";
+import type { GeofenceZone } from "./types";
 
 interface GeofenceMapDialogProps {
-  onAddGeofence: (data: {
-    zoneName: string;
-    lat: number;
-    lng: number;
-    radius: number;
-  }) => void;
+  isSubmitting?: boolean;
+  isDisabled?: boolean;
+  zoneToEdit?: GeofenceZone; // Added: Switches the modal into Edit Configuration state
+  onAction: (
+    data: Omit<GeofenceZone, "id" | "workspace_id" | "created_at">,
+  ) => Promise<void>;
 }
 
-export function GeofenceMapDialog({ onAddGeofence }: GeofenceMapDialogProps) {
+export function GeofenceMapDialog({
+  onAction,
+  isSubmitting,
+  isDisabled,
+  zoneToEdit,
+}: GeofenceMapDialogProps) {
+  const isEditMode = !!zoneToEdit;
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmingStep, setIsConfirmingStep] = useState(false);
 
@@ -34,10 +46,32 @@ export function GeofenceMapDialog({ onAddGeofence }: GeofenceMapDialogProps) {
   const [zoneName, setZoneName] = useState("");
   const [fenceRadius, setFenceRadius] = useState(250);
   const [selectedLocation, setSelectedLocation] = useState<LocationData>({
-    lat: 37.7749,
-    lng: -122.4194,
+    lat: 11.5564,
+    lng: 104.9282,
     address: "",
   });
+
+  // Synchronously seed existing fields when modal is triggered open
+  const handleOpenChange = (open: boolean) => {
+    if (isSubmitting) return;
+    setIsOpen(open);
+    if (open) {
+      if (zoneToEdit) {
+        setZoneName(zoneToEdit.name);
+        setFenceRadius(zoneToEdit.radius_meters);
+        setSelectedLocation({
+          lat: zoneToEdit.latitude,
+          lng: zoneToEdit.longitude,
+          address: `${zoneToEdit.latitude.toFixed(5)}, ${zoneToEdit.longitude.toFixed(5)}`,
+        });
+      } else {
+        setZoneName("");
+        setFenceRadius(250);
+        setSelectedLocation({ lat: 11.5564, lng: 104.9282, address: "" });
+      }
+      setIsConfirmingStep(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,52 +79,61 @@ export function GeofenceMapDialog({ onAddGeofence }: GeofenceMapDialogProps) {
     setIsConfirmingStep(true);
   };
 
-  const handleConfirm = () => {
-    onAddGeofence({
-      zoneName,
-      lat: selectedLocation.lat,
-      lng: selectedLocation.lng,
-      radius: fenceRadius,
+  const handleConfirm = async () => {
+    await onAction({
+      name: zoneName,
+      latitude: selectedLocation.lat,
+      longitude: selectedLocation.lng,
+      radius_meters: fenceRadius,
+      status: zoneToEdit?.status || "active",
     });
-
-    // Reset state
-    setZoneName("");
-    setFenceRadius(250);
-    setIsConfirmingStep(false);
     setIsOpen(false);
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        setIsOpen(open);
-        if (!open) setIsConfirmingStep(false);
-      }}
-    >
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          size="sm"
-          className="gap-2 h-10 text-xs font-medium bg-brand text-white hover:bg-brand/90 shadow-sm"
-        >
-          <PlusIcon className="size-4" />
-          Deploy Workspace Policy
-        </Button>
+        {isEditMode ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:bg-muted shrink-0"
+            disabled={isSubmitting || isDisabled}
+          >
+            <PencilIcon className="size-3.5" />
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            className="gap-2 h-10 text-xs font-medium bg-brand text-white hover:bg-brand/90 shadow-sm"
+            disabled={isSubmitting || isDisabled}
+          >
+            <PlusIcon className="size-4" />
+            Deploy Workspace Policy
+          </Button>
+        )}
       </DialogTrigger>
 
-      {/* FIXED: Dynamic resizing classes applied below to fit the step context perfectly */}
       <DialogContent
         className={`p-0 overflow-hidden bg-background transition-all duration-300 ease-in-out ${
           isConfirmingStep
             ? "w-[90vw] sm:max-w-115"
-            : "w-[95vw] sm:max-w-150 md.:max-w-[800px] lg:max-w-250"
+            : "w-[95vw] sm:max-w-150 md:max-w-200 lg:max-w-250"
         }`}
+        onInteractOutside={(e) => {
+          if (isSubmitting) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isSubmitting) e.preventDefault();
+        }}
       >
         {!isConfirmingStep ? (
           <form onSubmit={handleSubmit} className="flex flex-col max-h-[90vh]">
             <DialogHeader className="p-5 pb-3 shrink-0">
               <DialogTitle className="text-base font-bold">
-                Create Workspace Geofence Policy
+                {isEditMode
+                  ? "Modify Workspace Policy"
+                  : "Create Workspace Geofence Policy"}
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
                 Define an authorized geographical zone. This boundary policy
@@ -135,11 +178,17 @@ export function GeofenceMapDialog({ onAddGeofence }: GeofenceMapDialogProps) {
                 />
               </div>
 
-              <div className="relative w-full h-60 sm:h-95 md:h-115 rounded-lg  overflow-hidden shadow-inner">
-                <LocationPickerMap
-                  radius={fenceRadius}
-                  onLocationSelected={(loc) => setSelectedLocation(loc)}
-                />
+              <div className="relative w-full h-60 sm:h-95 md:h-115 rounded-lg overflow-hidden shadow-inner">
+                {isOpen && (
+                  <LocationPickerMap
+                    radius={fenceRadius}
+                    initialLocation={{
+                      lat: selectedLocation.lat,
+                      lng: selectedLocation.lng,
+                    }}
+                    onLocationSelected={(loc) => setSelectedLocation(loc)}
+                  />
+                )}
               </div>
             </div>
             <DialogFooter className="pe-6 py-6! pt-3! border-t border-muted bg-muted/20 flex items-center justify-end gap-2 shrink-0">
@@ -170,17 +219,19 @@ export function GeofenceMapDialog({ onAddGeofence }: GeofenceMapDialogProps) {
               </div>
               <div className="space-y-1">
                 <DialogTitle className="text-base font-bold">
-                  Activate Global Workspace Policy?
+                  {isEditMode
+                    ? "Save Policy Changes?"
+                    : "Activate Global Workspace Policy?"}
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Confirming this will instantly apply location compliance rules
-                  to every user account attached to this workspace context.
+                  {isEditMode
+                    ? "Confirming this will instantly update the location rules for this policy."
+                    : "Confirming this will instantly apply location compliance rules to every user account attached to this workspace context."}
                 </DialogDescription>
               </div>
             </div>
 
             <div className="flex-1 px-6 pb-6">
-              {/* FIXED: The summary grid layout now stretches tightly across a narrow container box */}
               <div className="rounded-lg bg-muted/40 border p-4 text-xs text-muted-foreground space-y-3 font-medium shadow-sm">
                 <p className="flex justify-between items-center border-b border-muted pb-2">
                   <span className="text-foreground font-semibold">
@@ -222,6 +273,7 @@ export function GeofenceMapDialog({ onAddGeofence }: GeofenceMapDialogProps) {
                 variant="outline"
                 size="sm"
                 className="text-xs h-9"
+                disabled={isSubmitting}
                 onClick={() => setIsConfirmingStep(false)}
               >
                 Modify Settings
@@ -229,10 +281,17 @@ export function GeofenceMapDialog({ onAddGeofence }: GeofenceMapDialogProps) {
               <Button
                 type="button"
                 size="sm"
+                disabled={isSubmitting}
                 onClick={handleConfirm}
-                className="text-xs h-9 bg-brand text-white hover:bg-brand/90 px-4"
+                className="text-xs h-9 bg-brand text-white hover:bg-brand/90 px-4 min-w-30"
               >
-                Activate Policy
+                {isSubmitting ? (
+                  <Loader2Icon className="size-4 animate-spin" />
+                ) : isEditMode ? (
+                  "Save Changes"
+                ) : (
+                  "Activate Policy"
+                )}
               </Button>
             </DialogFooter>
           </div>

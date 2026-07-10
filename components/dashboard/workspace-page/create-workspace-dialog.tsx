@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useWorkspace } from "@/provider/workspace-provider";
 import { Loader2Icon, PlusIcon } from "lucide-react";
 import { useState } from "react";
@@ -68,7 +69,13 @@ export function CreateWorkspaceDialog() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && isLoading) return;
+        setIsOpen(open);
+      }}
+    >
       <DialogTrigger asChild>
         <Button
           size="lg"
@@ -87,6 +94,10 @@ export function CreateWorkspaceDialog() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            <Label htmlFor="WorkspaceName" className="text-xs font-medium">
+              Workspace Name
+              <span className="text-muted-foreground ml-1">(Required)</span>
+            </Label>
             <Input
               placeholder="e.g., School Branch, Sub-Company"
               value={name}
@@ -96,6 +107,13 @@ export function CreateWorkspaceDialog() {
               autoFocus
               disabled={isLoading}
             />
+            <Label
+              htmlFor="workspaceDescription"
+              className="text-xs font-medium"
+            >
+              Description
+              <span className="text-muted-foreground ml-1">(Optional)</span>
+            </Label>
             <Input
               placeholder="Description (optional)"
               value={description}
