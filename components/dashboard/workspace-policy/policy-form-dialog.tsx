@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertTriangleIcon, InfoIcon } from "lucide-react";
+import { AlertTriangleIcon, InfoIcon, Loader2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { WorkspacePolicyData } from "./types";
 
@@ -21,6 +22,7 @@ interface PolicyFormDialogProps {
   setIsOpen: (open: boolean) => void;
   initialData: WorkspacePolicyData | null;
   onSave: (data: Omit<WorkspacePolicyData, "id" | "status">) => void;
+  isProcessing?: boolean;
 }
 
 const defaultValues = {
@@ -38,17 +40,30 @@ const defaultValues = {
 interface FormErrors {
   work_time?: string;
   check_time?: string;
-  thresholds?: string;
 }
 
-// Utility to convert "HH:mm" to total minutes for easy comparison
+// Convert "08:00 AM" to HTML compatible "08:00"
+const convertTo24Hour = (timeStr: string): string => {
+  if (!timeStr) return "";
+  if (!timeStr.toLowerCase().includes("m")) return timeStr.substring(0, 5); // Fallback for 24h
+
+  const [time, modifier] = timeStr.split(" ");
+  if (!time || !modifier) return timeStr;
+
+  let [hours, minutes] = time.split(":");
+  if (hours === "12") hours = "00";
+  if (modifier.toUpperCase() === "PM")
+    hours = (parseInt(hours, 10) + 12).toString();
+
+  return `${hours.padStart(2, "0")}:${minutes}`;
+};
+
 const timeToMinutes = (timeStr: string): number => {
   if (!timeStr || !timeStr.includes(":")) return 0;
   const [hours, minutes] = timeStr.split(":").map(Number);
   return hours * 60 + (minutes || 0);
 };
 
-// Utility function to add minutes to a "HH:mm" standard time string
 const calculateTimeOffset = (
   baseTime: string,
   offsetMinutes: number,
@@ -66,18 +81,39 @@ const calculateTimeOffset = (
   return `${targetHours.toString().padStart(2, "0")}:${targetMinutes.toString().padStart(2, "0")}`;
 };
 
+// Formats 24-hour time "14:30" to 12-hour time "02:30 PM"
+const formatTime12Hour = (timeStr: string): string => {
+  if (!timeStr || timeStr === "--:--") return "--:--";
+  const [hoursStr, minutesStr] = timeStr.split(":");
+  const hours = parseInt(hoursStr, 10);
+  if (isNaN(hours)) return "--:--";
+
+  const ampm = hours >= 12 ? "PM" : "AM";
+  const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
+  const displayHours = formattedHours.toString().padStart(2, "0");
+
+  return `${displayHours}:${minutesStr} ${ampm}`;
+};
+
 export function PolicyFormDialog({
   isOpen,
   setIsOpen,
   initialData,
   onSave,
+  isProcessing,
 }: PolicyFormDialogProps) {
   const [formData, setFormData] = useState(defaultValues);
   const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        ...initialData,
+        work_start_time: convertTo24Hour(initialData.work_start_time),
+        work_end_time: convertTo24Hour(initialData.work_end_time),
+        check_in_start: convertTo24Hour(initialData.check_in_start),
+        check_out_start: convertTo24Hour(initialData.check_out_start),
+      });
     } else {
       setFormData(defaultValues);
     }
@@ -91,7 +127,6 @@ export function PolicyFormDialog({
     setFormData((prev) => {
       const updated = { ...prev, [field]: value };
 
-      // Auto-clear specific validation errors if values become coherent during editing
       setErrors((prevErrors) => {
         const newErrors = { ...prevErrors };
 
@@ -113,21 +148,8 @@ export function PolicyFormDialog({
           }
         }
 
-        if (
-          field === "late_buffer_minutes" ||
-          field === "deadline_scan_minutes"
-        ) {
-          if (
-            Number(updated.deadline_scan_minutes) >
-            Number(updated.late_buffer_minutes)
-          ) {
-            delete newErrors.thresholds;
-          }
-        }
-
         return newErrors;
       });
-
       return updated;
     });
   };
@@ -138,7 +160,6 @@ export function PolicyFormDialog({
 
     const newErrors: FormErrors = {};
 
-    // 1. Work Time Validation
     if (
       timeToMinutes(formData.work_start_time) >=
       timeToMinutes(formData.work_end_time)
@@ -147,22 +168,12 @@ export function PolicyFormDialog({
         "Work End Time must be strictly after Work Start Time.";
     }
 
-    // 2. Check Window Validation
     if (
       timeToMinutes(formData.check_in_start) >=
       timeToMinutes(formData.check_out_start)
     ) {
       newErrors.check_time =
         "Check-Out Start must be strictly after Check-In Start.";
-    }
-
-    // 3. Buffer/Deadline Validation Guard Logic
-    if (
-      Number(formData.deadline_scan_minutes) <=
-      Number(formData.late_buffer_minutes)
-    ) {
-      newErrors.thresholds =
-        "Scan Deadline Window must be greater than Late Buffer minutes.";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -175,8 +186,15 @@ export function PolicyFormDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-background rounded-xl">
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !isProcessing && setIsOpen(open)}
+    >
+      <DialogContent
+        className="sm:max-w-md p-0 overflow-hidden bg-background rounded-xl"
+        onEscapeKeyDown={(e) => isProcessing && e.preventDefault()}
+        onInteractOutside={(e) => isProcessing && e.preventDefault()}
+      >
         <form onSubmit={handleSubmit} className="flex flex-col">
           <DialogHeader className="p-5 pb-4 bg-muted/10 border-b border-muted/40">
             <DialogTitle className="text-base font-bold text-foreground">
@@ -189,7 +207,6 @@ export function PolicyFormDialog({
           </DialogHeader>
 
           <div className="p-5 space-y-4 max-h-[65vh] overflow-y-auto">
-            {/* Policy Generic Text Header */}
             <div className="space-y-1.5">
               <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Policy Name
@@ -200,10 +217,10 @@ export function PolicyFormDialog({
                 onChange={(e) => handleChange("name", e.target.value)}
                 placeholder="e.g., HQ Standard Rules"
                 className="h-9 text-xs focus-visible:border-brand"
+                disabled={isProcessing}
               />
             </div>
 
-            {/* Core Work Hours Section */}
             <div>
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1.5">
@@ -217,6 +234,7 @@ export function PolicyFormDialog({
                     onChange={(e) =>
                       handleChange("work_start_time", e.target.value)
                     }
+                    disabled={isProcessing}
                     className={`h-9 text-xs ${errors.work_time ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   />
                 </div>
@@ -231,6 +249,7 @@ export function PolicyFormDialog({
                     onChange={(e) =>
                       handleChange("work_end_time", e.target.value)
                     }
+                    disabled={isProcessing}
                     className={`h-9 text-xs ${errors.work_time ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   />
                 </div>
@@ -243,7 +262,6 @@ export function PolicyFormDialog({
               )}
             </div>
 
-            {/* Check Windows Section */}
             <div>
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1.5">
@@ -257,6 +275,7 @@ export function PolicyFormDialog({
                     onChange={(e) =>
                       handleChange("check_in_start", e.target.value)
                     }
+                    disabled={isProcessing}
                     className={`h-9 text-xs ${errors.check_time ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   />
                 </div>
@@ -271,6 +290,7 @@ export function PolicyFormDialog({
                     onChange={(e) =>
                       handleChange("check_out_start", e.target.value)
                     }
+                    disabled={isProcessing}
                     className={`h-9 text-xs ${errors.check_time ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   />
                 </div>
@@ -283,7 +303,6 @@ export function PolicyFormDialog({
               )}
             </div>
 
-            {/* Validation Threshold Parameters */}
             <div>
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1.5">
@@ -301,7 +320,8 @@ export function PolicyFormDialog({
                         parseInt(e.target.value, 10) || 0,
                       )
                     }
-                    className={`h-9 text-xs font-mono ${errors.thresholds ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    disabled={isProcessing}
+                    className="h-9 text-xs font-mono"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -319,19 +339,13 @@ export function PolicyFormDialog({
                         parseInt(e.target.value, 10) || 0,
                       )
                     }
-                    className={`h-9 text-xs font-mono ${errors.thresholds ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    disabled={isProcessing}
+                    className="h-9 text-xs font-mono"
                   />
                 </div>
               </div>
-              {errors.thresholds && (
-                <p className="flex items-center gap-1.5 text-[11px] font-medium text-destructive mt-1.5 animate-in fade-in">
-                  <AlertTriangleIcon className="size-3 shrink-0" />
-                  {errors.thresholds}
-                </p>
-              )}
             </div>
 
-            {/* Attendance Rule Preview UI Block */}
             <div className="bg-muted/30 border border-muted/70 rounded-xl p-3.5 space-y-2">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <InfoIcon className="size-3.5 text-brand" />
@@ -341,18 +355,20 @@ export function PolicyFormDialog({
               </div>
               <div className="space-y-1.5 font-mono text-xs border-l-2 border-muted pl-2.5 ml-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-emerald-600 w-12">
-                    {formData.work_start_time || "--:--"}
+                  <span className="font-semibold text-emerald-600 w-16">
+                    {formatTime12Hour(formData.work_start_time)}
                   </span>
                   <span className="text-muted-foreground text-[11px]">
                     - On Time
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-amber-600 w-12">
-                    {calculateTimeOffset(
-                      formData.work_start_time,
-                      formData.late_buffer_minutes,
+                  <span className="font-semibold text-amber-600 w-16">
+                    {formatTime12Hour(
+                      calculateTimeOffset(
+                        formData.work_start_time,
+                        formData.late_buffer_minutes,
+                      ),
                     )}
                   </span>
                   <span className="text-muted-foreground text-[11px]">
@@ -360,32 +376,35 @@ export function PolicyFormDialog({
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-destructive w-12">
-                    {calculateTimeOffset(
-                      formData.work_start_time,
-                      formData.deadline_scan_minutes,
+                  <span className="font-semibold text-destructive w-16">
+                    {formatTime12Hour(
+                      calculateTimeOffset(
+                        formData.check_out_start,
+                        formData.deadline_scan_minutes,
+                      ),
                     )}
                   </span>
                   <span className="text-muted-foreground text-[11px]">
-                    - Attendance Deadline
+                    - Scan Out Deadline
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-muted-foreground/60 w-12">
+                  <span className="font-medium text-muted-foreground/60 w-16">
                     After{" "}
-                    {calculateTimeOffset(
-                      formData.work_start_time,
-                      formData.deadline_scan_minutes,
+                    {formatTime12Hour(
+                      calculateTimeOffset(
+                        formData.check_out_start,
+                        formData.deadline_scan_minutes,
+                      ),
                     )}
                   </span>
                   <span className="text-muted-foreground text-[11px]">
-                    - Absent
+                    - Missed Check-Out
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Leave Capacities Parameters */}
             <div className="grid grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -402,6 +421,7 @@ export function PolicyFormDialog({
                       parseInt(e.target.value, 10) || 0,
                     )
                   }
+                  disabled={isProcessing}
                   className="h-9 text-xs font-mono"
                 />
               </div>
@@ -420,6 +440,7 @@ export function PolicyFormDialog({
                       parseInt(e.target.value, 10) || 0,
                     )
                   }
+                  disabled={isProcessing}
                   className="h-9 text-xs font-mono"
                 />
               </div>
@@ -432,6 +453,7 @@ export function PolicyFormDialog({
               variant="outline"
               size="sm"
               onClick={() => setIsOpen(false)}
+              disabled={isProcessing}
               className="text-xs h-9 font-semibold"
             >
               Cancel
@@ -439,9 +461,19 @@ export function PolicyFormDialog({
             <Button
               type="submit"
               size="sm"
+              disabled={isProcessing}
               className="text-xs h-9 font-semibold bg-brand text-white hover:bg-brand/90 px-4"
             >
-              {initialData ? "Save Changes" : "Deploy Policy"}
+              {isProcessing ? (
+                <span className="flex items-center gap-2">
+                  <Loader2Icon className="size-3.5 animate-spin" />
+                  Processing...
+                </span>
+              ) : initialData ? (
+                "Save Changes"
+              ) : (
+                "Deploy Policy"
+              )}
             </Button>
           </DialogFooter>
         </form>

@@ -18,7 +18,6 @@ export async function GET(
       );
     }
 
-    // Capture the Authorization header from the incoming request
     const authHeader = request.headers.get("authorization");
     if (!authHeader) {
       return NextResponse.json(
@@ -27,11 +26,9 @@ export async function GET(
       );
     }
 
-    // Format target microservice URL
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
     const targetUrl = `${cleanUrl}/workspace/${workspaceId}/policies`;
 
-    // Proxy the fetch call down to the backend engine
     const backendResponse = await fetch(targetUrl, {
       method: "GET",
       headers: {
@@ -40,7 +37,6 @@ export async function GET(
       },
     });
 
-    // Guard statement for non-JSON responses
     const contentType = backendResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
       const errorText = await backendResponse.text();

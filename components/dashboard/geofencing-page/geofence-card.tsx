@@ -146,32 +146,12 @@ export function GeofenceCard({
 
         <div className="flex items-center gap-1 shrink-0">
           {/* Edit Button Configuration with Active Guard Disabling */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div
-                  className={
-                    isActive || isProcessing ? "cursor-not-allowed" : ""
-                  }
-                >
-                  <GeofenceMapDialog
-                    zoneToEdit={zone}
-                    onAction={(data) => onUpdate(zone.id, data)}
-                    isSubmitting={isProcessing}
-                    isDisabled={isActive || isProcessing}
-                  />
-                </div>
-              </TooltipTrigger>
-              {isActive && (
-                <TooltipContent className="text-xs">
-                  <p className="flex items-center gap-1.5">
-                    <AlertCircleIcon className="size-3" /> Cannot modify an
-                    active policy
-                  </p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
+
+          <GeofenceMapDialog
+            zoneToEdit={zone}
+            onAction={(data) => onUpdate(zone.id, data)}
+            isSubmitting={isProcessing}
+          />
 
           {/* Delete Button Configuration */}
           <TooltipProvider>

@@ -65,11 +65,6 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
     newName: string,
     newDescription?: string,
   ) => {
-    if (isActive) {
-      toast.error("You cannot edit the currently active workspace.");
-      return;
-    }
-
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(`/api/workspace/${id}/update-workspace`, {
@@ -194,37 +189,22 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
 
           {isOwner && (
             <>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className={isActive ? "cursor-not-allowed" : ""}>
-                      <WorkspaceRenameDialog
-                        workspaceId={workspaceItem.id}
-                        currentName={workspaceItem.name}
-                        currentDescription={workspaceItem.description}
-                        onRename={handleRename}
-                      >
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="size-8 border"
-                          disabled={isActive}
-                        >
-                          <PencilIcon className="size-3.5" />
-                        </Button>
-                      </WorkspaceRenameDialog>
-                    </div>
-                  </TooltipTrigger>
-                  {isActive && (
-                    <TooltipContent className="text-xs">
-                      <p className="flex items-center gap-1.5">
-                        <AlertCircleIcon className="size-3" /> Cannot modify the
-                        active workspace
-                      </p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+              <div>
+                <WorkspaceRenameDialog
+                  workspaceId={workspaceItem.id}
+                  currentName={workspaceItem.name}
+                  currentDescription={workspaceItem.description}
+                  onRename={handleRename}
+                >
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="size-8 border bg-muted"
+                  >
+                    <PencilIcon className="size-3.5" />
+                  </Button>
+                </WorkspaceRenameDialog>
+              </div>
 
               <TooltipProvider>
                 <Tooltip>

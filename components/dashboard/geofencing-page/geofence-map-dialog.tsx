@@ -97,10 +97,9 @@ export function GeofenceMapDialog({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground hover:bg-muted shrink-0"
-            disabled={isSubmitting || isDisabled}
+            className="h-8 w-8 text-foreground bg-muted hover:bg-muted shrink-0"
           >
-            <PencilIcon className="size-3.5" />
+            <PencilIcon className="size-3.5 " />
           </Button>
         ) : (
           <Button
@@ -267,7 +266,7 @@ export function GeofenceMapDialog({
               </div>
             </div>
 
-            <DialogFooter className="pe-6 py-6! pt-0! border-t border-muted bg-muted/20 flex items-center justify-end gap-2 shrink-0">
+            <DialogFooter className="pe-6 py-6! pt-3! border-t border-muted bg-muted/20 flex items-center justify-end gap-2 shrink-0">
               <Button
                 type="button"
                 variant="outline"

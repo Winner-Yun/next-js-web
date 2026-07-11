@@ -33,10 +33,18 @@ interface PolicyCardProps {
   onEdit: () => void;
   onDelete: (id: string) => void;
   onActivate: (id: string) => void;
+  isProcessing?: boolean;
 }
 
 const formatTime12Hour = (timeStr: string): string => {
   if (!timeStr) return "";
+  // Check if already in 12-hour format from backend
+  if (
+    timeStr.toLowerCase().includes("am") ||
+    timeStr.toLowerCase().includes("pm")
+  )
+    return timeStr;
+
   const [hoursStr, minutesStr] = timeStr.split(":");
   const hours = parseInt(hoursStr, 10);
   const ampm = hours >= 12 ? "PM" : "AM";
@@ -50,6 +58,7 @@ export function PolicyCard({
   onEdit,
   onDelete,
   onActivate,
+  isProcessing,
 }: PolicyCardProps) {
   const isActive = policy.status === "active";
 
@@ -147,38 +156,68 @@ export function PolicyCard({
       </CardContent>
 
       <CardFooter className="p-3 bg-muted/20 border-t border-muted/40 gap-2 flex-wrap sm:flex-nowrap">
-        <Button
-          variant={isActive ? "secondary" : "default"}
-          size="sm"
-          className={`flex-1 h-8 text-xs font-semibold gap-1.5 ${
-            isActive
-              ? "opacity-50 cursor-default hover:bg-secondary"
-              : "bg-brand text-white hover:bg-brand/90"
-          }`}
-          onClick={() => !isActive && onActivate(policy.id)}
-          disabled={isActive}
-        >
-          <svg
-            className="size-3.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2.5}
+        {!isActive ? (
+          <ConfirmDialog
+            title="Activate Policy?"
+            description={`Are you sure you want to set "${policy.name}" as the active policy? This will deactivate the currently active policy.`}
+            onConfirm={() => onActivate(policy.id)}
+            isLoading={isProcessing}
+            confirmText="Activate Policy"
+            loadingText="Activating..."
+            isDestructive={false}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-          {isActive ? "Currently Active" : "Set Active"}
-        </Button>
+            <Button
+              variant="default"
+              size="sm"
+              className="flex-1 h-8 text-xs font-semibold gap-1.5 bg-brand text-white hover:bg-brand/90"
+              disabled={isProcessing}
+            >
+              <svg
+                className="size-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              Set Active
+            </Button>
+          </ConfirmDialog>
+        ) : (
+          <Button
+            variant="secondary"
+            size="sm"
+            className="flex-1 h-8 text-xs font-semibold gap-1.5 opacity-50 cursor-default hover:bg-secondary"
+            disabled
+          >
+            <svg
+              className="size-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            Currently Active
+          </Button>
+        )}
 
         <Button
           variant="outline"
           size="icon"
           className="h-8 w-8 shrink-0 text-foreground hover:bg-muted"
           onClick={onEdit}
+          disabled={isProcessing}
         >
           <PencilIcon className="size-3.5" />
         </Button>
@@ -186,17 +225,20 @@ export function PolicyCard({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div>
+              <div
+                className={isActive || isProcessing ? "cursor-not-allowed" : ""}
+              >
                 <ConfirmDialog
                   title="Delete Policy?"
                   description={`Are you sure you want to drop "${policy.name}" from this workspace?`}
                   onConfirm={() => onDelete(policy.id)}
+                  isLoading={isProcessing}
                 >
                   <Button
                     variant="outline"
                     size="icon"
                     className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive border-muted-foreground/20"
-                    disabled={isActive}
+                    disabled={isActive || isProcessing}
                   >
                     <Trash2Icon className="size-3.5" />
                   </Button>
