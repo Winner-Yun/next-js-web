@@ -2,182 +2,312 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWorkspace } from "@/provider/workspace-provider";
 import {
   CalendarIcon,
-  DownloadCloudIcon,
   LayoutGridIcon,
+  Loader2Icon,
   PlusIcon,
   SearchIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { ConfirmImportDialog } from "./confirm-import"; // Ensure this file exists
 import { HolidayCalendar } from "./holiday-calendar";
 import { HolidayCard } from "./holiday-card";
 import { HolidayCreateDialog } from "./holiday-create-dialog";
-import type { Holiday } from "./types";
+import type { Holiday, HolidayConfig, PaginatedHolidays } from "./types";
 
 export function HolidayDirectory() {
   const { workspace } = useWorkspace();
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "calendar">("calendar");
-  const [isManualAddOpen, setIsManualAddOpen] = useState(false);
 
-  // Single definitions of state
-  const [isImporting, setIsImporting] = useState(false);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  // Dialog states
+  const [isManualAddOpen, setIsManualAddOpen] = useState(false);
+  const [holidayToEdit, setHolidayToEdit] = useState<Holiday | null>(null);
+  const [addHolidayDate, setAddHolidayDate] = useState<string | null>(null); // Added state to handle dates clicked from grid
+
+  // Config Confirm states
+  const [isConfigConfirmOpen, setIsConfigConfirmOpen] = useState(false);
+  const [pendingConfig, setPendingConfig] =
+    useState<Partial<HolidayConfig> | null>(null);
+  const [isConfigSaving, setIsConfigSaving] = useState(false);
+
+  // Data states
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
+  const [publicHolidays, setPublicHolidays] = useState<Holiday[]>([]);
+  const [config, setConfig] = useState<HolidayConfig | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const getAuthHeaders = useCallback(() => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
+    return {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
+  }, []);
+
+  const fetchPublicHolidays = async () => {
+    const year = new Date().getFullYear();
+    try {
+      const res = await fetch(
+        `https://date.nager.at/api/v3/PublicHolidays/${year}/KH`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        return data.map((h: unknown) => ({
+          id: `public-${h.date}`, // Special prefix to identify auto-generated dates
+          workspace_id: "public",
+          name: h.name,
+          date: h.date,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to fetch public holidays", err);
+    }
+    return [];
+  };
+
+  const fetchData = useCallback(async () => {
+    if (!workspace?.id) return;
+
+    try {
+      setIsLoading(true);
+      const [configRes, holidaysRes] = await Promise.all([
+        fetch(`/api/workspace/${workspace.id}/holiday-config`, {
+          headers: getAuthHeaders(),
+        }),
+        fetch(`/api/workspace/${workspace.id}/holidays`, {
+          headers: getAuthHeaders(),
+        }),
+      ]);
+
+      if (configRes.ok) {
+        const configData = await configRes.json();
+        setConfig(configData);
+
+        // Auto-fetch API holidays if enabled
+        if (configData.include_public_holidays) {
+          const apiHols = await fetchPublicHolidays();
+          setPublicHolidays(apiHols);
+        }
+      }
+
+      if (holidaysRes.ok) {
+        const holidaysData: PaginatedHolidays = await holidaysRes.json();
+        setHolidays(holidaysData.data || []);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      toast.error("Could not load workspace holiday data.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [workspace?.id, getAuthHeaders]);
 
   useEffect(() => {
     const savedMode = localStorage.getItem("holidayViewMode");
     if (savedMode === "grid" || savedMode === "calendar") {
       setViewMode(savedMode);
     }
-  }, []);
+    fetchData();
+  }, [fetchData]);
 
-  const [holidaysData, setHolidaysData] = useState<Record<string, Holiday[]>>({
-    worksmart: [
-      {
-        id: "HOL-001",
-        workspace_id: "worksmart",
-        name: "New Year's Day",
-        date: "2026-01-01",
-        created_at: "2025-12-01T08:00:00.000Z",
-        updated_at: "2025-12-01T08:00:00.000Z",
-      },
-      {
-        id: "HOL-002",
-        workspace_id: "worksmart",
-        name: "Independence Day",
-        date: "2026-11-09",
-        created_at: "2026-01-15T10:30:00.000Z",
-        updated_at: "2026-01-15T10:30:00.000Z",
-      },
-    ],
-  });
+  const confirmConfigUpdate = async () => {
+    if (!workspace?.id || !config || !pendingConfig) return;
 
-  const currentWorkspaceHolidays = useMemo(() => {
-    return holidaysData[workspace.id] || [];
-  }, [holidaysData, workspace.id]);
+    setIsConfigSaving(true);
+    const newConfig = { ...config, ...pendingConfig };
+
+    try {
+      const res = await fetch(`/api/workspace/${workspace.id}/holiday-config`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          include_public_holidays: newConfig.include_public_holidays,
+          include_weekend: newConfig.include_weekend,
+        }),
+      });
+      if (!res.ok) throw new Error();
+
+      setConfig(newConfig);
+
+      // Instantly load or clear public holidays based on config state
+      if (pendingConfig.include_public_holidays !== undefined) {
+        if (pendingConfig.include_public_holidays) {
+          const apiHols = await fetchPublicHolidays();
+          setPublicHolidays(apiHols);
+        } else {
+          setPublicHolidays([]);
+        }
+      }
+
+      toast.success("Holiday configuration updated successfully.");
+    } catch {
+      toast.error("Failed to update holiday configuration.");
+    } finally {
+      setIsConfigSaving(false);
+      setIsConfigConfirmOpen(false);
+      setPendingConfig(null);
+    }
+  };
+
+  const allHolidays = useMemo(() => {
+    // Only combine public holidays that don't conflict with custom workspace ones
+    const workspaceDates = new Set(holidays.map((h) => h.date));
+    const activePublicHolidays = publicHolidays.filter(
+      (p) => !workspaceDates.has(p.date),
+    );
+    return [...holidays, ...activePublicHolidays];
+  }, [holidays, publicHolidays]);
 
   const processedHolidays = useMemo(() => {
-    return currentWorkspaceHolidays.filter(
+    return allHolidays.filter(
       (holiday) =>
         holiday.name.toLowerCase().includes(search.toLowerCase()) ||
         holiday.id.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [currentWorkspaceHolidays, search]);
+  }, [allHolidays, search]);
 
-  const handleAddHoliday = (data: { name: string; date: string }) => {
-    const now = new Date().toISOString();
-    const newId = `HOL-${Math.random().toString(36).substr(2, 9)}`;
-    const newHoliday: Holiday = {
-      id: newId,
-      workspace_id: workspace.id,
-      name: data.name,
-      date: data.date,
-      created_at: now,
-      updated_at: now,
-    };
+  const handleSaveHoliday = async (name: string, date: string, id?: string) => {
+    if (!workspace?.id) return;
 
-    setHolidaysData((prev) => {
-      const existing = prev[workspace.id] || [];
-      return {
-        ...prev,
-        [workspace.id]: [newHoliday, ...existing].sort(
-          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-        ),
-      };
-    });
-    toast.success(`Holiday "${data.name}" added successfully!`);
-  };
+    // Block saving over a public API holiday
+    if (id?.startsWith("public-")) {
+      toast.error("Cannot modify auto-generated public holidays.");
+      return;
+    }
+    if (!id && publicHolidays.some((p) => p.date === date)) {
+      toast.error("A public holiday already exists on this date.");
+      return;
+    }
 
-  const handleRemoveHoliday = (id: string) => {
-    setHolidaysData((prev) => ({
-      ...prev,
-      [workspace.id]: (prev[workspace.id] || []).filter((h) => h.id !== id),
-    }));
-    toast.success("Holiday permanently deleted.");
-  };
-
-  const handleImportKhmerHolidays = async () => {
-    setIsImporting(true);
     try {
-      const targetYear = new Date().getFullYear();
-      const response = await fetch(
-        `https://date.nager.at/api/v3/PublicHolidays/${targetYear}/KH`,
+      if (id) {
+        const res = await fetch(`/api/workspace/holiday/${id}`, {
+          method: "PATCH",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ name, date }),
+        });
+        if (!res.ok) throw new Error("Failed to update holiday");
+        toast.success(`Holiday "${name}" updated successfully!`);
+      } else {
+        const res = await fetch(`/api/workspace/${workspace.id}/holidays`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ name, date }),
+        });
+        if (!res.ok) throw new Error("Failed to create holiday");
+        toast.success(`Holiday "${name}" added successfully!`);
+      }
+
+      // Reset all dialog states on success
+      setIsManualAddOpen(false);
+      setHolidayToEdit(null);
+      setAddHolidayDate(null);
+      await fetchData();
+    } catch (error) {
+      console.error("Save holiday error:", error);
+      toast.error("Failed to save holiday.");
+    }
+  };
+
+  const handleRemoveHoliday = async (id: string) => {
+    // Block deleting an auto-generated API holiday
+    if (id.startsWith("public-")) {
+      toast.error(
+        "Cannot delete auto-generated public holidays. Turn off the feature instead.",
       );
-      if (!response.ok) throw new Error("API failed");
+      return;
+    }
 
-      const apiData = await response.json();
-      const now = new Date().toISOString();
-
-      setHolidaysData((prev) => {
-        const existingHolidays = prev[workspace.id] || [];
-        const existingDates = new Set(existingHolidays.map((h) => h.date));
-
-        let addedCount = 0;
-        const newHolidays = apiData
-          .filter(
-            (apiHoliday: unknown) =>
-              !existingDates.has((apiHoliday as unknown).date),
-          )
-          .map((apiHoliday: unknown) => {
-            addedCount++;
-            return {
-              id: `HOL-${Math.random().toString(36).substr(2, 9)}`,
-              workspace_id: workspace.id,
-              name: (apiHoliday as unknown).name,
-              date: (apiHoliday as unknown).date,
-              created_at: now,
-              updated_at: now,
-            };
-          });
-
-        if (addedCount === 0) {
-          toast.info(
-            `All Khmer holidays for ${targetYear} are already present.`,
-          );
-          return prev;
-        }
-
-        const merged = [...existingHolidays, ...newHolidays].sort(
-          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-        );
-
-        toast.success(`Successfully imported ${addedCount} new holidays!`);
-        return { ...prev, [workspace.id]: merged };
+    try {
+      const res = await fetch(`/api/workspace/holiday/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
       });
-    } catch {
-      toast.error("Failed to import Khmer holidays.");
-    } finally {
-      setIsImporting(false);
-      setIsConfirmOpen(false);
+      if (!res.ok) throw new Error("Failed to delete holiday");
+
+      toast.success("Holiday permanently deleted.");
+      await fetchData();
+    } catch (error) {
+      console.error("Delete holiday error:", error);
+      toast.error("Failed to remove holiday.");
     }
   };
 
   return (
     <div className="w-full space-y-6 p-px animate-in fade-in duration-300">
-      <ConfirmImportDialog
-        isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        onConfirm={handleImportKhmerHolidays}
-        isImporting={isImporting}
-        year={new Date().getFullYear()}
-      />
+      <Dialog
+        open={isConfigConfirmOpen}
+        onOpenChange={(open) => {
+          if (!isConfigSaving) {
+            setIsConfigConfirmOpen(open);
+            if (!open) setPendingConfig(null);
+          }
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-md"
+          onInteractOutside={(e) => isConfigSaving && e.preventDefault()}
+          onEscapeKeyDown={(e) => isConfigSaving && e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Confirm Settings Update</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to update the workspace holiday
+              configuration?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsConfigConfirmOpen(false);
+                setPendingConfig(null);
+              }}
+              disabled={isConfigSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmConfigUpdate}
+              disabled={isConfigSaving}
+              className="bg-brand text-white hover:bg-brand/90"
+            >
+              {isConfigSaving ? (
+                <>
+                  <Loader2Icon className="mr-2 size-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Confirm"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between border-b border-muted/60 pb-5">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Workspace Holidays
           </h1>
-          <p className="text-muted-foreground text-xs mt-1">
-            Active:{" "}
-            <span className="font-semibold text-brand">{workspace.name}</span>
-          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto">
@@ -194,16 +324,12 @@ export function HolidayDirectory() {
           )}
 
           <Button
-            onClick={() => setIsConfirmOpen(true)}
-            disabled={isImporting}
-            variant="outline"
-            className="h-10 text-xs shrink-0"
-          >
-            <DownloadCloudIcon className="size-4 mr-1.5 text-blue-500" /> Import
-            Holidays
-          </Button>
-          <Button
-            onClick={() => setIsManualAddOpen(true)}
+            onClick={() => {
+              setHolidayToEdit(null);
+              setAddHolidayDate(null);
+              setIsManualAddOpen(true);
+            }}
+            disabled={isLoading || !workspace?.id}
             className="h-10 text-xs bg-brand text-white hover:bg-brand/90 shrink-0"
           >
             <PlusIcon className="size-4 mr-1.5" /> Add Holiday
@@ -234,21 +360,99 @@ export function HolidayDirectory() {
           </Tabs>
 
           <HolidayCreateDialog
-            isOpen={isManualAddOpen}
-            onClose={() => setIsManualAddOpen(false)}
-            onSave={(n, d) => {
-              handleAddHoliday({ name: n, date: d });
+            isOpen={isManualAddOpen} // State from explicit add button
+            addHolidayDate={addHolidayDate} // State from calendar grid click
+            editHoliday={holidayToEdit} // State from edit button
+            onClose={() => {
               setIsManualAddOpen(false);
+              setHolidayToEdit(null);
+              setAddHolidayDate(null);
             }}
+            onSave={handleSaveHoliday}
           />
         </div>
       </div>
 
-      {viewMode === "calendar" ? (
+      {config && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-5 p-4 bg-muted/20 border border-muted/60 rounded-xl mb-4">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={config.include_public_holidays}
+              onClick={() => {
+                setPendingConfig({
+                  include_public_holidays: !config.include_public_holidays,
+                });
+                setIsConfigConfirmOpen(true);
+              }}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background ${config.include_public_holidays ? "bg-brand" : "bg-muted-foreground/30"}`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${config.include_public_holidays ? "translate-x-4" : "translate-x-0"}`}
+              />
+            </button>
+            <Label
+              className="text-xs font-semibold cursor-pointer"
+              onClick={() => {
+                setPendingConfig({
+                  include_public_holidays: !config.include_public_holidays,
+                });
+                setIsConfigConfirmOpen(true);
+              }}
+            >
+              Auto-Display Public Holidays
+            </Label>
+          </div>
+          <div className="hidden sm:block w-px h-6 bg-muted/60"></div>
+          <div className="flex items-center gap-3">
+            <Label
+              htmlFor="include_weekend"
+              className="text-xs font-semibold whitespace-nowrap"
+            >
+              Include Weekends:
+            </Label>
+            <select
+              id="include_weekend"
+              value={config.include_weekend}
+              onChange={(e) => {
+                setPendingConfig({ include_weekend: e.target.value });
+                setIsConfigConfirmOpen(true);
+              }}
+              className="h-8 rounded-md border border-input bg-background px-3 py-1 text-xs font-medium shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
+            >
+              <option value="Saturday and Sunday">Saturday and Sunday</option>
+              <option value="Sunday only">Sunday only</option>
+              <option value="None">None</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {isLoading ? (
+        viewMode === "calendar" ? (
+          <div className="space-y-5 animate-pulse mt-4">
+            <div className="h-16 bg-muted/40 rounded-xl w-full border border-muted/60"></div>
+            <div className="h-125 bg-muted/40 rounded-xl w-full border border-muted/60"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 animate-pulse mt-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-30 bg-muted/40 rounded-xl border border-muted/60"
+              ></div>
+            ))}
+          </div>
+        )
+      ) : viewMode === "calendar" ? (
         <HolidayCalendar
-          holidays={currentWorkspaceHolidays}
+          holidays={allHolidays}
+          includeWeekend={config?.include_weekend}
           onRemove={handleRemoveHoliday}
-          onAdd={handleAddHoliday}
+          onEdit={(holiday) => setHolidayToEdit(holiday)}
+          // Fixed onAdd mapping to open the dialog with the clicked date instead of silently trying to save an empty object
+          onAdd={(data) => setAddHolidayDate(data.date)}
         />
       ) : (
         <>
@@ -259,6 +463,7 @@ export function HolidayDirectory() {
                   key={h.id}
                   holiday={h}
                   onRemove={handleRemoveHoliday}
+                  onEdit={() => setHolidayToEdit(h)}
                 />
               ))}
             </div>
@@ -273,17 +478,8 @@ export function HolidayDirectory() {
               <p className="text-xs text-muted-foreground mt-1 max-w-62.5">
                 {search
                   ? "Try adjusting your search terms to find what you're looking for."
-                  : "Start by adding a new holiday or importing the Khmer holiday calendar."}
+                  : "Start by adding a new holiday or turning on Public Holidays."}
               </p>
-              {!search && (
-                <Button
-                  variant="ghost"
-                  onClick={() => setIsManualAddOpen(true)}
-                  className="mt-4 text-xs h-8 text-brand hover:text-brand/80"
-                >
-                  Add your first holiday
-                </Button>
-              )}
             </div>
           )}
         </>

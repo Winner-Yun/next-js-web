@@ -6,6 +6,7 @@ import type { Holiday } from "./types";
 
 interface CalendarGridProps {
   holidays: Holiday[];
+  includeWeekend?: string;
   daysInMonth: number;
   firstDayOfMonth: number;
   todayStr: string;
@@ -20,6 +21,7 @@ const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function CalendarGrid({
   holidays,
+  includeWeekend = "None",
   daysInMonth,
   firstDayOfMonth,
   todayStr,
@@ -31,7 +33,6 @@ export function CalendarGrid({
 }: CalendarGridProps) {
   return (
     <Card className="overflow-hidden border-muted/80 shadow-md rounded-xl transition-all duration-300">
-      {/* Weekday Row Header */}
       <div className="grid grid-cols-7 border-b border-muted/60 bg-muted/20">
         {WEEKDAYS.map((day) => (
           <div
@@ -43,9 +44,7 @@ export function CalendarGrid({
         ))}
       </div>
 
-      {/* Calendar Grid Days */}
       <div className="grid grid-cols-7 bg-background md:divide-x divide-muted/20">
-        {/* Pad leading empty month spaces */}
         {Array.from({ length: firstDayOfMonth }).map((_, i) => (
           <div
             key={`empty-${i}`}
@@ -53,7 +52,6 @@ export function CalendarGrid({
           />
         ))}
 
-        {/* Actual days loop */}
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1;
           const dateStr = getDateString(day);
@@ -63,6 +61,13 @@ export function CalendarGrid({
           const isSelectedToAdd = addHolidayDate === dateStr;
           const isSelectedToView = selectedHoliday?.date === dateStr;
           const isCurrentlySelected = isSelectedToAdd || isSelectedToView;
+
+          // Determine day of the week (0 = Sunday, 6 = Saturday)
+          const dayOfWeek = (firstDayOfMonth + i) % 7;
+          const isRedWeekend =
+            (includeWeekend === "Sunday only" && dayOfWeek === 0) ||
+            (includeWeekend === "Saturday and Sunday" &&
+              (dayOfWeek === 0 || dayOfWeek === 6));
 
           return (
             <div
@@ -76,19 +81,29 @@ export function CalendarGrid({
               `}
             >
               <div className="flex items-center justify-between">
-                <span
-                  className={`text-xs font-semibold size-6.5 flex items-center justify-center rounded-full transition-transform duration-200 group-hover:scale-105 ${
-                    isToday && !isCurrentlySelected
-                      ? "bg-brand text-white shadow-md font-bold"
-                      : holidayForDay || isCurrentlySelected
-                        ? "text-brand font-bold bg-brand/15"
-                        : "text-muted-foreground group-hover:text-foreground group-hover:bg-muted/30"
-                  }`}
-                >
-                  {day}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-xs font-semibold size-6.5 flex items-center justify-center rounded-full transition-transform duration-200 group-hover:scale-105 ${
+                      isRedWeekend
+                        ? "bg-destructive text-white shadow-md font-bold" // Render red background
+                        : isToday && !isCurrentlySelected
+                          ? "bg-brand text-white shadow-md font-bold"
+                          : holidayForDay || isCurrentlySelected
+                            ? "text-brand font-bold bg-brand/15"
+                            : "text-muted-foreground group-hover:text-foreground group-hover:bg-muted/30"
+                    }`}
+                  >
+                    {day}
+                  </span>
 
-                {/* Hover plus actions */}
+                  {/* Added "Today" label rendering */}
+                  {isToday && (
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-brand">
+                      Today
+                    </span>
+                  )}
+                </div>
+
                 {!holidayForDay && onAdd && (
                   <PlusIcon
                     className={`size-4 transition-all transform duration-200 ${
@@ -100,7 +115,6 @@ export function CalendarGrid({
                 )}
               </div>
 
-              {/* Render Holiday Banner */}
               {holidayForDay && (
                 <div className="mt-2 animate-in fade-in slide-in-from-bottom-1 duration-200">
                   <div
