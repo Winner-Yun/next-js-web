@@ -29,7 +29,7 @@ export function AttendanceCard({ log, onClick }: AttendanceCardProps) {
               {log.employeeName}
             </h3>
             <p className="text-[10px] text-muted-foreground truncate font-medium">
-              {log.role} • <span className="font-mono">{log.id}</span>
+              {log.role} • <span className="font-mono">{log.date}</span>
             </p>
           </div>
         </div>

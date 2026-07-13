@@ -54,7 +54,7 @@ export function AttendanceTable({ logs, onRowClick }: AttendanceTableProps) {
                     </span>
                     <span className="text-muted-foreground text-[11px] block truncate">
                       {log.role} •{" "}
-                      <span className="font-mono text-[10px]">{log.id}</span>
+                      <span className="font-mono text-[10px]">{log.date}</span>
                     </span>
                   </div>
                 </td>

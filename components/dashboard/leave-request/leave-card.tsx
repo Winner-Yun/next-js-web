@@ -29,7 +29,14 @@ export function LeaveCard({ request, onClick }: LeaveCardProps) {
               {request.employeeName}
             </h3>
             <p className="text-[10px] text-muted-foreground truncate font-medium">
-              {request.role} • <span className="font-mono">{request.id}</span>
+              {request.role} •{" "}
+              <span>
+                {new Date(request.createdAt).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
             </p>
           </div>
         </div>

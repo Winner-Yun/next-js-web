@@ -1,3 +1,4 @@
+// types.ts
 export type AttendanceStatus = "Present" | "Late" | "Absent" | "On Leave";
 
 export interface AttendanceRecord {

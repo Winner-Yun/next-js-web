@@ -54,7 +54,13 @@ export function LeaveTable({ requests, onRowClick }: LeaveTableProps) {
                     </span>
                     <span className="text-muted-foreground text-[11px] block truncate">
                       {req.role} •{" "}
-                      <span className="font-mono text-[10px]">{req.id}</span>
+                      <span>
+                        {new Date(req.createdAt).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
                     </span>
                   </div>
                 </td>

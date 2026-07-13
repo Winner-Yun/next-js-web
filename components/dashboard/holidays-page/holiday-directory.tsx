@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -21,112 +23,107 @@ import {
   PlusIcon,
   SearchIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import useSWR from "swr"; // Added SWR
 
 import { HolidayCalendar } from "./holiday-calendar";
 import { HolidayCard } from "./holiday-card";
 import { HolidayCreateDialog } from "./holiday-create-dialog";
 import type { Holiday, HolidayConfig, PaginatedHolidays } from "./types";
 
+// Standard SWR fetcher for authenticated endpoints
+const fetcher = async (url: string) => {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) throw new Error("Failed to fetch workspace data");
+  return res.json();
+};
+
+// Specialized fetcher for the public API holidays
+const publicHolidaysFetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch public holidays");
+  const data = await res.json();
+  return data.map((h: unknown) => ({
+    id: `public-${h.date}`,
+    workspace_id: "public",
+    name: h.name,
+    date: h.date,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }));
+};
+
 export function HolidayDirectory() {
   const { workspace } = useWorkspace();
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "calendar">("calendar");
 
-  // Dialog states
   const [isManualAddOpen, setIsManualAddOpen] = useState(false);
   const [holidayToEdit, setHolidayToEdit] = useState<Holiday | null>(null);
-  const [addHolidayDate, setAddHolidayDate] = useState<string | null>(null); // Added state to handle dates clicked from grid
+  const [addHolidayDate, setAddHolidayDate] = useState<string | null>(null);
 
-  // Config Confirm states
   const [isConfigConfirmOpen, setIsConfigConfirmOpen] = useState(false);
   const [pendingConfig, setPendingConfig] =
     useState<Partial<HolidayConfig> | null>(null);
   const [isConfigSaving, setIsConfigSaving] = useState(false);
 
-  // Data states
-  const [holidays, setHolidays] = useState<Holiday[]>([]);
-  const [publicHolidays, setPublicHolidays] = useState<Holiday[]>([]);
-  const [config, setConfig] = useState<HolidayConfig | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // === REPLACED USESTATE WITH USESWR CACHING ===
 
-  const getAuthHeaders = useCallback(() => {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
-    return {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    };
-  }, []);
+  // 1. Fetch Config
+  const { data: config, mutate: mutateConfig } = useSWR<HolidayConfig>(
+    workspace?.id ? `/api/workspace/${workspace.id}/holiday-config` : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
 
-  const fetchPublicHolidays = async () => {
-    const year = new Date().getFullYear();
-    try {
-      const res = await fetch(
-        `https://date.nager.at/api/v3/PublicHolidays/${year}/KH`,
-      );
-      if (res.ok) {
-        const data = await res.json();
-        return data.map((h: unknown) => ({
-          id: `public-${h.date}`, // Special prefix to identify auto-generated dates
-          workspace_id: "public",
-          name: h.name,
-          date: h.date,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }));
-      }
-    } catch (err) {
-      console.error("Failed to fetch public holidays", err);
-    }
-    return [];
-  };
+  // 2. Fetch Workspace Holidays
+  const {
+    data: holidaysData,
+    mutate: mutateHolidays,
+    isLoading: isHolidaysLoading,
+  } = useSWR<PaginatedHolidays>(
+    workspace?.id ? `/api/workspace/${workspace.id}/holidays` : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
 
-  const fetchData = useCallback(async () => {
-    if (!workspace?.id) return;
+  // 3. Conditionally Fetch Public Holidays (Only runs if the config allows it)
+  const currentYear = new Date().getFullYear();
+  const { data: publicHolidaysData } = useSWR<Holiday[]>(
+    config?.include_public_holidays
+      ? `https://date.nager.at/api/v3/PublicHolidays/${currentYear}/KH`
+      : null,
+    publicHolidaysFetcher,
+    { revalidateOnFocus: false, dedupingInterval: 86400000 }, // Cache API response for a day
+  );
 
-    try {
-      setIsLoading(true);
-      const [configRes, holidaysRes] = await Promise.all([
-        fetch(`/api/workspace/${workspace.id}/holiday-config`, {
-          headers: getAuthHeaders(),
-        }),
-        fetch(`/api/workspace/${workspace.id}/holidays`, {
-          headers: getAuthHeaders(),
-        }),
-      ]);
-
-      if (configRes.ok) {
-        const configData = await configRes.json();
-        setConfig(configData);
-
-        // Auto-fetch API holidays if enabled
-        if (configData.include_public_holidays) {
-          const apiHols = await fetchPublicHolidays();
-          setPublicHolidays(apiHols);
-        }
-      }
-
-      if (holidaysRes.ok) {
-        const holidaysData: PaginatedHolidays = await holidaysRes.json();
-        setHolidays(holidaysData.data || []);
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-      toast.error("Could not load workspace holiday data.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [workspace?.id, getAuthHeaders]);
+  const holidays = holidaysData?.data || [];
+  const publicHolidays = publicHolidaysData || [];
+  const isLoading = isHolidaysLoading && !holidaysData;
 
   useEffect(() => {
     const savedMode = localStorage.getItem("holidayViewMode");
     if (savedMode === "grid" || savedMode === "calendar") {
       setViewMode(savedMode);
     }
-    fetchData();
-  }, [fetchData]);
+  }, []);
+
+  const getAuthHeaders = () => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
+    return {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
+  };
 
   const confirmConfigUpdate = async () => {
     if (!workspace?.id || !config || !pendingConfig) return;
@@ -145,18 +142,8 @@ export function HolidayDirectory() {
       });
       if (!res.ok) throw new Error();
 
-      setConfig(newConfig);
-
-      // Instantly load or clear public holidays based on config state
-      if (pendingConfig.include_public_holidays !== undefined) {
-        if (pendingConfig.include_public_holidays) {
-          const apiHols = await fetchPublicHolidays();
-          setPublicHolidays(apiHols);
-        } else {
-          setPublicHolidays([]);
-        }
-      }
-
+      // Instantly update the SWR cache UI on success
+      await mutateConfig(newConfig, { revalidate: true });
       toast.success("Holiday configuration updated successfully.");
     } catch {
       toast.error("Failed to update holiday configuration.");
@@ -168,7 +155,6 @@ export function HolidayDirectory() {
   };
 
   const allHolidays = useMemo(() => {
-    // Only combine public holidays that don't conflict with custom workspace ones
     const workspaceDates = new Set(holidays.map((h) => h.date));
     const activePublicHolidays = publicHolidays.filter(
       (p) => !workspaceDates.has(p.date),
@@ -187,7 +173,6 @@ export function HolidayDirectory() {
   const handleSaveHoliday = async (name: string, date: string, id?: string) => {
     if (!workspace?.id) return;
 
-    // Block saving over a public API holiday
     if (id?.startsWith("public-")) {
       toast.error("Cannot modify auto-generated public holidays.");
       return;
@@ -216,19 +201,18 @@ export function HolidayDirectory() {
         toast.success(`Holiday "${name}" added successfully!`);
       }
 
-      // Reset all dialog states on success
       setIsManualAddOpen(false);
       setHolidayToEdit(null);
       setAddHolidayDate(null);
-      await fetchData();
+
+      // Revalidate cache instead of manual fetch call
+      await mutateHolidays(undefined, { revalidate: true });
     } catch (error) {
-      console.error("Save holiday error:", error);
       toast.error("Failed to save holiday.");
     }
   };
 
   const handleRemoveHoliday = async (id: string) => {
-    // Block deleting an auto-generated API holiday
     if (id.startsWith("public-")) {
       toast.error(
         "Cannot delete auto-generated public holidays. Turn off the feature instead.",
@@ -244,9 +228,9 @@ export function HolidayDirectory() {
       if (!res.ok) throw new Error("Failed to delete holiday");
 
       toast.success("Holiday permanently deleted.");
-      await fetchData();
+      // Revalidate cache instead of manual fetch call
+      await mutateHolidays(undefined, { revalidate: true });
     } catch (error) {
-      console.error("Delete holiday error:", error);
       toast.error("Failed to remove holiday.");
     }
   };
@@ -360,9 +344,9 @@ export function HolidayDirectory() {
           </Tabs>
 
           <HolidayCreateDialog
-            isOpen={isManualAddOpen} // State from explicit add button
-            addHolidayDate={addHolidayDate} // State from calendar grid click
-            editHoliday={holidayToEdit} // State from edit button
+            isOpen={isManualAddOpen}
+            addHolidayDate={addHolidayDate}
+            editHoliday={holidayToEdit}
             onClose={() => {
               setIsManualAddOpen(false);
               setHolidayToEdit(null);
@@ -451,7 +435,6 @@ export function HolidayDirectory() {
           includeWeekend={config?.include_weekend}
           onRemove={handleRemoveHoliday}
           onEdit={(holiday) => setHolidayToEdit(holiday)}
-          // Fixed onAdd mapping to open the dialog with the clicked date instead of silently trying to save an empty object
           onAdd={(data) => setAddHolidayDate(data.date)}
         />
       ) : (

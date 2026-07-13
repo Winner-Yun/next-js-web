@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { ShieldCheckIcon } from "lucide-react";
+import { Loader2, ShieldCheckIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { LeaveRequest, LeaveStatus } from "./types";
 
@@ -19,7 +18,7 @@ interface LeaveEditDialogProps {
   isOpen: boolean;
   request: LeaveRequest | null;
   onClose: () => void;
-  onSave: (id: string, nextStatus: LeaveStatus) => void; // Only passing status back now
+  onSave: (id: string, nextStatus: LeaveStatus) => Promise<void>; // Prop converted to handle promises
 }
 
 const STATUS_OPTIONS: LeaveStatus[] = ["Pending", "Approved", "Rejected"];
@@ -31,6 +30,7 @@ export function LeaveEditDialog({
   onSave,
 }: LeaveEditDialogProps) {
   const [status, setStatus] = useState<LeaveStatus>("Pending");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen && request) {
@@ -38,15 +38,30 @@ export function LeaveEditDialog({
     }
   }, [isOpen, request]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!request) return;
-    onSave(request.id, status);
+
+    setIsSaving(true);
+    try {
+      await onSave(request.id, status);
+      // Parent handles closing the modal via state mutation upon resolution
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-96 p-2 overflow-hidden bg-background">
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !open && !isSaving && onClose()}
+    >
+      <DialogContent
+        className="sm:max-w-96 p-2 overflow-hidden bg-background"
+        // Block backdrop close and Esc exit during standard processing
+        onInteractOutside={(e) => isSaving && e.preventDefault()}
+        onEscapeKeyDown={(e) => isSaving && e.preventDefault()}
+      >
         <form onSubmit={handleSubmit} className="flex flex-col">
           <DialogHeader className="p-5 pb-3 shrink-0">
             <div className="flex items-center gap-2 text-brand">
@@ -55,13 +70,6 @@ export function LeaveEditDialog({
                 Admin Status Override
               </DialogTitle>
             </div>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Authorized admin control panel for request{" "}
-              <span className="font-mono font-bold text-foreground">
-                {request?.id}
-              </span>
-              .
-            </DialogDescription>
           </DialogHeader>
 
           {/* Context Display (Read Only) */}
@@ -100,7 +108,8 @@ export function LeaveEditDialog({
                 id="adminStatusSelect"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as LeaveStatus)}
-                className="w-full h-10 rounded-md border-2 border-brand/30 bg-background px-3 py-1 text-xs font-semibold shadow-xs transition-colors focus-visible:outline-hidden cursor-pointer focus-visible:border-brand"
+                disabled={isSaving}
+                className="w-full h-10 rounded-md border-2 border-brand/30 bg-background px-3 py-1 text-xs font-semibold shadow-xs transition-colors focus-visible:outline-hidden cursor-pointer focus-visible:border-brand disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {STATUS_OPTIONS.map((opt) => (
                   <option key={opt} value={opt}>
@@ -118,14 +127,17 @@ export function LeaveEditDialog({
               size="sm"
               className="text-xs h-9"
               onClick={onClose}
+              disabled={isSaving}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               size="sm"
-              className="text-xs h-9 bg-brand text-white hover:bg-brand/90 px-4"
+              className="text-xs h-9 bg-brand text-white hover:bg-brand/90 px-4 gap-1.5"
+              disabled={isSaving}
             >
+              {isSaving && <Loader2 className="size-3.5 animate-spin" />}
               Apply Override
             </Button>
           </DialogFooter>

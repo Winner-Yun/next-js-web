@@ -15,15 +15,20 @@ import {
   CheckIcon,
   Edit2Icon,
   FileTextIcon,
+  Loader2,
   XIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { LeaveStatusBadge } from "./leave-status-badge";
 import type { LeaveRequest } from "./types";
 
 interface LeaveViewDialogProps {
   selectedRequest: LeaveRequest | null;
   onClose: () => void;
-  onStatusChange: (id: string, nextStatus: "Approved" | "Rejected") => void;
+  onStatusChange: (
+    id: string,
+    nextStatus: "Approved" | "Rejected",
+  ) => Promise<void>;
   onEditTrigger: (request: LeaveRequest) => void;
 }
 
@@ -33,12 +38,37 @@ export function LeaveViewDialog({
   onStatusChange,
   onEditTrigger,
 }: LeaveViewDialogProps) {
+  // Track which action is currently processing
+  const [loadingAction, setLoadingAction] = useState<
+    "Approved" | "Rejected" | null
+  >(null);
+
+  const isProcessing = loadingAction !== null;
+
+  const handleAction = async (status: "Approved" | "Rejected") => {
+    if (!selectedRequest) return;
+    setLoadingAction(status);
+    try {
+      await onStatusChange(selectedRequest.id, status);
+      // The parent component handles setting the selected request to null on success,
+      // which will naturally unmount/close this dialog.
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
   return (
     <Dialog
       open={!!selectedRequest}
-      onOpenChange={(open) => !open && onClose()}
+      // Prevent standard open/close events while processing
+      onOpenChange={(open) => !open && !isProcessing && onClose()}
     >
-      <DialogContent className="sm:max-w-106.25 p-4 overflow-hidden bg-background">
+      <DialogContent
+        className="sm:max-w-106.25 p-4 overflow-hidden bg-background"
+        // Prevent closing by clicking outside or pressing Escape while loading
+        onInteractOutside={(e) => isProcessing && e.preventDefault()}
+        onEscapeKeyDown={(e) => isProcessing && e.preventDefault()}
+      >
         {selectedRequest && (
           <div className="flex flex-col">
             <DialogHeader className="p-5 pb-3 shrink-0">
@@ -49,9 +79,6 @@ export function LeaveViewDialog({
                 >
                   Application Matrix
                 </Badge>
-                <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground bg-muted/40 px-1.5 py-0.5 rounded border border-muted">
-                  {selectedRequest.id}
-                </span>
               </div>
               <DialogTitle className="text-base font-bold pt-3 text-foreground">
                 {selectedRequest.employeeName}
@@ -136,7 +163,9 @@ export function LeaveViewDialog({
                     href={selectedRequest.attachmentUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs text-brand hover:underline flex items-center gap-1"
+                    className={`text-xs text-brand hover:underline flex items-center gap-1 ${
+                      isProcessing ? "pointer-events-none opacity-50" : ""
+                    }`}
                   >
                     Click to view attachment
                   </a>
@@ -150,6 +179,7 @@ export function LeaveViewDialog({
                   size="sm"
                   className="text-xs h-9"
                   onClick={onClose}
+                  disabled={isProcessing}
                 >
                   Close
                 </Button>
@@ -161,6 +191,7 @@ export function LeaveViewDialog({
                     size="sm"
                     className="text-xs h-9 gap-1 hover:text-foreground"
                     onClick={() => onEditTrigger(selectedRequest)}
+                    disabled={isProcessing}
                   >
                     <Edit2Icon className="size-3" /> Edit
                   </Button>
@@ -174,23 +205,29 @@ export function LeaveViewDialog({
                     size="sm"
                     variant="outline"
                     className="text-xs h-9 border-destructive/40 text-destructive hover:bg-destructive/10 gap-1"
-                    onClick={() => {
-                      onStatusChange(selectedRequest.id, "Rejected");
-                      onClose();
-                    }}
+                    onClick={() => handleAction("Rejected")}
+                    disabled={isProcessing}
                   >
-                    <XIcon className="size-3.5" /> Reject
+                    {loadingAction === "Rejected" ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <XIcon className="size-3.5" />
+                    )}
+                    Reject
                   </Button>
                   <Button
                     type="button"
                     size="sm"
                     className="text-xs h-9 bg-emerald-600 text-white hover:bg-emerald-500 gap-1"
-                    onClick={() => {
-                      onStatusChange(selectedRequest.id, "Approved");
-                      onClose();
-                    }}
+                    onClick={() => handleAction("Approved")}
+                    disabled={isProcessing}
                   >
-                    <CheckIcon className="size-3.5" /> Approve
+                    {loadingAction === "Approved" ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <CheckIcon className="size-3.5" />
+                    )}
+                    Approve
                   </Button>
                 </div>
               )}

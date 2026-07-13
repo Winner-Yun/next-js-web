@@ -9,23 +9,13 @@ interface ReportHeaderProps {
   onExport: () => void;
 }
 
-export function ReportHeader({
-  workspaceName,
-  activeTab,
-  onExport,
-}: ReportHeaderProps) {
+export function ReportHeader({ activeTab, onExport }: ReportHeaderProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-muted/60 pb-5 print:border-b-2 print:border-black">
       <div>
-        <h1 className="text-2xl  tracking-tight text-foreground print:text-black print:text-3xl">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground print:text-black print:text-3xl">
           Workspace Master Report
         </h1>
-        <p className="text-muted-foreground text-xs mt-1 print:text-gray-600">
-          Comprehensive Analytics for Directory:{" "}
-          <span className="font-semibold text-brand print:text-black">
-            {workspaceName}
-          </span>
-        </p>
       </div>
 
       <div className="flex items-center gap-2 self-stretch sm:self-auto print:hidden">

@@ -36,9 +36,6 @@ export function AttendanceViewDialog({
                 >
                   Log Details
                 </Badge>
-                <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground bg-muted/40 px-1.5 py-0.5 rounded border border-muted">
-                  {selectedLog.id}
-                </span>
               </div>
               <div className="flex items-center gap-3 pt-3">
                 <div className="size-10 rounded-full bg-brand/10 text-brand flex items-center justify-center font-bold text-sm shrink-0 border border-brand/20">
