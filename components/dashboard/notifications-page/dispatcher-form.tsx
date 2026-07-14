@@ -18,23 +18,46 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { WORKSPACE_MEMBERS } from "./mock-data";
+import useSWR from "swr";
 import type { NotificationTarget, NotificationType } from "./types";
 
-export function DispatcherForm() {
+interface DispatcherFormProps {
+  onDispatchSuccess?: () => void;
+}
+
+const apiFetcher = async (url: string) => {
+  const token = localStorage.getItem("accessToken");
+  if (!token) throw new Error("No token found");
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to fetch data");
+  return res.json();
+};
+
+export function DispatcherForm({ onDispatchSuccess }: DispatcherFormProps) {
   const { workspace } = useWorkspace();
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [type, setType] = useState<NotificationType>("info");
   const [target, setTarget] = useState<NotificationTarget>("global");
   const [selectedMemberId, setSelectedMemberId] = useState("");
+
   const [isPushing, setIsPushing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [countdown, setCountdown] = useState(3); // Visual countdown helper
+  const [countdown, setCountdown] = useState(5);
 
-  const members = WORKSPACE_MEMBERS[workspace?.id] || [];
+  // Fetch real workspace members for the dropdown
+  const { data: membersData } = useSWR(
+    workspace?.id ? `/api/workspace/${workspace.id}/members` : null,
+    apiFetcher,
+  );
 
-  // Reset member selection on workspace boundary change
+  // Handle nested array responses gracefully
+  const members = Array.isArray(membersData)
+    ? membersData
+    : membersData?.members || membersData?.data || [];
+
   useEffect(() => {
     setSelectedMemberId("");
   }, [workspace?.id]);
@@ -49,20 +72,14 @@ export function DispatcherForm() {
     setCountdown(3);
   };
 
-  // AUTOMATIC REDIRECT LOGIC
   useEffect(() => {
     if (!isSuccess) return;
-
-    // Countdown interval for UI feedback
     const interval = setInterval(() => {
       setCountdown((prev) => (prev > 1 ? prev - 1 : 1));
     }, 1000);
-
-    // Form fallback timeout sequence
     const timeout = setTimeout(() => {
       handleCreateAnother();
     }, 3000);
-
     return () => {
       clearInterval(interval);
       clearTimeout(timeout);
@@ -79,32 +96,57 @@ export function DispatcherForm() {
 
     setIsPushing(true);
 
-    const payload = {
-      title,
-      message,
-      type,
-      target,
-      workspaceId: workspace?.id,
-      targetMemberId: target === "member" ? selectedMemberId : undefined,
-    };
+    try {
+      const token = localStorage.getItem("accessToken");
 
-    console.log("Pushing Notification Payload:", payload);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Find selected member to extract their email for the "personal:email" target payload
+      const selectedMember = members.find(
+        (m: unknown) => m.id === selectedMemberId || m._id === selectedMemberId,
+      );
 
-    toast.success("Notification operational broadcast successful.");
-    setIsSuccess(true);
-    setIsPushing(false);
+      const targetPayload =
+        target === "global"
+          ? "global"
+          : `personal:${selectedMember?.email || selectedMemberId}`;
+
+      const res = await fetch(`/api/notification/${workspace?.id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          message,
+          type,
+          target: targetPayload,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to dispatch notification");
+      }
+
+      toast.success("Notification operational broadcast successful.");
+      setIsSuccess(true);
+
+      // Trigger refresh on the parent directory component
+      if (onDispatchSuccess) onDispatchSuccess();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to dispatch notice. Please check system logs.");
+    } finally {
+      setIsPushing(false);
+    }
   };
 
-  // --- SUCCESS VIEW COMPONENT STATE (WITH AUTO RESET) ---
   if (isSuccess) {
     const selectedMemberName = members.find(
-      (m) => m.id === selectedMemberId,
+      (m: unknown) => m.id === selectedMemberId || m._id === selectedMemberId,
     )?.name;
 
     return (
       <div className="bg-background rounded-xl border border-muted/60 p-8 shadow-xs text-center flex flex-col items-center justify-center min-h-115 animate-in fade-in zoom-in-95 duration-300">
-        {/* Animated Success Badge Ring */}
         <div className="relative flex items-center justify-center size-16 bg-emerald-500/10 text-emerald-500 rounded-full border border-emerald-500/20 mb-4 animate-bounce">
           <CheckCircle2Icon className="size-8 shrink-0" />
         </div>
@@ -117,7 +159,6 @@ export function DispatcherForm() {
           have updated across the client session layer.
         </p>
 
-        {/* Audit Meta Parameters Card */}
         <div className="w-full bg-muted/20 border border-muted/40 rounded-xl p-4 my-6 text-left space-y-3 max-w-md">
           <div className="flex items-center justify-between text-[11px] pb-2 border-b border-muted/40">
             <span className="text-muted-foreground font-medium">
@@ -131,7 +172,7 @@ export function DispatcherForm() {
               ) : (
                 <>
                   <UserIcon className="size-3 text-brand" /> Recipient:{" "}
-                  {selectedMemberName || selectedMemberId}
+                  {selectedMemberName || "Specific User"}
                 </>
               )}
             </span>
@@ -172,7 +213,6 @@ export function DispatcherForm() {
           </div>
         </div>
 
-        {/* Auto Redirect Info & Manual Reset Button */}
         <div className="space-y-3">
           <p className="text-[11px] text-muted-foreground/80 font-medium animate-pulse">
             Returning to create form automatically in{" "}
@@ -190,21 +230,16 @@ export function DispatcherForm() {
     );
   }
 
-  // --- STANDARD FORM INPUT CONTROLS ---
   return (
     <form
       onSubmit={handleSubmit}
       className="space-y-6 bg-background rounded-xl border border-muted/60 p-6 shadow-xs animate-in fade-in duration-300"
     >
-      {/* Target Scope Section */}
       <div className="space-y-2.5">
         <div className="flex items-center justify-between">
           <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/90">
             Target Scope
           </label>
-          <span className="text-[10px] bg-muted font-mono font-bold px-2 py-0.5 rounded text-muted-foreground">
-            {workspace?.name || "Global Scope"}
-          </span>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <button
@@ -232,7 +267,6 @@ export function DispatcherForm() {
         </div>
       </div>
 
-      {/* Conditional Member Select */}
       {target === "member" && (
         <div className="space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
           <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/90">
@@ -248,9 +282,9 @@ export function DispatcherForm() {
               <option value="" disabled>
                 Choose a member from {workspace?.name || "active context"}...
               </option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} — {m.role} ({m.id})
+              {members.map((m: unknown) => (
+                <option key={m.id || m._id} value={m.id || m._id}>
+                  {m.name || m.email} {m.role ? `— ${m.role}` : ""}
                 </option>
               ))}
             </select>
@@ -268,7 +302,6 @@ export function DispatcherForm() {
         </div>
       )}
 
-      {/* Notification Type Selector */}
       <div className="space-y-2.5">
         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/90">
           Priority Type Classification
@@ -322,7 +355,6 @@ export function DispatcherForm() {
         </div>
       </div>
 
-      {/* Content Fields */}
       <div className="space-y-4">
         <div className="space-y-2">
           <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/90">
@@ -351,7 +383,6 @@ export function DispatcherForm() {
         </div>
       </div>
 
-      {/* Action Button */}
       <Button
         disabled={isPushing}
         className="w-full h-11 bg-brand hover:bg-brand/90 text-white font-semibold rounded-xl shadow-xs transition-all duration-150 flex items-center justify-center gap-2"
