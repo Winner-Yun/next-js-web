@@ -101,7 +101,7 @@ export function AttendanceChart() {
           if (
             !item ||
             typeof item !== "object" ||
-            (item as AttendanceItem).status !== "absent"
+            (item as AttendanceItem).status !== "present"
           ) {
             return false;
           }
@@ -128,10 +128,10 @@ export function AttendanceChart() {
     <DashboardCard className="gap-0 md:col-span-2">
       <CardHeader className="gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <CardTitle>Daily attendance</CardTitle>
+          <CardTitle>Daily Present</CardTitle>
         </div>
         <CardDescription>
-          Worker attendance percentage for the last 7 days.
+          Worker attendance present for last 7 days.
         </CardDescription>
       </CardHeader>
       <CardContent>

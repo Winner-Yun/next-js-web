@@ -92,11 +92,19 @@ export function DashboardAttendance() {
     today.getMonth() + 1,
   ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-  // Filter attendance to today's records only
-  const todayAttendance = (attendance as AttendanceRecord[]).filter((item) => {
-    if (!item.date) return false;
-    return item.date.substring(0, 10) === todayStr;
-  });
+  // Filter attendance to today's records only, sort by latest, and limit to top 5
+  const todayAttendance = (attendance as AttendanceRecord[])
+    .filter((item) => {
+      if (!item.date) return false;
+      return item.date.substring(0, 10) === todayStr;
+    })
+    .sort((a, b) => {
+      // Sort in descending order to get the most recent check-ins first
+      const timeA = new Date(a.check_in || 0).getTime();
+      const timeB = new Date(b.check_in || 0).getTime();
+      return timeB - timeA;
+    })
+    .slice(0, 5); // Limit to the last (most recent) 5 data points
 
   // Map attendance records to display rows
   const rows = todayAttendance.map((item) => {
@@ -179,7 +187,7 @@ export function DashboardAttendance() {
 
       <div className="mask-t-from-30% absolute inset-x-0 bottom-0 flex h-1/5 items-center justify-center bg-background">
         <Button asChild className="relative" variant="ghost">
-          <Link href="/attendance">
+          <Link href="/attendance-logs">
             View All
             <ArrowRightIcon aria-hidden="true" />
           </Link>

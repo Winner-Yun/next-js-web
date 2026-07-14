@@ -166,7 +166,6 @@ export function AttendanceStatusChart() {
                 </filter>
               </defs>
 
-              {/* PRESENT = BRAND */}
               <Line
                 dataKey="present"
                 dot={false}
@@ -177,7 +176,6 @@ export function AttendanceStatusChart() {
                 className="text-brand"
               />
 
-              {/* ABSENT = DESTRUCTIVE */}
               <Line
                 dataKey="absent"
                 dot={false}

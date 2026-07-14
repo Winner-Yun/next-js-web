@@ -74,7 +74,7 @@ export function PolicyDirectory() {
         : `/api/workspace/${workspace.id}/policy`;
 
       const res = await fetch(url, {
-        method: isEdit ? "PUT" : "POST",
+        method: isEdit ? "PATCH" : "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

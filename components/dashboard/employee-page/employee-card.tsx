@@ -3,22 +3,29 @@
 import { DashboardCard } from "@/components/dashboard/dashboard-home/dashboard-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   BriefcaseIcon,
   ChevronRightIcon,
   CircleIcon,
   MailIcon,
+  UserXIcon,
 } from "lucide-react";
 import type { Employee } from "./types";
 
 interface EmployeeCardProps {
   employee: Employee;
   onClick: () => void;
+  onRevokeInvite?: (id: string, e: React.MouseEvent) => void;
 }
 
-export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
+export function EmployeeCard({
+  employee,
+  onClick,
+  onRevokeInvite,
+}: EmployeeCardProps) {
   const isActive = employee.status === "active";
-  const isSuspended = employee.status === "suspended"; // ADDED: Check for suspended status
+  const isSuspended = employee.status === "suspended";
   const initials = employee.name ? employee.name[0].toUpperCase() : "?";
 
   return (
@@ -53,7 +60,6 @@ export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
           </div>
         </div>
 
-        {/* UPDATED: Badge handles "suspended" variant and text string */}
         <Badge
           variant={
             isActive ? "success" : isSuspended ? "destructive" : "secondary"
@@ -102,9 +108,23 @@ export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
           </span>
         </span>
 
-        <div className="flex size-7 items-center justify-center rounded-lg border border-transparent transition-all duration-300 group-hover:border-muted group-hover:bg-muted/40">
-          <ChevronRightIcon className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-        </div>
+        {employee.is_pending ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 px-2 z-10 relative"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRevokeInvite?.(employee.id, e);
+            }}
+          >
+            <UserXIcon className="size-3.5 mr-1" /> Revoke
+          </Button>
+        ) : (
+          <div className="flex size-7 items-center justify-center rounded-lg border border-transparent transition-all duration-300 group-hover:border-muted group-hover:bg-muted/40">
+            <ChevronRightIcon className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </div>
+        )}
       </div>
     </DashboardCard>
   );
