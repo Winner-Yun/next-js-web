@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
@@ -27,11 +28,9 @@ export async function POST(
       );
     }
 
-    // Format target microservice URL
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
     const targetUrl = `${cleanUrl}/workspace/${workspaceId}/policy/${policyId}/activate`;
 
-    // Proxy the PATCH execution to the backend server engine
     const backendResponse = await fetch(targetUrl, {
       method: "POST",
       headers: {
@@ -40,7 +39,6 @@ export async function POST(
       },
     });
 
-    // Handle empty responses (like 204 No Content) gracefully
     if (backendResponse.status === 204) {
       return new NextResponse(null, { status: 204 });
     }
@@ -48,7 +46,6 @@ export async function POST(
     const data = await backendResponse.json();
     return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("Proxy policy activation error:", error);
     return NextResponse.json(
       { detail: "Internal server error handling policy activation." },
       { status: 500 },

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
@@ -186,7 +187,6 @@ export function EmployeesDirectory() {
         toast.error(errData.detail || "Failed to cancel invitation context.");
       }
     } catch (error) {
-      console.error(error);
       toast.error("An error occurred during revocation handling.");
     } finally {
       setIsRevoking(false);
@@ -240,7 +240,7 @@ export function EmployeesDirectory() {
                 className="peer sr-only"
                 disabled={isRevoking}
                 checked={showPending}
-                // 4. Hook up the custom handle change function
+                // Hook up the custom handle change function
                 onChange={(e) => handleTogglePending(e.target.checked)}
               />
               <div className="h-4 w-8 rounded-full bg-muted-foreground/30 transition-colors peer-checked:bg-brand"></div>

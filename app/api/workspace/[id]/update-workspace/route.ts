@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
@@ -5,7 +6,7 @@ const BACKEND_URL =
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }, //  Changed to a Promise type
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const authHeader = request.headers.get("authorization");
@@ -17,10 +18,8 @@ export async function PATCH(
       );
     }
 
-    // 1. Unwrap the dynamic route parameters safely using await
     const { id: workspaceId } = await params;
 
-    // 2. Parse request body JSON payload
     const { workspace_name, description } = await request.json();
 
     if (!workspaceId) {
@@ -60,10 +59,6 @@ export async function PATCH(
     const contentType = backendResponse.headers.get("content-type") ?? "";
 
     if (!contentType.includes("application/json")) {
-      const errorText = await backendResponse.text();
-
-      console.error("Backend returned non-JSON response:", errorText);
-
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -76,8 +71,6 @@ export async function PATCH(
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error("Workspace update proxy fetch error:", error);
-
     return NextResponse.json(
       { detail: "Unable to reach workspace backend service." },
       { status: 500 },

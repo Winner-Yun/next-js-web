@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useEffect, useState } from "react";
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
   const [value, setValue] = useState<T>(() => {
@@ -9,7 +10,6 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.error(error);
       return initialValue;
     }
   });
@@ -20,9 +20,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     }
     try {
       window.localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.error(error);
-    }
+    } catch (error) {}
   }, [key, value]);
 
   return [value, setValue] as const;

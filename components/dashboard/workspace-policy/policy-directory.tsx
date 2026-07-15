@@ -126,7 +126,7 @@ export function PolicyDirectory() {
       setIsProcessing(true);
       const token = localStorage.getItem("accessToken");
 
-      // Update this call to match your POST endpoint
+
       const res = await fetch(
         `/api/workspace/${workspace.id}/policy/${id}/activate`,
         {

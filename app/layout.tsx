@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/provider/auth-provider";
 import { ThemeProvider } from "@/provider/theme-provider";
 
 export const metadata: Metadata = {
@@ -32,7 +33,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TooltipProvider>{children}</TooltipProvider>
+          <AuthProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

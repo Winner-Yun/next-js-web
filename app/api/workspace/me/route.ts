@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // app/api/workspace/me/route.ts
 import { NextResponse } from "next/server";
 
@@ -17,18 +18,14 @@ export async function GET(request: Request) {
 
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
 
-    // Forward any query parameters (page, limit, search, etc.)
     const { searchParams } = new URL(request.url);
 
-    // Map common search-related params to what the backend expects
     const searchValue = searchParams.get("search");
     const forwardParams = new URLSearchParams();
     if (searchValue !== null) {
-      // The backend typically uses `q` for search queries
       forwardParams.set("q", searchValue);
     }
 
-    // Forward any other unrelated params as-is
     searchParams.forEach((value, key) => {
       if (key !== "search") {
         forwardParams.set(key, value);
@@ -49,10 +46,6 @@ export async function GET(request: Request) {
     const contentType = backendResponse.headers.get("content-type") ?? "";
 
     if (!contentType.includes("application/json")) {
-      const errorText = await backendResponse.text();
-
-      console.error("Backend returned non-JSON response:", errorText);
-
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -65,8 +58,6 @@ export async function GET(request: Request) {
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error("Workspace proxy fetch error:", error);
-
     return NextResponse.json(
       { detail: "Unable to reach workspace backend service." },
       { status: 500 },

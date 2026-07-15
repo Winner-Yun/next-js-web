@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
@@ -27,20 +28,16 @@ export async function POST(
       );
     }
 
-    // Attempt to parse a body if one was sent, but don't fail if the request is empty
-    // (Activation endpoints often don't require a payload body)
     let body = null;
     try {
       body = await request.json();
-    } catch {
-      // Body is empty or invalid JSON; proceed without it
-    }
+    } catch {}
 
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
     const targetUrl = `${cleanUrl}/workspace/${workspaceId}/geofence/${geofenceId}/activate`;
 
     const backendResponse = await fetch(targetUrl, {
-      method: "POST", // Note: Change to PATCH if your backend framework requires it
+      method: "POST",
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -50,11 +47,7 @@ export async function POST(
 
     const contentType = backendResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
-      const errorText = await backendResponse.text();
-      console.error(
-        "Backend returned non-JSON response for geofence activation:",
-        errorText,
-      );
+      
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -64,7 +57,7 @@ export async function POST(
     const data = await backendResponse.json();
     return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("Proxy geofence activation process error:", error);
+  
     return NextResponse.json(
       { detail: "Internal server error handling geofence activation request." },
       { status: 500 },

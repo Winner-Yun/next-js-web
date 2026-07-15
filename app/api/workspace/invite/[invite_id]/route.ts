@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
@@ -29,7 +30,6 @@ export async function DELETE(
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
     const targetUrl = `${cleanUrl}/workspace/invite/${inviteId}`;
 
-    // Perform proxy DELETE request to the backend service
     const backendResponse = await fetch(targetUrl, {
       method: "DELETE",
       headers: {
@@ -40,8 +40,6 @@ export async function DELETE(
 
     const contentType = backendResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
-      const errorText = await backendResponse.text();
-      console.error("Backend returned non-JSON response:", errorText);
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -51,7 +49,6 @@ export async function DELETE(
     const data = await backendResponse.json();
     return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("Proxy delete invite error:", error);
     return NextResponse.json(
       {
         detail: "Internal server error handling invite deletion proxy request.",

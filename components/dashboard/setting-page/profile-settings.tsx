@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -92,7 +93,6 @@ export function ProfileSettings() {
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") return;
 
-        console.error("Load profile error:", error);
         if (!cancelled) toast.error("Failed to load profile.");
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -166,7 +166,6 @@ export function ProfileSettings() {
       toast.success("Profile picture updated.");
       mutate("/api/auth/me");
     } catch (error) {
-      console.error("Upload avatar error:", error);
       toast.error("Failed to update profile picture.");
     } finally {
       setIsUploadingAvatar(false);
@@ -227,7 +226,6 @@ export function ProfileSettings() {
       toast.success("Profile updated successfully.");
       mutate("/api/auth/me");
     } catch (error) {
-      console.error("Update profile error:", error);
       toast.error("Failed to update profile.");
     } finally {
       setIsSaving(false);

@@ -42,7 +42,7 @@ export function HolidayCreateDialog({
     if (isDialogVisible) {
       setNewHolidayName(editHoliday?.name || "");
       setHolidayDate(editHoliday?.date || addHolidayDate || "");
-      setIsSaving(false); // Reset saving state when opened
+      setIsSaving(false);
     }
   }, [isDialogVisible, addHolidayDate, editHoliday]);
 

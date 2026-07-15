@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
@@ -35,7 +36,7 @@ async function proxyNotification(
         Authorization: authHeader,
         "Content-Type": "application/json",
       },
-      // Only attach body if it's a POST request
+
       ...(method === "POST" && {
         body: await request.text(),
       }),
@@ -44,9 +45,6 @@ async function proxyNotification(
     const contentType = backendResponse.headers.get("content-type") ?? "";
 
     if (!contentType.includes("application/json")) {
-      const errorText = await backendResponse.text();
-      console.error("Backend returned non-JSON response:", errorText);
-
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -59,8 +57,6 @@ async function proxyNotification(
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error(`Proxy ${method} notification error:`, error);
-
     return NextResponse.json(
       { detail: "Internal server error handling request." },
       { status: 500 },

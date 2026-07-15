@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // app/api/workspace/[id]/members/route.ts
 import { NextResponse } from "next/server";
 
@@ -29,7 +30,6 @@ export async function GET(
 
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
 
-    // Forward any query parameters (page, limit, search, sort, etc.)
     const { searchParams } = new URL(request.url);
     const query = searchParams.toString();
 
@@ -48,10 +48,6 @@ export async function GET(
     const contentType = backendResponse.headers.get("content-type") ?? "";
 
     if (!contentType.includes("application/json")) {
-      const errorText = await backendResponse.text();
-
-      console.error("Backend returned non-JSON response:", errorText);
-
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -64,8 +60,6 @@ export async function GET(
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error("Proxy members fetch error:", error);
-
     return NextResponse.json(
       {
         detail: "Internal server error handling members proxy request.",

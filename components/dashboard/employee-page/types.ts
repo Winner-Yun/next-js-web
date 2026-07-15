@@ -12,6 +12,6 @@ export type Employee = {
   joined_at?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
-  department?: string; // Kept for layout compatibility
+  department?: string; 
 };
   

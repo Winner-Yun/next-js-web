@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,6 @@ export function CreateWorkspaceDialog() {
       setDescription("");
       setIsOpen(false);
     } catch (error) {
-      console.error("Create workspace error:", error);
       toast.error("Failed to create workspace.");
     } finally {
       setIsLoading(false);

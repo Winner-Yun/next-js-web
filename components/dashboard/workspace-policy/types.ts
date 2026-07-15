@@ -1,5 +1,5 @@
 export interface WorkspacePolicyData {
-  id: string; // Provided by backend on fetch
+  id: string; 
   name: string;
   work_start_time: string;
   work_end_time: string;

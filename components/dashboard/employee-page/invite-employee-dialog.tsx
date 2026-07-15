@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
@@ -66,9 +67,6 @@ export function InviteEmployeeDialog({
       const token = localStorage.getItem("accessToken");
 
       if (!token) {
-        console.warn(
-          "Autocomplete skipped: 'accessToken' not found in localStorage.",
-        );
         setSuggestions([]);
         return;
       }
@@ -87,7 +85,6 @@ export function InviteEmployeeDialog({
         );
 
         if (res.status === 401) {
-          console.error("Backend rejected the token with 401 Unauthorized.");
           setSuggestions([]);
           return;
         }
@@ -101,7 +98,6 @@ export function InviteEmployeeDialog({
           setSuggestions(usersList);
         }
       } catch (error) {
-        console.error("Failed fetching suggestions:", error);
       } finally {
         setIsLoadingSuggestions(false);
       }
@@ -157,7 +153,6 @@ export function InviteEmployeeDialog({
         toast.error(errData.detail || "Failed to process invitation delivery.");
       }
     } catch (error) {
-      console.error(error);
       toast.error("An error occurred during submission.");
     } finally {
       setIsSubmitting(false);

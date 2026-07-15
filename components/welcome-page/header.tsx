@@ -29,7 +29,6 @@ export function Header() {
     const section = document.getElementById(id);
 
     if (!section) {
-      console.log("Section not found:", id);
       return;
     }
 

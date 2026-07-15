@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // app/api/workspace/attendance/[id]/route.ts
 import { NextResponse } from "next/server";
 
@@ -24,13 +25,11 @@ export async function GET(request: Request, { params }: { params: unknown }) {
       );
     }
 
-    // Extract the query parameters from the incoming request
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
 
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
 
-    // 2. Append the query string to the backend URL
     const targetUrl = `${cleanUrl}/workspace/leaves/${workspaceId}${queryString ? `?${queryString}` : ""}`;
 
     const backendResponse = await fetch(targetUrl, {
@@ -43,8 +42,6 @@ export async function GET(request: Request, { params }: { params: unknown }) {
 
     const contentType = backendResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
-      const errorText = await backendResponse.text();
-      console.error("Backend returned non-JSON response:", errorText);
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -54,7 +51,6 @@ export async function GET(request: Request, { params }: { params: unknown }) {
     const data = await backendResponse.json();
     return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("Proxy attendance fetch error:", error);
     return NextResponse.json(
       { detail: "Internal server error handling attendance proxy request." },
       { status: 500 },

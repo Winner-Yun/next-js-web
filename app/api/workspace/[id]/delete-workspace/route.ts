@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
@@ -41,10 +42,6 @@ export async function DELETE(
     const contentType = backendResponse.headers.get("content-type") ?? "";
 
     if (!contentType.includes("application/json")) {
-      const errorText = await backendResponse.text();
-
-      console.error("Backend returned non-JSON response:", errorText);
-
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -57,8 +54,6 @@ export async function DELETE(
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error("Workspace deletion proxy fetch error:", error);
-
     return NextResponse.json(
       { detail: "Unable to reach workspace backend service." },
       { status: 500 },

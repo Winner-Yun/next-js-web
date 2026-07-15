@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
@@ -39,11 +40,6 @@ export async function GET(
 
     const contentType = backendResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
-      const errorText = await backendResponse.text();
-      console.error(
-        "Backend returned non-JSON response for policies:",
-        errorText,
-      );
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -53,7 +49,6 @@ export async function GET(
     const data = await backendResponse.json();
     return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("Proxy policies retrieval error:", error);
     return NextResponse.json(
       { detail: "Internal server error handling policies retrieval request." },
       { status: 500 },

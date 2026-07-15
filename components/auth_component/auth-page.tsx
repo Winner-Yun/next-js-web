@@ -68,8 +68,6 @@ function AuthContent() {
 
       router.push("/dashboard");
     } catch (error) {
-      console.error(error);
-
       setErrorMsg(
         error instanceof Error
           ? error.message

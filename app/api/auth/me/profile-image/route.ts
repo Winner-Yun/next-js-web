@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Proxy /auth/me/profile-image to backend
 import { NextResponse } from "next/server";
 
@@ -16,13 +17,8 @@ async function proxyProfileImage(request: Request): Promise<NextResponse> {
   }
 
   try {
-    // Parse the incoming multipart/form-data. Reading with `request.text()`
-    // would corrupt the binary image bytes, which is why the backend was
-    // returning 422.
     const incomingForm = await request.formData();
 
-    // Re-build a clean FormData for the backend request. We clone the entries
-    // so the File objects are re-serialized correctly across the fetch call.
     const outboundForm = new FormData();
     for (const [key, value] of incomingForm.entries()) {
       outboundForm.append(key, value);
@@ -34,10 +30,6 @@ async function proxyProfileImage(request: Request): Promise<NextResponse> {
         method: "PATCH",
         headers: {
           Authorization: authHeader,
-          // IMPORTANT: do NOT set Content-Type here. Passing a FormData body
-          // makes `fetch` automatically set `multipart/form-data; boundary=…`.
-          // Setting it manually would either override the boundary (breaking
-          // the upload) or be missing the boundary, both causing 422.
         },
         body: outboundForm,
       },
@@ -52,7 +44,6 @@ async function proxyProfileImage(request: Request): Promise<NextResponse> {
       },
     });
   } catch (error) {
-    console.error(`Proxy auth/me/profile-image PATCH fetch error:`, error);
     return NextResponse.json(
       { detail: "Unable to connect to the authentication service." },
       { status: 502 },

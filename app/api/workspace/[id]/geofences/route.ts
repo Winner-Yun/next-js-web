@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
@@ -10,7 +11,6 @@ export async function GET(
   try {
     const resolvedParams = await params;
 
-    // Extract dynamic parameter matching the folder name [workspace_id] exactly
     const workspaceId = resolvedParams?.id;
 
     if (!workspaceId) {
@@ -20,7 +20,6 @@ export async function GET(
       );
     }
 
-    // Capture the Authorization header from the incoming client request
     const authHeader = request.headers.get("authorization");
     if (!authHeader) {
       return NextResponse.json(
@@ -29,11 +28,9 @@ export async function GET(
       );
     }
 
-    // Clean base URL and construct target endpoint
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
     const targetUrl = `${cleanUrl}/workspace/${workspaceId}/geofences`;
 
-    // Forward the GET request to the backend microservice
     const backendResponse = await fetch(targetUrl, {
       method: "GET",
       headers: {
@@ -42,11 +39,8 @@ export async function GET(
       },
     });
 
-    // Guard statement for non-JSON backend crashes
     const contentType = backendResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
-      const errorText = await backendResponse.text();
-      console.error("Backend returned non-JSON response:", errorText);
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -56,7 +50,6 @@ export async function GET(
     const data = await backendResponse.json();
     return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("Proxy geofences retrieval error:", error);
     return NextResponse.json(
       { detail: "Internal server error handling geofences retrieval request." },
       { status: 500 },

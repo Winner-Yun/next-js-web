@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
@@ -42,7 +43,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       const token = localStorage.getItem("accessToken");
 
       if (!token) {
-        console.warn("No auth token discovered. Redirecting...");
         setIsLoading(false);
         router.push("/");
         return;
@@ -68,7 +68,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         setWorkspaceState(found || data.workspaces[0] || null);
       }
     } catch (error) {
-      console.error("Error loading workspaces:", error);
     } finally {
       setIsLoading(false);
     }

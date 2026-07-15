@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
@@ -133,7 +134,6 @@ export function DispatcherForm({ onDispatchSuccess }: DispatcherFormProps) {
       // Trigger refresh on the parent directory component
       if (onDispatchSuccess) onDispatchSuccess();
     } catch (error) {
-      console.error(error);
       toast.error("Failed to dispatch notice. Please check system logs.");
     } finally {
       setIsPushing(false);

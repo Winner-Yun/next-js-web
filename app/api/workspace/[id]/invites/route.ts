@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
@@ -26,18 +27,15 @@ export async function GET(
       );
     }
 
-    // Extract query parameters (page, limit, status) from the incoming request
     const { searchParams } = new URL(request.url);
 
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
     let targetUrl = `${cleanUrl}/workspace/${workspaceId}/invites`;
 
-    // Forward any present query strings directly to the backend
     if (searchParams.toString()) {
       targetUrl += `?${searchParams.toString()}`;
     }
 
-    // Perform proxy GET request to the backend service
     const backendResponse = await fetch(targetUrl, {
       method: "GET",
       headers: {
@@ -48,8 +46,6 @@ export async function GET(
 
     const contentType = backendResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
-      const errorText = await backendResponse.text();
-      console.error("Backend returned non-JSON response:", errorText);
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -59,7 +55,6 @@ export async function GET(
     const data = await backendResponse.json();
     return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("Proxy get invites error:", error);
     return NextResponse.json(
       { detail: "Internal server error handling invites proxy request." },
       { status: 500 },

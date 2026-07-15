@@ -45,7 +45,7 @@ export function EmployeeDetailsPanel({ employee }: { employee: Employee }) {
     attendanceFetcher,
     {
       revalidateOnFocus: false,
-      dedupingInterval: 300000, // Cache for 5 minutes
+      dedupingInterval: 300000, 
     },
   );
 

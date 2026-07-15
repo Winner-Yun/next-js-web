@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 
 const BACKEND_URL =
@@ -5,7 +6,6 @@ const BACKEND_URL =
 
 export async function PATCH(request: Request, { params }: { params: unknown }) {
   try {
-    // Resolve params according to Next.js 15 App Router requirements
     const resolvedParams = (await params) as { leave_id: string };
     const leaveId = resolvedParams?.leave_id;
 
@@ -24,10 +24,8 @@ export async function PATCH(request: Request, { params }: { params: unknown }) {
       );
     }
 
-    // Extract the body from the incoming request
     const body = await request.json();
 
-    // Validate that the required "status" field is present
     if (!body || !body.status) {
       return NextResponse.json(
         { detail: "Status field is required." },
@@ -37,12 +35,10 @@ export async function PATCH(request: Request, { params }: { params: unknown }) {
 
     const cleanUrl = BACKEND_URL.replace(/\/$/, "");
 
-    // Append the leave_id to the backend URL route
     const targetUrl = `${cleanUrl}/workspace/leave/${leaveId}/approve`;
 
-    // Forward the request to the external backend API
     const backendResponse = await fetch(targetUrl, {
-      method: "PATCH", // Change to "POST" if your backend expects it instead
+      method: "PATCH",
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -52,8 +48,6 @@ export async function PATCH(request: Request, { params }: { params: unknown }) {
 
     const contentType = backendResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
-      const errorText = await backendResponse.text();
-      console.error("Backend returned non-JSON response:", errorText);
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },
@@ -63,7 +57,6 @@ export async function PATCH(request: Request, { params }: { params: unknown }) {
     const data = await backendResponse.json();
     return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("Proxy leave approve fetch error:", error);
     return NextResponse.json(
       { detail: "Internal server error handling leave approve proxy request." },
       { status: 500 },

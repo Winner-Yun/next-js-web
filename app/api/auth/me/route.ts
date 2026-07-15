@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Proxy /auth/me to backend
 import { NextResponse } from "next/server";
 
@@ -44,7 +45,6 @@ async function proxyAuthMe(
       },
     });
   } catch (error) {
-    console.error(`Proxy auth/me ${method} fetch error:`, error);
     return NextResponse.json(
       { detail: "Unable to connect to the authentication service." },
       { status: 502 },
