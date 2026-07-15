@@ -4,9 +4,6 @@ import { NextResponse } from "next/server";
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "https://smart-atd-backend.vercel.app";
 
-/**
- * Unified request processor to eliminate code replication across HTTP verbs
- */
 async function processGeofenceProxy(
   method: "PATCH" | "DELETE",
   request: Request,

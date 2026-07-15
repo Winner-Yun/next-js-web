@@ -1,10 +1,11 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/provider/workspace-provider";
 import { MapPinIcon, SearchIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 
@@ -28,6 +29,7 @@ export function GeofencingDirectory() {
   const { workspace } = useWorkspace();
   const [search, setSearch] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasShownAlert, setHasShownAlert] = useState(false);
 
   const {
     data: zonesData,
@@ -54,6 +56,27 @@ export function GeofencingDirectory() {
       zonesData?.find((z) => z.status === "active")?.name || "None Configured"
     );
   }, [zonesData]);
+
+  // --- ALERTS CHECK ---
+  useEffect(() => {
+    if (zonesData && !hasShownAlert) {
+      const requiresUpdate = zonesData.some(
+        (zone) =>
+          (zone.latitude === 0 && zone.longitude === 0) ||
+          !zone.updated_at ||
+          zone.created_at === zone.updated_at,
+      );
+
+      if (requiresUpdate) {
+        toast.warning("Location Update Required", {
+          description:
+            "Some geofence zones require updates to their location data. Please click the edit icon on the highlighted policies to set proper coordinates.",
+          duration: 8000,
+        });
+        setHasShownAlert(true); // Prevents infinite toast firing on re-renders
+      }
+    }
+  }, [zonesData, hasShownAlert]);
 
   // --- ACTIONS ---
 
@@ -107,7 +130,6 @@ export function GeofencingDirectory() {
       });
 
       if (!res.ok) {
-        // Attempt to extract explicit detail from backend
         const errData = await res.json().catch(() => null);
         throw new Error(
           errData?.detail || "Failed to update workspace configuration",
@@ -135,7 +157,14 @@ export function GeofencingDirectory() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) throw new Error("Failed to delete policy configuration");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(
+          errData?.detail ||
+            errData?.message ||
+            "Failed to delete policy configuration",
+        );
+      }
 
       toast.success("Policy permanently deleted.");
       await mutate(undefined, { revalidate: true });
@@ -186,6 +215,8 @@ export function GeofencingDirectory() {
     }
   };
 
+  const hasNoGeofences = zonesData && zonesData.length === 0;
+
   // --- RENDER ---
 
   return (
@@ -220,10 +251,19 @@ export function GeofencingDirectory() {
             />
           </div>
 
-          <GeofenceMapDialog
-            onAction={handleAddGeofence}
-            isSubmitting={isProcessing}
-          />
+       
+          <div className="relative w-full sm:w-auto">
+            <GeofenceMapDialog
+              onAction={handleAddGeofence}
+              isSubmitting={isProcessing}
+            />
+            {hasNoGeofences && (
+              <span className="absolute -top-1 -right-1 flex h-3 w-3 pointer-events-none">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -250,15 +290,40 @@ export function GeofencingDirectory() {
             />
           ))}
 
-          {processedZones.length === 0 && (
-            <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 flex flex-col items-center justify-center">
-              <div className="rounded-full bg-muted/40 p-3 mb-3">
-                <MapPinIcon className="size-5 text-muted-foreground/70" />
+      
+          {hasNoGeofences ? (
+            <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-amber-500/30 bg-amber-500/2 flex flex-col items-center justify-center p-6 animate-in fade-in duration-200">
+              <div className="rounded-full bg-amber-500/10 p-4 mb-4">
+                <MapPinIcon className="size-6 text-amber-600 dark:text-amber-400" />
               </div>
-              <p className="text-sm font-medium">
-                No workspace location policies configured
+              <h3 className="text-sm font-semibold text-foreground">
+                No tracking zones configured
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1 mb-5 max-w-sm leading-relaxed">
+                You must set up and deploy at least one geofence zone to monitor
+                workspace presence and automate hours.
               </p>
+              <GeofenceMapDialog
+                onAction={handleAddGeofence}
+                isSubmitting={isProcessing}
+              />
             </div>
+          ) : (
+          
+            processedZones.length === 0 && (
+              <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 flex flex-col items-center justify-center">
+                <div className="rounded-full bg-muted/40 p-3 mb-3">
+                  <MapPinIcon className="size-5 text-muted-foreground/70" />
+                </div>
+                <p className="text-sm font-medium">
+                  No matching geofence zones
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Adjust your search terms to find other configured tracking
+                  zones.
+                </p>
+              </div>
+            )
           )}
         </div>
       )}

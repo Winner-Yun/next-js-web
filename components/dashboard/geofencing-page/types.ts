@@ -7,4 +7,5 @@ export interface GeofenceZone {
   radius_meters: number;
   status: "active" | "inactive";
   created_at?: string;
+  updated_at?: string;
 }

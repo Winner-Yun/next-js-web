@@ -126,7 +126,6 @@ export function PolicyDirectory() {
       setIsProcessing(true);
       const token = localStorage.getItem("accessToken");
 
-
       const res = await fetch(
         `/api/workspace/${workspace.id}/policy/${id}/activate`,
         {
@@ -153,6 +152,8 @@ export function PolicyDirectory() {
     setEditingPolicy(null);
     setIsFormOpen(true);
   };
+
+  const hasNoPolicies = policiesData && policiesData.length === 0;
 
   return (
     <div className="w-full space-y-6 p-px animate-in fade-in duration-300">
@@ -185,15 +186,23 @@ export function PolicyDirectory() {
             />
           </div>
 
-          <Button
-            onClick={openCreate}
-            size="sm"
-            disabled={isProcessing || isLoading || !workspace}
-            className="gap-2 h-10 text-xs font-semibold bg-brand text-white hover:bg-brand/90 shadow-sm"
-          >
-            <PlusIcon className="size-4" />
-            Create Policy
-          </Button>
+          <div className="relative w-full sm:w-auto">
+            <Button
+              onClick={openCreate}
+              size="sm"
+              disabled={isProcessing || isLoading || !workspace}
+              className="w-full sm:w-auto gap-2 h-10 text-xs font-semibold bg-brand text-white hover:bg-brand/90 shadow-sm"
+            >
+              <PlusIcon className="size-4" />
+              Create Policy
+            </Button>
+            {hasNoPolicies && (
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -223,18 +232,43 @@ export function PolicyDirectory() {
             />
           ))}
 
-          {processedPolicies.length === 0 && (
-            <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 flex flex-col items-center justify-center">
-              <div className="rounded-full bg-muted/40 p-3 mb-3">
-                <ScrollTextIcon className="size-5 text-muted-foreground/70" />
+          {hasNoPolicies ? (
+            <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-amber-500/30 bg-amber-500/2 flex flex-col items-center justify-center p-6 animate-in fade-in duration-200">
+              <div className="rounded-full bg-amber-500/10 p-4 mb-4">
+                <ScrollTextIcon className="size-6 text-amber-600 dark:text-amber-400" />
               </div>
-              <p className="text-sm font-medium">
+              <h3 className="text-sm font-semibold text-foreground">
                 No workspace policies configured
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1 mb-5 max-w-sm leading-relaxed">
+                You must set up and deploy at least one workspace policy to
+                manage rules, schedules, and timing structures.
               </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Adjust your search or create a new policy to manage rules.
-              </p>
+              <Button
+                onClick={openCreate}
+                size="sm"
+                disabled={isProcessing || isLoading || !workspace}
+                className="gap-2 h-10 text-xs font-semibold bg-brand text-white hover:bg-brand/90 shadow-sm px-5"
+              >
+                <PlusIcon className="size-4" />
+                Create Your First Policy
+              </Button>
             </div>
+          ) : (
+            /* Fallback Empty State: Only shows if search filters returned nothing */
+            processedPolicies.length === 0 && (
+              <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 flex flex-col items-center justify-center">
+                <div className="rounded-full bg-muted/40 p-3 mb-3">
+                  <ScrollTextIcon className="size-5 text-muted-foreground/70" />
+                </div>
+                <p className="text-sm font-medium">
+                  No matching workspace policies
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Adjust your search terms to find other configured policies.
+                </p>
+              </div>
+            )
           )}
         </div>
       )}

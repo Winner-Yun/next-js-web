@@ -47,13 +47,16 @@ export function GeofenceCard({
 }: GeofenceCardProps) {
   const isActive = zone.status === "active";
 
+  // Check if location data is missing/invalid
+  const hasInvalidCoordinates = zone.latitude === 0 && zone.longitude === 0;
+
   return (
     <Card
       className={`overflow-hidden transition-all duration-200 hover:shadow-md border flex flex-col ${
         isActive
           ? "border-brand/40 bg-brand/5"
           : "border-muted/80 bg-background/50"
-      }`}
+      } ${hasInvalidCoordinates ? "border-yellow-500/50" : ""}`}
     >
       <CardHeader className="p-4 flex flex-row items-start justify-between space-y-0 pb-2">
         <div className="space-y-1 min-w-0 pr-2">
@@ -95,8 +98,18 @@ export function GeofenceCard({
             <span className="text-muted-foreground block text-[10px] font-medium">
               Center Target
             </span>
-            <div className="flex items-center gap-1 font-mono font-semibold text-foreground">
-              <CompassIcon className="size-3 text-muted-foreground/50" />
+            <div
+              className={`flex items-center gap-1 font-mono font-semibold ${
+                hasInvalidCoordinates
+                  ? "text-yellow-600 dark:text-yellow-500"
+                  : "text-foreground"
+              }`}
+            >
+              {hasInvalidCoordinates ? (
+                <AlertCircleIcon className="size-3 text-yellow-600 dark:text-yellow-500" />
+              ) : (
+                <CompassIcon className="size-3 text-muted-foreground/50" />
+              )}
               <span>
                 {zone.latitude.toFixed(3)}, {zone.longitude.toFixed(3)}
               </span>
@@ -113,7 +126,9 @@ export function GeofenceCard({
               }`}
             >
               <TargetIcon
-                className={`size-3 ${isActive ? "text-brand/60" : "text-muted-foreground/50"}`}
+                className={`size-3 ${
+                  isActive ? "text-brand/60" : "text-muted-foreground/50"
+                }`}
               />
               <span>{zone.radius_meters} Meters</span>
             </div>
@@ -132,7 +147,7 @@ export function GeofenceCard({
           <Button
             variant={isActive ? "secondary" : "outline"}
             size="sm"
-            disabled={isActive || isProcessing}
+            disabled={isActive || isProcessing || hasInvalidCoordinates}
             className={`h-8 text-xs flex-1 ${
               isActive
                 ? "opacity-50 cursor-default"
@@ -145,15 +160,12 @@ export function GeofenceCard({
         </GeofenceConfirmDialog>
 
         <div className="flex items-center gap-1 shrink-0">
-          {/* Edit Button Configuration with Active Guard Disabling */}
-
           <GeofenceMapDialog
             zoneToEdit={zone}
             onAction={(data) => onUpdate(zone.id, data)}
             isSubmitting={isProcessing}
           />
 
-          {/* Delete Button Configuration */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
