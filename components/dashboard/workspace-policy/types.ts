@@ -1,5 +1,5 @@
 export interface WorkspacePolicyData {
-  id: string; 
+  id: string;
   name: string;
   work_start_time: string;
   work_end_time: string;

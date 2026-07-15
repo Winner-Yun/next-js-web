@@ -27,7 +27,7 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 import type { GeofenceZone } from "../geofencing/types";
 
-// Standard workspace authenticated fetcher[cite: 5]
+// Standard workspace authenticated fetcher
 const fetcher = async (url: string) => {
   const token = localStorage.getItem("accessToken");
   const res = await fetch(url, {
@@ -44,7 +44,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
 
-  // States to allow users to dismiss the warning bubbles individually[cite: 5]
+  // States to allow users to dismiss the warning bubbles individually
   const [isGeofenceAlertDismissed, setIsGeofenceAlertDismissed] =
     useState(false);
   const [isPolicyAlertDismissed, setIsPolicyAlertDismissed] = useState(false);
@@ -62,24 +62,27 @@ export function AppSidebar() {
     { revalidateOnFocus: false },
   );
 
-
   const { data: policiesData } = useSWR<unknown[]>(
     workspace?.id ? `/api/workspace/${workspace.id}/policies` : null,
     fetcher,
     { revalidateOnFocus: false },
   );
 
-  const isAtDashboardHome = pathname === "/dashboard";
+  // Update this to include both the dashboard and the workspace page routes
+  const isAlertAllowedRoute =
+    pathname === "/dashboard" ||
+    pathname.includes("/workspace") ||
+    pathname.includes("/workspaces");
 
-  // Check Geofence status[cite: 5]
+  // Check Geofence status
   const hasNoGeofences = zonesData && zonesData.length === 0;
   const showGeofenceAlert =
-    isAtDashboardHome && hasNoGeofences && !isGeofenceAlertDismissed;
+    isAlertAllowedRoute && hasNoGeofences && !isGeofenceAlertDismissed;
 
-  // Check Policy status[cite: 5]
+  // Check Policy status
   const hasNoPolicies = policiesData && policiesData.length === 0;
   const showPolicyAlert =
-    isAtDashboardHome && hasNoPolicies && !isPolicyAlertDismissed;
+    isAlertAllowedRoute && hasNoPolicies && !isPolicyAlertDismissed;
 
   const filteredNavGroups = useMemo(() => {
     if (!searchQuery.trim()) return navGroups;
@@ -143,7 +146,7 @@ export function AppSidebar() {
                 {group.items.map((item) => {
                   const isCurrentActive = pathname === item.path;
 
-                  // Identify target configuration items[cite: 5]
+                  // Identify target configuration items
                   const isGeofencesItem = item.title === "Geofences";
                   const isPoliciesItem = item.title === "Workspaces Policies";
 
@@ -155,7 +158,7 @@ export function AppSidebar() {
                     isWorkspaceLoading ||
                     (!hasWorkspace && !isAllowedWhenEmpty);
 
-                  // Decide if this specific item should show an active warning style[cite: 5]
+                  // Decide if this specific item should show an active warning style
                   const hasWarning =
                     (isGeofencesItem && hasNoGeofences) ||
                     (isPoliciesItem && hasNoPolicies);
@@ -188,7 +191,7 @@ export function AppSidebar() {
                         >
                           <div className="relative flex items-center justify-center">
                             {item.icon}
-                            {/* Pulsing notification dot next to the icon[cite: 5] */}
+                            {/* Pulsing notification dot next to the icon */}
                             {hasWarning && (
                               <span className="absolute -top-1 -right-1 flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -200,7 +203,7 @@ export function AppSidebar() {
                         </Link>
                       </SidebarMenuButton>
 
-                      {/* --- INLINE GEOFENCE WARNING BOX ---[cite: 5] */}
+                      {/* --- INLINE GEOFENCE WARNING BOX --- */}
                       {isGeofencesItem && showGeofenceAlert && (
                         <div className="mx-2 mt-1 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg shadow-sm animate-in fade-in duration-200">
                           <div className="flex items-start justify-between gap-2">
@@ -227,7 +230,7 @@ export function AppSidebar() {
                         </div>
                       )}
 
-                      {/* --- INLINE WORKSPACE POLICIES WARNING BOX ---[cite: 5] */}
+                      {/* --- INLINE WORKSPACE POLICIES WARNING BOX --- */}
                       {isPoliciesItem && showPolicyAlert && (
                         <div className="mx-2 mt-1 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg shadow-sm animate-in fade-in duration-200">
                           <div className="flex items-start justify-between gap-2">
