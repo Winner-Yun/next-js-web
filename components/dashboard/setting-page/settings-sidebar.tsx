@@ -76,11 +76,10 @@ export function SettingsSidebar({
       }
     }
 
-    // Clear local storage tokens
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
 
-    // Replace the current history state and redirect to your root page.tsx
+
     window.location.replace("/");
   };
 
