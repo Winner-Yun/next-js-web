@@ -258,9 +258,10 @@ export function HolidayDirectory() {
               configuration?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-row justify-end gap-2">
+          <DialogFooter className="flex-row justify-end gap-2!">
             <Button
               variant="outline"
+              className="cursor-pointer"
               onClick={() => {
                 setIsConfigConfirmOpen(false);
                 setPendingConfig(null);
@@ -272,7 +273,7 @@ export function HolidayDirectory() {
             <Button
               onClick={confirmConfigUpdate}
               disabled={isConfigSaving}
-              className="bg-brand text-white hover:bg-brand/90"
+              className="bg-brand cursor-pointer text-white hover:bg-brand/90"
             >
               {isConfigSaving ? (
                 <>
@@ -314,7 +315,7 @@ export function HolidayDirectory() {
               setIsManualAddOpen(true);
             }}
             disabled={isLoading || !workspace?.id}
-            className="h-10 text-xs bg-brand text-white hover:bg-brand/90 shrink-0"
+            className="h-10 cursor-pointer text-xs bg-brand text-white hover:bg-brand/90 shrink-0"
           >
             <PlusIcon className="size-4 mr-1.5" /> Add Holiday
           </Button>
@@ -370,7 +371,7 @@ export function HolidayDirectory() {
                 });
                 setIsConfigConfirmOpen(true);
               }}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background ${config.include_public_holidays ? "bg-brand" : "bg-muted-foreground/30"}`}
+              className={`relative  inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background ${config.include_public_holidays ? "bg-brand" : "bg-muted-foreground/30"}`}
             >
               <span
                 className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${config.include_public_holidays ? "translate-x-4" : "translate-x-0"}`}

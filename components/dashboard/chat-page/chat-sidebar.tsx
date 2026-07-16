@@ -15,7 +15,7 @@ export const MEMBERS_DATA: Record<
   company: [{ id: "u4", name: "Bob", role: "member" }],
 };
 
-interface ActiveChat {  
+interface ActiveChat {
   id: string;
   type: ChatType; //[cite: 5]
   name: string;
@@ -53,7 +53,7 @@ export function ChatSidebar({
               name: workspace.name,
             })
           }
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+          className={`w-full cursor-pointer flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
             activeChat.id === workspace?.id
               ? "bg-brand/10 text-brand font-medium"
               : "text-foreground hover:bg-muted/50"
@@ -85,7 +85,7 @@ export function ChatSidebar({
                     name: member.name,
                   })
                 }
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                className={`w-full flex items-center cursor-pointer gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                   activeChat.id === `dm_${member.id}`
                     ? "bg-brand/10 text-brand font-medium"
                     : "text-foreground hover:bg-muted/50"

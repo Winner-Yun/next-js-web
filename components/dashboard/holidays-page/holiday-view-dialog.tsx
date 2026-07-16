@@ -70,7 +70,7 @@ export function HolidayViewDialog({
             variant="outline"
             size="sm"
             onClick={onClose}
-            className="text-xs h-9"
+            className="text-xs cursor-pointer h-9"
           >
             Close
           </Button>
@@ -91,7 +91,7 @@ export function HolidayViewDialog({
                 <Button
                   variant="destructive"
                   size="sm"
-                  className="text-xs h-9 px-3"
+                  className="text-xs cursor-pointer h-9 px-3"
                 >
                   <TrashIcon className="size-3.5 mr-1.5" /> Delete
                 </Button>
@@ -103,7 +103,7 @@ export function HolidayViewDialog({
                   onEdit(selectedHoliday);
                   onClose();
                 }}
-                className="text-xs h-9 bg-brand text-white hover:bg-brand/90 px-3"
+                className="text-xs cursor-pointer h-9 bg-brand text-white hover:bg-brand/90 px-3"
               >
                 <EditIcon className="size-3.5 mr-1.5" /> Edit
               </Button>

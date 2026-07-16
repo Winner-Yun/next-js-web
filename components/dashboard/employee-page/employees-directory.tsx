@@ -344,7 +344,7 @@ export function EmployeesDirectory() {
               type="button"
               variant="outline"
               size="sm"
-              className="text-xs h-9"
+              className="text-xs h-9 cursor-pointer"
               disabled={isRevoking}
               onClick={() => setInviteToRevoke(null)}
             >
@@ -354,7 +354,7 @@ export function EmployeesDirectory() {
               type="button"
               variant="destructive"
               size="sm"
-              className="text-xs h-9 gap-1.5 min-w-32.5"
+              className="text-xs h-9 gap-1.5 min-w-32.5 cursor-pointer"
               disabled={isRevoking}
               onClick={handleFinalRevoke}
             >

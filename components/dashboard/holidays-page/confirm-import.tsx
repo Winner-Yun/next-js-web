@@ -50,7 +50,7 @@ export function ConfirmImportDialog({
           <Button
             onClick={onConfirm}
             disabled={isImporting}
-            className="bg-brand text-white hover:bg-brand/90"
+            className="bg-brand cursor-pointer text-white hover:bg-brand/90"
           >
             {isImporting ? (
               <>

@@ -79,7 +79,7 @@ export function ChatMessageBubble({
           {msg.isMine && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-1.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted rounded-md mt-1 shrink-0">
+                <button className="p-1.5 text-muted-foreground cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted rounded-md mt-1 shrink-0">
                   <MoreVerticalIcon className="size-4" />
                 </button>
               </DropdownMenuTrigger>

@@ -125,6 +125,7 @@ function AuthContent() {
             asChild
             variant="ghost"
             className="
+            cursor-pointer
             group rounded-xl
             text-muted-foreground
             hover:bg-muted/50
@@ -232,7 +233,7 @@ function AuthContent() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-12 w-full justify-center gap-3 rounded-xl border-border/70 bg-background/80 text-sm font-semibold shadow-sm transition-transform hover:bg-background"
+                    className="h-12 cursor-pointer w-full justify-center gap-3 rounded-xl border-border/70 bg-background/80 text-sm font-semibold shadow-sm transition-transform hover:bg-background"
                   >
                     <GoogleIcon className="size-4 shrink-0 text-[#4285f4]" />
                     <span>Continue with Google</span>

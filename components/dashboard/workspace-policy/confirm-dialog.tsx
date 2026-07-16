@@ -81,7 +81,7 @@ export function ConfirmDialog({
           <Button
             disabled={isLoading}
             onClick={handleConfirm}
-            className={`h-9 text-xs font-semibold text-white ${
+            className={`h-9 text-xs cursor-pointer font-semibold text-white ${
               isDestructive
                 ? "bg-destructive hover:bg-destructive/90"
                 : "bg-brand hover:bg-brand/90"

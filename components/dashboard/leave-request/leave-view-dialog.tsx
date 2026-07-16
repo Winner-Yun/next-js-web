@@ -177,7 +177,7 @@ export function LeaveViewDialog({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="text-xs h-9"
+                  className="text-xs cursor-pointer h-9"
                   onClick={onClose}
                   disabled={isProcessing}
                 >
@@ -189,7 +189,7 @@ export function LeaveViewDialog({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="text-xs h-9 gap-1 hover:text-foreground"
+                    className="text-xs cursor-pointer h-9 gap-1 hover:text-foreground"
                     onClick={() => onEditTrigger(selectedRequest)}
                     disabled={isProcessing}
                   >
@@ -204,7 +204,7 @@ export function LeaveViewDialog({
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="text-xs h-9 border-destructive/40 text-destructive hover:bg-destructive/10 gap-1"
+                    className="text-xs h-9 cursor-pointer border-destructive/40 text-destructive hover:bg-destructive/10 gap-1"
                     onClick={() => handleAction("Rejected")}
                     disabled={isProcessing}
                   >
@@ -218,7 +218,7 @@ export function LeaveViewDialog({
                   <Button
                     type="button"
                     size="sm"
-                    className="text-xs h-9 bg-emerald-600 text-white hover:bg-emerald-500 gap-1"
+                    className="text-xs h-9 cursor-pointer bg-emerald-600 text-white hover:bg-emerald-500 gap-1"
                     onClick={() => handleAction("Approved")}
                     disabled={isProcessing}
                   >

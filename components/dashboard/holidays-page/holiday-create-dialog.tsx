@@ -127,7 +127,7 @@ export function HolidayCreateDialog({
               type="button"
               variant="outline"
               size="sm"
-              className="text-xs h-9"
+              className="text-xs h-9 cursor-pointer"
               onClick={onClose}
               disabled={isSaving}
             >
@@ -136,7 +136,7 @@ export function HolidayCreateDialog({
             <Button
               type="submit"
               size="sm"
-              className="text-xs h-9 bg-brand text-white hover:bg-brand/90 px-4 transition-all"
+              className="text-xs cursor-pointer h-9 bg-brand text-white hover:bg-brand/90 px-4 transition-all"
               disabled={isSaving || !newHolidayName.trim() || !holidayDate}
             >
               {isSaving ? (

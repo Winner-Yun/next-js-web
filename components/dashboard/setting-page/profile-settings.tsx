@@ -290,7 +290,7 @@ export function ProfileSettings() {
                 onClick={handlePickAvatar}
                 disabled={isProcessing}
                 aria-label="Change profile picture"
-                className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-not-allowed"
+                className="absolute cursor-pointer inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-not-allowed"
               >
                 {isUploadingAvatar ? (
                   <Loader2Icon className="size-5 text-white animate-spin" />
@@ -379,7 +379,7 @@ export function ProfileSettings() {
             <Button
               disabled={isProcessing || isLoading}
               type="submit"
-              className="bg-brand hover:bg-brand/90 text-white"
+              className="bg-brand cursor-pointer hover:bg-brand/90 text-white"
             >
               {isSaving ? (
                 <Loader2Icon className="size-4 mr-2 animate-spin" />
@@ -432,7 +432,7 @@ export function ProfileSettings() {
           <DialogFooter className="sm:justify-center">
             <Button
               type="button"
-              className="bg-brand hover:bg-brand/90 text-white"
+              className="bg-brand cursor-pointer hover:bg-brand/90 text-white"
               onClick={() => setAvatarSuccessUrl(null)}
             >
               Done

@@ -23,10 +23,15 @@ export function AppHeader() {
         </BreadcrumbList>
       </Breadcrumb>{" "}
       <div className="flex items-center gap-3">
-        <Button size="icon-sm" variant="outline">
+        <Button size="icon-sm" className="cursor-pointer" variant="outline">
           <HelpCircleIcon />
         </Button>
-        <Button aria-label="Notifications" size="icon-sm" variant="outline">
+        <Button
+          aria-label="Notifications"
+          size="icon-sm"
+          className="cursor-pointer"
+          variant="outline"
+        >
           <BellIcon />
         </Button>
         <Separator

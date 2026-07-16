@@ -79,7 +79,6 @@ export function SettingsSidebar({
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
 
-
     window.location.replace("/");
   };
 
@@ -95,7 +94,7 @@ export function SettingsSidebar({
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all shrink-0 md:shrink border ${
+                className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all shrink-0 md:shrink border ${
                   isActive
                     ? "bg-brand/10 text-brand border-brand/20 shadow-xs"
                     : "border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground"
@@ -115,7 +114,7 @@ export function SettingsSidebar({
           {/* Logout Trigger Button */}
           <button
             onClick={() => setIsLogoutDialogOpen(true)}
-            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all shrink-0 md:shrink border border-transparent text-red-500 hover:bg-red-500/10 hover:text-red-600"
+            className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all shrink-0 md:shrink border border-transparent text-red-500 hover:bg-red-500/10 hover:text-red-600"
           >
             <LogOutIcon className="size-4" />
             Log out
@@ -136,12 +135,14 @@ export function SettingsSidebar({
           <DialogFooter className="mt-4 gap-2! sm:gap-0">
             <Button
               variant="outline"
+              className="cursor-pointer"
               onClick={() => setIsLogoutDialogOpen(false)}
               disabled={isLoggingOut}
             >
               Cancel
             </Button>
             <Button
+              className="cursor-pointer"
               variant="destructive"
               onClick={handleConfirmLogout}
               disabled={isLoggingOut}

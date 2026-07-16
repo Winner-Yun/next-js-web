@@ -45,7 +45,7 @@ export function Footer() {
                 <li key={link.label}>
                   <button
                     onClick={() => scrollToSection(link.id)}
-                    className="transition-colors hover:text-brand cursor-pointer"
+                    className="transition-colors  hover:text-brand cursor-pointer"
                   >
                     {link.label}
                   </button>

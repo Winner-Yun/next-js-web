@@ -147,7 +147,7 @@ export function AttendanceViewDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="text-xs h-9"
+                className="text-xs cursor-pointer h-9"
                 onClick={onClose}
               >
                 Close View

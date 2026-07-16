@@ -85,7 +85,7 @@ export function CalendarHeader({
         <Button
           variant="outline"
           size="sm"
-          className="h-9 text-xs font-medium px-4 shadow-xs"
+          className="h-9 text-xs cursor-pointer font-medium px-4 shadow-xs"
           onClick={onToday}
         >
           Today
@@ -94,7 +94,7 @@ export function CalendarHeader({
           <Button
             variant="outline"
             size="icon"
-            className="size-9"
+            className="size-9 cursor-pointer"
             onClick={onPrevMonth}
           >
             <ChevronLeftIcon className="size-4" />
@@ -102,7 +102,7 @@ export function CalendarHeader({
           <Button
             variant="outline"
             size="icon"
-            className="size-9"
+            className="size-9 cursor-pointer"
             onClick={onNextMonth}
           >
             <ChevronRightIcon className="size-4" />

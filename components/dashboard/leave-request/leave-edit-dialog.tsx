@@ -125,7 +125,7 @@ export function LeaveEditDialog({
               type="button"
               variant="outline"
               size="sm"
-              className="text-xs h-9"
+              className="text-xs cursor-pointer h-9"
               onClick={onClose}
               disabled={isSaving}
             >
@@ -134,7 +134,7 @@ export function LeaveEditDialog({
             <Button
               type="submit"
               size="sm"
-              className="text-xs h-9 bg-brand text-white hover:bg-brand/90 px-4 gap-1.5"
+              className="text-xs cursor-pointer h-9 bg-brand text-white hover:bg-brand/90 px-4 gap-1.5"
               disabled={isSaving}
             >
               {isSaving && <Loader2 className="size-3.5 animate-spin" />}

@@ -38,7 +38,7 @@ export function AppearanceSettings() {
         <div className="grid grid-cols-3 gap-4">
           <button
             onClick={() => setTheme("light")}
-            className={`flex flex-col items-center justify-center gap-3 h-28 border rounded-xl transition-all duration-200 ${
+            className={`flex cursor-pointer flex-col items-center justify-center gap-3 h-28 border rounded-xl transition-all duration-200 ${
               theme === "light"
                 ? "border-brand bg-brand/5 ring-1 ring-brand/30 shadow-sm"
                 : "border-muted/60 hover:bg-muted/30 hover:border-muted-foreground/30 text-muted-foreground hover:text-foreground"
@@ -56,7 +56,7 @@ export function AppearanceSettings() {
 
           <button
             onClick={() => setTheme("dark")}
-            className={`flex flex-col items-center justify-center gap-3 h-28 border rounded-xl transition-all duration-200 ${
+            className={`flex cursor-pointer flex-col items-center justify-center gap-3 h-28 border rounded-xl transition-all duration-200 ${
               theme === "dark"
                 ? "border-brand bg-brand/5 ring-1 ring-brand/30 shadow-sm"
                 : "border-muted/60 hover:bg-muted/30 hover:border-muted-foreground/30 text-muted-foreground hover:text-foreground"
@@ -74,7 +74,7 @@ export function AppearanceSettings() {
 
           <button
             onClick={() => setTheme("system")}
-            className={`flex flex-col items-center justify-center gap-3 h-28 border rounded-xl transition-all duration-200 ${
+            className={`flex cursor-pointer flex-col items-center justify-center gap-3 h-28 border rounded-xl transition-all duration-200 ${
               theme === "system"
                 ? "border-brand bg-brand/5 ring-1 ring-brand/30 shadow-sm"
                 : "border-muted/60 hover:bg-muted/30 hover:border-muted-foreground/30 text-muted-foreground hover:text-foreground"

@@ -75,7 +75,7 @@ export function NavUser() {
     return (
       <button
         onClick={handleLogout}
-        className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+        className="text-xs text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
       >
         Session expired. Log out
       </button>
@@ -87,7 +87,7 @@ export function NavUser() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="rounded-full outline-none ring-offset-background transition-all hover:ring-2 hover:ring-primary focus-visible:ring-2 focus-visible:ring-primary">
+        <button className="cursor-pointer rounded-full outline-none ring-offset-background transition-all hover:ring-2 hover:ring-primary focus-visible:ring-2 focus-visible:ring-primary">
           <Avatar className="size-8 cursor-pointer">
             <AvatarImage src={user.avatar} alt={user.name} />
             <AvatarFallback>{userInitial}</AvatarFallback>

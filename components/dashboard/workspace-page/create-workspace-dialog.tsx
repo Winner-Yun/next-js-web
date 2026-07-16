@@ -79,7 +79,7 @@ export function CreateWorkspaceDialog() {
       <DialogTrigger asChild>
         <Button
           size="lg"
-          className="gap-2 bg-brand text-white hover:bg-brand/90"
+          className="gap-2 bg-brand cursor-pointer text-white hover:bg-brand/90"
         >
           <PlusIcon className="size-4" />
           New Workspace
@@ -133,7 +133,7 @@ export function CreateWorkspaceDialog() {
             </Button>
             <Button
               type="submit"
-              className="bg-brand text-white hover:bg-brand/90"
+              className="bg-brand cursor-pointer text-white hover:bg-brand/90"
               disabled={isLoading}
             >
               {isLoading ? (

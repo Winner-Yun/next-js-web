@@ -36,7 +36,7 @@ export function HolidayCard({ holiday, onRemove, onEdit }: HolidayCardProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-7 text-muted-foreground hover:text-brand hover:bg-brand/10"
+                className="size-7 cursor-pointer text-muted-foreground hover:text-brand hover:bg-brand/10"
                 onClick={onEdit}
               >
                 <Edit2Icon className="size-3.5" />
@@ -51,7 +51,7 @@ export function HolidayCard({ holiday, onRemove, onEdit }: HolidayCardProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  className="size-7 cursor-pointer text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                 >
                   <Trash2Icon className="size-3.5" />
                 </Button>

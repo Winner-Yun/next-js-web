@@ -454,7 +454,7 @@ export function PolicyFormDialog({
               size="sm"
               onClick={() => setIsOpen(false)}
               disabled={isProcessing}
-              className="text-xs h-9 font-semibold"
+              className="text-xs cursor-pointer h-9 font-semibold"
             >
               Cancel
             </Button>
@@ -462,7 +462,7 @@ export function PolicyFormDialog({
               type="submit"
               size="sm"
               disabled={isProcessing}
-              className="text-xs h-9 font-semibold bg-brand text-white hover:bg-brand/90 px-4"
+              className="text-xs h-9 cursor-pointer font-semibold bg-brand text-white hover:bg-brand/90 px-4"
             >
               {isProcessing ? (
                 <span className="flex items-center gap-2">

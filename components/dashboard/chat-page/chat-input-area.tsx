@@ -33,7 +33,10 @@ export function ChatInputArea({
           <span className="flex items-center gap-1.5">
             <Edit2Icon className="size-3.5" /> Editing Message...
           </span>
-          <button onClick={onCancelEdit} className="hover:underline">
+          <button
+            onClick={onCancelEdit}
+            className="hover:underline cursor-pointer"
+          >
             Cancel
           </button>
         </div>
@@ -53,7 +56,7 @@ export function ChatInputArea({
         <Button
           onClick={onSubmit}
           disabled={!inputValue.trim()}
-          className="h-11 w-11 rounded-xl bg-brand text-white shrink-0 shadow-xs hover:bg-brand/90 transition-all flex items-center justify-center p-0"
+          className="h-11 w-11 rounded-xl bg-brand cursor-pointer text-white shrink-0 shadow-xs hover:bg-brand/90 transition-all flex items-center justify-center p-0"
         >
           <SendIcon className="size-4 ml-1" />
         </Button>

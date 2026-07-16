@@ -91,7 +91,12 @@ export function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-3 border-l border-border pl-6">
-            <Button asChild size="sm" variant="ghost">
+            <Button
+              asChild
+              className="cursor-pointer"
+              size="sm"
+              variant="ghost"
+            >
               <Link href="/auth">Sign In</Link>
             </Button>
 

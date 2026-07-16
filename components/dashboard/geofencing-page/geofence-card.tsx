@@ -148,7 +148,7 @@ export function GeofenceCard({
             variant={isActive ? "secondary" : "outline"}
             size="sm"
             disabled={isActive || isProcessing || hasInvalidCoordinates}
-            className={`h-8 text-xs flex-1 ${
+            className={`h-8 text-xs flex-1 cursor-pointer${
               isActive
                 ? "opacity-50 cursor-default"
                 : "hover:bg-brand hover:text-white border-brand/20"
@@ -184,7 +184,7 @@ export function GeofenceCard({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0"
+                      className="h-8 w-8 cursor-pointer text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0"
                       disabled={isActive || isProcessing}
                     >
                       <Trash2Icon className="size-4" />

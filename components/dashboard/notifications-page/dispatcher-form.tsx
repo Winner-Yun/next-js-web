@@ -221,7 +221,7 @@ export function DispatcherForm({ onDispatchSuccess }: DispatcherFormProps) {
           <Button
             onClick={handleCreateAnother}
             variant="outline"
-            className="text-xs h-9 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all border-muted hover:bg-muted/40"
+            className="text-xs cursor-pointer h-9 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all border-muted hover:bg-muted/40"
           >
             <PlusIcon className="size-3.5" /> Back Now
           </Button>
@@ -245,7 +245,7 @@ export function DispatcherForm({ onDispatchSuccess }: DispatcherFormProps) {
           <button
             type="button"
             onClick={() => setTarget("global")}
-            className={`h-11 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-muted/60 ${
+            className={`h-11 cursor-pointer flex items-center justify-center gap-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-muted/60 ${
               target === "global"
                 ? "border-brand bg-brand text-white shadow-xs"
                 : "bg-background hover:bg-muted/30 text-muted-foreground hover:text-foreground"
@@ -256,7 +256,7 @@ export function DispatcherForm({ onDispatchSuccess }: DispatcherFormProps) {
           <button
             type="button"
             onClick={() => setTarget("member")}
-            className={`h-11 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-muted/60 ${
+            className={`h-11 flex cursor-pointer items-center justify-center gap-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-muted/60 ${
               target === "member"
                 ? "border-brand bg-brand text-white shadow-xs"
                 : "bg-background hover:bg-muted/30 text-muted-foreground hover:text-foreground"
@@ -343,7 +343,7 @@ export function DispatcherForm({ onDispatchSuccess }: DispatcherFormProps) {
                 key={t}
                 type="button"
                 onClick={() => setType(t)}
-                className={`h-10 flex items-center justify-center gap-1.5 rounded-xl text-xs font-medium border transition-all duration-150 ${
+                className={`h-10 cursor-pointer flex items-center justify-center gap-1.5 rounded-xl text-xs font-medium border transition-all duration-150 ${
                   isActive ? config.activeClass : config.inactiveClass
                 }`}
               >
@@ -385,7 +385,7 @@ export function DispatcherForm({ onDispatchSuccess }: DispatcherFormProps) {
 
       <Button
         disabled={isPushing}
-        className="w-full h-11 bg-brand hover:bg-brand/90 text-white font-semibold rounded-xl shadow-xs transition-all duration-150 flex items-center justify-center gap-2"
+        className="w-full h-11 cursor-pointer bg-brand hover:bg-brand/90 text-white font-semibold rounded-xl shadow-xs transition-all duration-150 flex items-center justify-center gap-2"
       >
         {isPushing ? (
           <>

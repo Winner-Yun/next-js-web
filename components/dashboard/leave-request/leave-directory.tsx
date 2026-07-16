@@ -261,7 +261,7 @@ export function LeaveDirectory() {
                   <button
                     key={st}
                     onClick={() => setStatusFilter(st)}
-                    className={`flex items-center justify-center gap-1.5 text-xs font-semibold px-3 h-7 rounded-md transition-all ${
+                    className={`flex cursor-pointer items-center justify-center gap-1.5 text-xs font-semibold px-3 h-7 rounded-md transition-all ${
                       isActive
                         ? "bg-brand text-white"
                         : "text-muted-foreground hover:text-foreground"
@@ -279,7 +279,7 @@ export function LeaveDirectory() {
             {/* Advanced Filters Trigger Button */}
             <button
               onClick={handleToggleAdvanced}
-              className={`flex items-center gap-1.5 px-3 h-9 rounded-lg border text-xs font-semibold transition-all ${
+              className={`flex cursor-pointer items-center gap-1.5 px-3 h-9 rounded-lg border text-xs font-semibold transition-all ${
                 showAdvanced
                   ? "bg-muted text-foreground border-muted-foreground/30"
                   : "bg-background text-muted-foreground border-muted/60"
@@ -336,7 +336,7 @@ export function LeaveDirectory() {
                 onClick={() =>
                   setSortOrder(sortOrder === "asc" ? "desc" : "asc")
                 }
-                className="flex items-center justify-between w-full h-8.5 text-xs rounded-lg border border-muted/80 bg-background px-3 font-medium text-left"
+                className="flex items-center cursor-pointer justify-between w-full h-8.5 text-xs rounded-lg border border-muted/80 bg-background px-3 font-medium text-left"
               >
                 <span>{sortOrder === "asc" ? "Ascending" : "Descending"}</span>
                 <ArrowUpDown className="size-3.5 text-muted-foreground" />

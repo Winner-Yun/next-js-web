@@ -166,7 +166,7 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
                   <Button
                     size="sm"
                     variant={isActive ? "default" : "outline"}
-                    className="h-8 w-full text-xs"
+                    className="h-8 cursor-pointer w-full text-xs"
                     onClick={handleSwitch}
                     disabled={isActive || !isOwner}
                   >
@@ -199,7 +199,7 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="size-8 border bg-muted"
+                    className="size-8 cursor-pointer border bg-muted"
                   >
                     <PencilIcon className="size-3.5" />
                   </Button>
@@ -226,7 +226,7 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="size-8 border hover:text-destructive"
+                          className="size-8 border cursor-pointer hover:text-destructive"
                           disabled={isActive || isDeleting}
                         >
                           {isDeleting ? (

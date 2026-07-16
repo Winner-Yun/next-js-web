@@ -15,7 +15,7 @@ export function CustomTrigger({ place }: { place: Place }) {
   return (
     <SidebarTrigger
       className={cn(
-        "transition-opacity duration-300 ease-out motion-reduce:transition-none",
+        "transition-opacity cursor-pointer duration-300 ease-out motion-reduce:transition-none",
 
         // navbar trigger disappears when sidebar is open
         place === "navbar" && sidebarOpen && "pointer-events-none opacity-0",

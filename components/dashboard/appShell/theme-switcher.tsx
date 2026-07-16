@@ -13,7 +13,7 @@ export function ThemeSwitcher() {
 
   return (
     <Button
-      className="text-muted-foreground cursor-pointer"
+      className="text-muted-foreground cursor-pointer "
       onClick={toggleTheme}
       size="icon-sm"
       variant="ghost"

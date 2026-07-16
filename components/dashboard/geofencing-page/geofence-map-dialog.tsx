@@ -97,14 +97,14 @@ export function GeofenceMapDialog({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-foreground bg-muted hover:bg-muted shrink-0"
+            className="h-8 cursor-pointer w-8 text-foreground bg-muted hover:bg-muted shrink-0"
           >
             <PencilIcon className="size-3.5 " />
           </Button>
         ) : (
           <Button
             size="sm"
-            className="gap-2 h-10 text-xs font-medium bg-brand text-white hover:bg-brand/90 shadow-sm"
+            className="gap-2 h-10 cursor-pointer text-xs font-medium bg-brand text-white hover:bg-brand/90 shadow-sm"
             disabled={isSubmitting || isDisabled}
           >
             <PlusIcon className="size-4" />
@@ -195,7 +195,7 @@ export function GeofenceMapDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="text-xs h-9"
+                className="text-xs h-9 cursor-pointer"
                 onClick={() => setIsOpen(false)}
               >
                 Cancel
@@ -204,7 +204,7 @@ export function GeofenceMapDialog({
               <Button
                 type="submit"
                 size="sm"
-                className="text-xs h-9 bg-brand text-white hover:bg-brand/90 px-4"
+                className="text-xs h-9 cursor-pointer bg-brand text-white hover:bg-brand/90 px-4"
               >
                 Review Policy
               </Button>
@@ -271,7 +271,7 @@ export function GeofenceMapDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="text-xs h-9"
+                className="text-xs h-9 cursor-pointer"
                 disabled={isSubmitting}
                 onClick={() => setIsConfirmingStep(false)}
               >
@@ -282,7 +282,7 @@ export function GeofenceMapDialog({
                 size="sm"
                 disabled={isSubmitting}
                 onClick={handleConfirm}
-                className="text-xs h-9 bg-brand text-white hover:bg-brand/90 px-4 min-w-30"
+                className="text-xs h-9 cursor-pointer bg-brand text-white hover:bg-brand/90 px-4 min-w-30"
               >
                 {isSubmitting ? (
                   <Loader2Icon className="size-4 animate-spin" />

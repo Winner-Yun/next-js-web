@@ -191,7 +191,7 @@ export function PolicyDirectory() {
               onClick={openCreate}
               size="sm"
               disabled={isProcessing || isLoading || !workspace}
-              className="w-full sm:w-auto gap-2 h-10 text-xs font-semibold bg-brand text-white hover:bg-brand/90 shadow-sm"
+              className="w-full cursor-pointer sm:w-auto gap-2 h-10 text-xs font-semibold bg-brand text-white hover:bg-brand/90 shadow-sm"
             >
               <PlusIcon className="size-4" />
               Create Policy
@@ -248,7 +248,7 @@ export function PolicyDirectory() {
                 onClick={openCreate}
                 size="sm"
                 disabled={isProcessing || isLoading || !workspace}
-                className="gap-2 h-10 text-xs font-semibold bg-brand text-white hover:bg-brand/90 shadow-sm px-5"
+                className="gap-2 h-10 cursor-pointer text-xs font-semibold bg-brand text-white hover:bg-brand/90 shadow-sm px-5"
               >
                 <PlusIcon className="size-4" />
                 Create Your First Policy

@@ -236,7 +236,7 @@ export function ManageAccessDialog({ onSuccess }: ManageAccessDialogProps) {
         <Button
           size="sm"
           variant="outline"
-          className="gap-2 h-9 text-xs font-medium text-destructive hover:bg-destructive/5 hover:text-destructive border-muted/80"
+          className="gap-2 cursor-pointer h-9 text-xs font-medium text-destructive hover:bg-destructive/5 hover:text-destructive border-muted/80"
         >
           <UserMinusIcon className="size-4" />
           Manage Access
@@ -399,7 +399,7 @@ export function ManageAccessDialog({ onSuccess }: ManageAccessDialogProps) {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="text-xs h-9"
+                className="text-xs h-9 cursor-pointer"
                 onClick={() => setIsOpen(false)}
               >
                 Cancel
@@ -408,7 +408,7 @@ export function ManageAccessDialog({ onSuccess }: ManageAccessDialogProps) {
                 type="submit"
                 size="sm"
                 disabled={isTargetOwner}
-                className={`text-xs h-9 ${
+                className={`text-xs h-9 cursor-pointer ${
                   managementAction === "remove"
                     ? "bg-destructive text-white hover:bg-destructive/90"
                     : managementAction === "suspend"
@@ -481,7 +481,7 @@ export function ManageAccessDialog({ onSuccess }: ManageAccessDialogProps) {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="text-xs h-9"
+                className="text-xs  h-9 cursor-pointer"
                 disabled={isSubmitting}
                 onClick={() => setIsConfirming(false)}
               >
@@ -493,7 +493,7 @@ export function ManageAccessDialog({ onSuccess }: ManageAccessDialogProps) {
                 size="sm"
                 disabled={isSubmitting}
                 onClick={handleFinalConfirm}
-                className={`text-xs h-9 gap-1.5 ${
+                className={`text-xs h-9 cursor-pointer gap-1.5 ${
                   managementAction === "remove"
                     ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     : managementAction === "unsuspend"

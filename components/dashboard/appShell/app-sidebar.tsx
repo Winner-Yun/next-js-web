@@ -119,7 +119,9 @@ export function AppSidebar() {
               height={30}
               style={{ width: "auto", height: "auto" }}
             />
-            <span className="font-medium text-brand pt-1">WorkSmart</span>
+            <span className="font-medium cursor-pointer text-brand pt-1">
+              WorkSmart
+            </span>
           </Link>
         </Button>
 
@@ -222,7 +224,7 @@ export function AppSidebar() {
                                 e.stopPropagation();
                                 setIsGeofenceAlertDismissed(true);
                               }}
-                              className="text-muted-foreground hover:text-foreground hover:bg-accent p-0.5 rounded transition-colors shrink-0"
+                              className="text-muted-foreground cursor-pointer hover:text-foreground hover:bg-accent p-0.5 rounded transition-colors shrink-0"
                             >
                               <XIcon className="size-3.5" />
                             </button>
@@ -249,7 +251,7 @@ export function AppSidebar() {
                                 e.stopPropagation();
                                 setIsPolicyAlertDismissed(true);
                               }}
-                              className="text-muted-foreground hover:text-foreground hover:bg-accent p-0.5 rounded transition-colors shrink-0"
+                              className="text-muted-foreground cursor-pointer hover:text-foreground hover:bg-accent p-0.5 rounded transition-colors shrink-0"
                             >
                               <XIcon className="size-3.5" />
                             </button>
@@ -279,7 +281,7 @@ export function AppSidebar() {
           <ThemeSwitcher />
           <Button
             asChild
-            className="text-muted-foreground"
+            className="text-muted-foreground cursor-pointer"
             size="icon-sm"
             variant="ghost"
             disabled={isWorkspaceLoading}

@@ -311,7 +311,7 @@ export function AttendanceDirectory() {
                 <Button
                   variant={isToday ? "outline" : "default"}
                   size="sm"
-                  className={`hidden sm:flex h-10 text-xs font-medium px-4 shadow-xs shrink-0 transition-colors ${
+                  className={`hidden cursor-pointer sm:flex h-10 text-xs font-medium px-4 shadow-xs shrink-0 transition-colors ${
                     isToday
                       ? "border-muted/60 "
                       : "bg-brand text-white hover:bg-brand/90 border-transparent "
@@ -336,7 +336,7 @@ export function AttendanceDirectory() {
                 <Button
                   variant={isThisMonth ? "default" : "outline"}
                   size="sm"
-                  className={`hidden sm:flex h-10 text-xs font-medium px-4 shadow-xs shrink-0 transition-colors ${
+                  className={`hidden cursor-pointer sm:flex h-10 text-xs font-medium px-4 shadow-xs shrink-0 transition-colors ${
                     isThisMonth
                       ? "bg-brand text-white hover:bg-brand/90 border-transparent opacity-70"
                       : "border-muted/60"
@@ -362,7 +362,7 @@ export function AttendanceDirectory() {
               variant="outline"
               onClick={handleExportCSV}
               disabled={isLoading}
-              className="h-10 text-xs border-muted/60 bg-background shadow-xs gap-1.5 w-full sm:w-auto"
+              className="h-10 cursor-pointer text-xs border-muted/60 bg-background shadow-xs gap-1.5 w-full sm:w-auto"
             >
               <FileSpreadsheetIcon className="size-3.5 text-brand" />
               CSV
@@ -388,7 +388,7 @@ export function AttendanceDirectory() {
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-all ${
+                className={`text-xs cursor-pointer font-semibold px-3 py-1.5 rounded-md transition-all ${
                   statusFilter === status
                     ? "bg-brand text-white shadow-xs"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
@@ -413,7 +413,7 @@ export function AttendanceDirectory() {
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9 shrink-0 bg-background text-muted-foreground hover:text-foreground border-muted/60"
+              className="h-9 w-9 shrink-0 cursor-pointer bg-background text-muted-foreground hover:text-foreground border-muted/60"
               onClick={() =>
                 setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
               }
@@ -548,7 +548,7 @@ export function AttendanceDirectory() {
           <Button
             variant="outline"
             size="sm"
-            className="text-xs font-semibold h-8 w-24"
+            className="text-xs  cursor-pointer font-semibold h-8 w-24"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
           >
@@ -560,7 +560,7 @@ export function AttendanceDirectory() {
           <Button
             variant="outline"
             size="sm"
-            className="text-xs font-semibold h-8 w-24"
+            className="text-xs cursor-pointer font-semibold h-8 w-24"
             onClick={() => setPage((p) => p + 1)}
             disabled={page >= totalPages}
           >

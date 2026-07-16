@@ -35,7 +35,7 @@ export function NotificationHeader({
           <Button
             variant="outline"
             onClick={onMarkAllAsRead}
-            className="h-10 text-xs border-muted/60 bg-background shadow-xs gap-1.5"
+            className="h-10 cursor-pointer text-xs border-muted/60 bg-background shadow-xs gap-1.5"
           >
             <CheckCheckIcon className="size-4 text-muted-foreground" /> Mark all
             as read
@@ -43,7 +43,7 @@ export function NotificationHeader({
         )}
         <Button
           onClick={onCreateOpen}
-          className="h-10 text-xs bg-brand text-white hover:bg-brand/90 px-4 gap-1.5 shadow-sm"
+          className="h-10 cursor-pointer text-xs bg-brand text-white hover:bg-brand/90 px-4 gap-1.5 shadow-sm"
         >
           <PlusIcon className="size-4" /> Dispatch Notice
         </Button>

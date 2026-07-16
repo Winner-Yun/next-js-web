@@ -75,14 +75,14 @@ export function MobileNav() {
               <Button
                 asChild
                 variant="outline"
-                className="w-full bg-transparent"
+                className="w-full bg-transparent cursor-pointer"
               >
                 <Link href="/auth">Sign In</Link>
               </Button>
 
               <Button
                 asChild
-                className="w-full bg-brand text-white hover:bg-brand-hover"
+                className="w-full bg-brand cursor-pointer text-white hover:bg-brand-hover"
               >
                 <Link href="/auth">Get Started</Link>
               </Button>

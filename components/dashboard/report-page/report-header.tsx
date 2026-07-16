@@ -22,14 +22,14 @@ export function ReportHeader({ activeTab, onExport }: ReportHeaderProps) {
         <Button
           variant="outline"
           onClick={() => window.print()}
-          className="h-10 text-xs border-muted/60 bg-background shadow-xs gap-1.5"
+          className="h-10 cursor-pointer text-xs border-muted/60 bg-background shadow-xs gap-1.5"
         >
           <PrinterIcon className="size-3.5 text-muted-foreground" /> Print
           Report
         </Button>
         <Button
           onClick={onExport}
-          className="h-10 text-xs bg-brand text-white hover:bg-brand/90 px-4 shadow-sm gap-1.5"
+          className="h-10 cursor-pointer text-xs bg-brand text-white hover:bg-brand/90 px-4 shadow-sm gap-1.5"
         >
           <FileSpreadsheetIcon className="size-3.5" /> Export{" "}
           {activeTab === "attendance" ? "Attendance" : "Leaves"}

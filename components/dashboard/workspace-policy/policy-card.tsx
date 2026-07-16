@@ -169,7 +169,7 @@ export function PolicyCard({
             <Button
               variant="default"
               size="sm"
-              className="flex-1 h-8 text-xs font-semibold gap-1.5 bg-brand text-white hover:bg-brand/90"
+              className="flex-1 h-8 text-xs cursor-pointer font-semibold gap-1.5 bg-brand text-white hover:bg-brand/90"
               disabled={isProcessing}
             >
               <svg
@@ -192,7 +192,7 @@ export function PolicyCard({
           <Button
             variant="secondary"
             size="sm"
-            className="flex-1 h-8 text-xs font-semibold gap-1.5 opacity-50 cursor-default hover:bg-secondary"
+            className="flex-1 h-8  text-xs font-semibold gap-1.5 opacity-50 cursor-default hover:bg-secondary"
             disabled
           >
             <svg
@@ -215,7 +215,7 @@ export function PolicyCard({
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 shrink-0 text-foreground hover:bg-muted"
+          className="h-8 cursor-pointer w-8 shrink-0 text-foreground hover:bg-muted"
           onClick={onEdit}
           disabled={isProcessing}
         >
@@ -237,7 +237,7 @@ export function PolicyCard({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive border-muted-foreground/20"
+                    className="h-8 w-8 cursor-pointer shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive border-muted-foreground/20"
                     disabled={isActive || isProcessing}
                   >
                     <Trash2Icon className="size-3.5" />

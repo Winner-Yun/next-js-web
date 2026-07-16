@@ -121,7 +121,7 @@ export function EmployeeCard({
             <UserXIcon className="size-3.5 mr-1" /> Revoke
           </Button>
         ) : (
-          <div className="flex size-7 items-center justify-center rounded-lg border border-transparent transition-all duration-300 group-hover:border-muted group-hover:bg-muted/40">
+          <div className="flex size-7 cursor-pointer items-center justify-center rounded-lg border border-transparent transition-all duration-300 group-hover:border-muted group-hover:bg-muted/40">
             <ChevronRightIcon className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </div>
         )}

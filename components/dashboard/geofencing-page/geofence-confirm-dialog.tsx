@@ -76,13 +76,16 @@ export function GeofenceConfirmDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isProcessing} className="h-9 text-xs">
+          <AlertDialogCancel
+            disabled={isProcessing}
+            className="h-9 text-xs cursor-pointer"
+          >
             Cancel
           </AlertDialogCancel>
           <Button
             onClick={handleConfirm}
             disabled={isProcessing}
-            className={`h-9 text-xs text-white min-w-27.5 ${
+            className={`h-9 text-xs cursor-pointer text-white min-w-27.5 ${
               variant === "destructive"
                 ? "bg-destructive hover:bg-destructive/90"
                 : "bg-brand hover:bg-brand/90"

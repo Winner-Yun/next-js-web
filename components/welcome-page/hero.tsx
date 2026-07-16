@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowRightIcon, RocketIcon } from "lucide-react";
@@ -21,7 +23,7 @@ export function HeroSection() {
             "group mx-auto flex w-fit items-center gap-3 rounded-full border border-border/50 bg-muted/30 px-4 py-1.5 backdrop-blur-sm transition-all hover:bg-muted/50",
             "fade-in slide-in-from-bottom-10 animate-in fill-mode-backwards delay-500 duration-500 ease-out",
           )}
-          href="#link"
+          href="#about"
         >
           <RocketIcon className="size-4 text-brand" />
           <span className="text-sm font-medium text-muted-foreground">
@@ -53,14 +55,20 @@ export function HeroSection() {
         {/* Call to Actions */}
         <div className="fade-in slide-in-from-bottom-10 flex animate-in flex-col sm:flex-row flex-wrap items-center justify-center gap-4 fill-mode-backwards pt-6 delay-300 duration-500 ease-out">
           <Button
-            className="rounded-full border border-border/50 bg-transparent px-8 py-6 text-base font-semibold text-foreground shadow-lg transition-all hover:bg-muted/30 hover:shadow-xl hover:-translate-y-0.5"
+            onClick={() => {
+              window.location.href = "/auth";
+            }}
+            className="rounded-full cursor-pointer border border-border/50 bg-transparent px-8 py-6 text-base font-semibold text-foreground shadow-lg transition-all hover:bg-muted/30 hover:shadow-xl hover:-translate-y-0.5"
             size="lg"
             variant="outline"
           >
             Sign in
           </Button>
           <Button
-            className="rounded-full bg-brand px-8 py-6 text-base font-semibold text-white shadow-lg transition-all hover:bg-brand-hover hover:shadow-xl hover:-translate-y-0.5"
+            onClick={() => {
+              window.location.href = "/auth";
+            }}
+            className="rounded-full cursor-pointer bg-brand px-8 py-6 text-base font-semibold text-white shadow-lg transition-all hover:bg-brand-hover hover:shadow-xl hover:-translate-y-0.5"
             size="lg"
           >
             Get Started <ArrowRightIcon className="ml-2 size-4" />

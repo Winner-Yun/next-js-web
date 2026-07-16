@@ -164,7 +164,7 @@ export function InviteEmployeeDialog({
       <DialogTrigger asChild>
         <Button
           size="sm"
-          className="h-9 text-xs gap-1.5 bg-brand hover:bg-brand/90 font-medium"
+          className="h-9 text-xs cursor-pointer gap-1.5 bg-brand hover:bg-brand/90 font-medium"
         >
           <MailPlusIcon className="size-3.5" /> Invite Member
         </Button>
@@ -219,7 +219,7 @@ export function InviteEmployeeDialog({
                         // FIXED: Safe key fallback chain ensures a unique value is always allocated
                         key={user.id || user._id || `${user.email}-${index}`}
                         type="button"
-                        className="w-full text-left px-3 py-2 text-xs hover:bg-muted/80 transition-colors flex flex-col gap-0.5"
+                        className="w-full text-left px-3 cursor-pointer py-2 text-xs hover:bg-muted/80 transition-colors flex flex-col gap-0.5"
                         onMouseDown={(e) => {
                           e.preventDefault();
                           handleSelectSuggestion(user);
@@ -267,7 +267,7 @@ export function InviteEmployeeDialog({
               type="button"
               variant="outline"
               size="sm"
-              className="text-xs h-9"
+              className="text-xs  h-9 cursor-pointer"
               disabled={isSubmitting}
               onClick={() => setOpen(false)}
             >
@@ -276,7 +276,7 @@ export function InviteEmployeeDialog({
             <Button
               type="submit"
               size="sm"
-              className="text-xs h-9 min-w-27.5 bg-brand hover:bg-brand/90"
+              className="text-xs cursor-pointer h-9 min-w-27.5 bg-brand hover:bg-brand/90"
               disabled={isSubmitting || !email.trim()}
             >
               {isSubmitting ? (
