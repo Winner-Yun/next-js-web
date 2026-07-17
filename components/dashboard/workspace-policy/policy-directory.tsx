@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/provider/workspace-provider";
 import { PlusIcon, ScrollTextIcon, SearchIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 
@@ -25,6 +26,39 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+// How long (ms) the mouse needs to stay held down on a card before it
+// switches into "reorder" mode. Short clicks (buttons, etc.) never reach
+// this threshold, so normal interactions are unaffected.
+const LONG_PRESS_MS = 450;
+
+const getOrderStorageKey = (workspaceId: string) =>
+  `policy-order:${workspaceId}`;
+
+const readStoredOrder = (workspaceId: string): string[] | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(getOrderStorageKey(workspaceId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeStoredOrder = (workspaceId: string, order: string[]) => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      getOrderStorageKey(workspaceId),
+      JSON.stringify(order),
+    );
+  } catch {
+    // Ignore storage failures (e.g. private browsing quota) — ordering just
+    // won't persist across reloads in that case.
+  }
+};
+
 export function PolicyDirectory() {
   const { workspace } = useWorkspace();
   const [search, setSearch] = useState("");
@@ -33,6 +67,13 @@ export function PolicyDirectory() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPolicy, setEditingPolicy] =
     useState<WorkspacePolicyData | null>(null);
+
+  // Card order (by policy id), driven by drag-to-reorder and persisted
+  // per-workspace so it survives reloads.
+  const [orderedIds, setOrderedIds] = useState<string[]>([]);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const orderedIdsRef = useRef<string[]>([]);
 
   const {
     data: policiesData,
@@ -45,6 +86,77 @@ export function PolicyDirectory() {
     { revalidateOnFocus: false },
   );
 
+  // Keep the ref in sync so the mouseup handler (attached once) always sees
+  // the latest order without needing to re-bind on every reorder.
+  useEffect(() => {
+    orderedIdsRef.current = orderedIds;
+  }, [orderedIds]);
+
+  // Whenever fresh data arrives, respect any saved order for ids we still
+  // recognize, and tack newly-created policies onto the end.
+  useEffect(() => {
+    if (!policiesData || !workspace?.id) return;
+    const currentIds = policiesData.map((p) => p.id);
+    const stored = readStoredOrder(workspace.id);
+    const validStored = stored
+      ? stored.filter((id) => currentIds.includes(id))
+      : [];
+    const missing = currentIds.filter((id) => !validStored.includes(id));
+    setOrderedIds([...validStored, ...missing]);
+  }, [policiesData, workspace?.id]);
+
+  const clearPressTimer = () => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+  };
+
+  const handleCardMouseDown = (id: string) => {
+    clearPressTimer();
+    pressTimerRef.current = setTimeout(() => {
+      setDraggingId(id);
+      pressTimerRef.current = null;
+    }, LONG_PRESS_MS);
+  };
+
+  const handleCardMouseEnter = (id: string) => {
+    if (!draggingId || draggingId === id) return;
+    setOrderedIds((prev) => {
+      const fromIndex = prev.indexOf(draggingId);
+      const toIndex = prev.indexOf(id);
+      if (fromIndex === -1 || toIndex === -1) return prev;
+      const next = [...prev];
+      next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, draggingId);
+      return next;
+    });
+  };
+
+  const finishDragging = () => {
+    clearPressTimer();
+    if (draggingId && workspace?.id) {
+      writeStoredOrder(workspace.id, orderedIdsRef.current);
+    }
+    setDraggingId(null);
+  };
+
+  // Catch mouseup anywhere (not just on a card) so a drag that ends off a
+  // card still saves and exits cleanly.
+  useEffect(() => {
+    window.addEventListener("mouseup", finishDragging);
+    return () => window.removeEventListener("mouseup", finishDragging);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draggingId, workspace?.id]);
+
+  const orderedPolicies = useMemo(() => {
+    if (!policiesData) return [];
+    const byId = new Map(policiesData.map((p) => [p.id, p]));
+    return orderedIds
+      .map((id) => byId.get(id))
+      .filter((p): p is WorkspacePolicyData => Boolean(p));
+  }, [policiesData, orderedIds]);
+
   // Find the policy that is currently active
   const activePolicy = useMemo(() => {
     if (!policiesData) return null;
@@ -52,13 +164,13 @@ export function PolicyDirectory() {
   }, [policiesData]);
 
   const processedPolicies = useMemo(() => {
-    if (!policiesData) return [];
-    return policiesData.filter(
+    if (!orderedPolicies.length) return [];
+    return orderedPolicies.filter(
       (pol) =>
         pol.name.toLowerCase().includes(search.toLowerCase()) ||
         pol.id.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [policiesData, search]);
+  }, [orderedPolicies, search]);
 
   const handleSavePolicy = async (
     data: Omit<WorkspacePolicyData, "id" | "status">,
@@ -219,17 +331,27 @@ export function PolicyDirectory() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {processedPolicies.map((policy) => (
-            <PolicyCard
+            <div
               key={policy.id}
-              policy={policy}
-              onEdit={() => {
-                setEditingPolicy(policy);
-                setIsFormOpen(true);
-              }}
-              onDelete={handleRemovePolicy}
-              onActivate={handleSetActivePolicy}
-              isProcessing={isProcessing}
-            />
+              onMouseDown={() => handleCardMouseDown(policy.id)}
+              onMouseEnter={() => handleCardMouseEnter(policy.id)}
+              className={`transition-transform duration-150 select-none ${
+                draggingId === policy.id
+                  ? "cursor-grabbing scale-[1.02] z-10 drop-shadow-lg"
+                  : "cursor-grab"
+              }`}
+            >
+              <PolicyCard
+                policy={policy}
+                onEdit={() => {
+                  setEditingPolicy(policy);
+                  setIsFormOpen(true);
+                }}
+                onDelete={handleRemovePolicy}
+                onActivate={handleSetActivePolicy}
+                isProcessing={isProcessing}
+              />
+            </div>
           ))}
 
           {hasNoPolicies ? (

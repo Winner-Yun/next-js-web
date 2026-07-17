@@ -6,23 +6,23 @@ import type React from "react";
 
 const emails = [
   "winnerlegendpvh1426@gmail.com",
-  "test@example.com",
-  "test@example.com",
-  "test@example.com",
+  "phyna59@gmail.com",
+  "thasopheak777@gmail.com",
+  "bunnoreaksambathh@gmail.com",
 ];
 
 const facebookUsers = [
-  "@Winner Yun",
-  "@ui.team",
-  "@app.support",
-  "@community.page",
+  "@winnerYun",
+  "@cheamsophy ",
+  "@ThaSopheak1",
+  "@BUN_NOREAKSAMBATH ",
 ];
 
 const telegramUsers = [
-  "@winnerYun",
-  "@ui.team",
-  "@app.support",
-  "@community.page",
+  "@Winner Yun",
+  "@Chem Sophy",
+  "@Tha Sopheak",
+  "@Bun Noreaksambath",
 ];
 
 type ContactItem = {

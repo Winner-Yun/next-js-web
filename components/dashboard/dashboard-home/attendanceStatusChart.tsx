@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
-import { useWorkspace } from "@/provider/workspace-provider";
 import { useId } from "react";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 
@@ -46,7 +45,6 @@ export function AttendanceStatusChart() {
   const chartUid = useId().replace(/:/g, "");
   const idLineGlow = `attendance-line-glow-${chartUid}`;
 
-  const { workspace } = useWorkspace();
   const { attendance, isLoading } = useDashboardData();
 
   // Build last 7 calendar days skeleton (rolling window ending today)
@@ -69,19 +67,32 @@ export function AttendanceStatusChart() {
     const countByStatus = (status: string) =>
       Array.isArray(attendance)
         ? attendance.filter((item: unknown) => {
-            if (
-              !item ||
-              typeof item !== "object" ||
-              (item as AttendanceItem).status !== status
-            ) {
-              return false;
-            }
+            if (!item || typeof item !== "object") return false;
+
             const record = item as AttendanceItem;
+
+            let matchesStatus = false;
+            if (status === "present") {
+              matchesStatus =
+                record.status === "present" || record.status === "late";
+            } else {
+              matchesStatus = record.status === status;
+            }
+
+            if (!matchesStatus) return false;
+
             if (record.date && record.date === slot.date) return true;
+
             if (record.timestamp) {
-              const ts = new Date(record.timestamp);
+              const tsStr = String(record.timestamp);
+              const safeTsStr =
+                tsStr.endsWith("Z") || tsStr.includes("+")
+                  ? tsStr
+                  : `${tsStr}Z`;
+              const ts = new Date(safeTsStr);
+
               if (!isNaN(ts.getTime())) {
-                return ts.toISOString().slice(0, 10) === slot.date;
+                return toLocalDateString(ts) === slot.date;
               }
             }
             return false;
@@ -104,8 +115,7 @@ export function AttendanceStatusChart() {
             <CardTitle>Attendance status</CardTitle>
           </div>
           <CardDescription>
-            Worker attendance present and absent for {workspace.name}, last{" "}
-            {VISIBLE_DAYS} days.
+            Worker attendance present and absent for last {VISIBLE_DAYS} days.
           </CardDescription>
         </div>
       </CardHeader>

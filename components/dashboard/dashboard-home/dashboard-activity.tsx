@@ -8,7 +8,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
-import { useWorkspace } from "@/provider/workspace-provider";
 import {
   ClockIcon,
   FileTextIcon,
@@ -24,6 +23,7 @@ type AttendanceRecord = {
   check_out?: string | null;
   status?: string;
   date?: string;
+  created_at?: string | null;
   updated_at?: string | null;
 };
 
@@ -55,7 +55,12 @@ const formatRelativeTime = (
   now: Date = new Date(),
 ): string => {
   if (!value) return "Just now";
-  const date = new Date(value);
+
+  // Enforce UTC parsing to allow auto-adjustment to local time
+  const safeValue =
+    value.endsWith("Z") || value.includes("+") ? value : `${value}Z`;
+
+  const date = new Date(safeValue);
   if (Number.isNaN(date.getTime())) return "Just now";
 
   const diffMs = now.getTime() - date.getTime();
@@ -78,7 +83,7 @@ const formatRelativeTime = (
 };
 
 const getActivityTimestamp = (record: AttendanceRecord): string | null => {
-  return record.check_in ?? record.updated_at ?? null;
+  return record.created_at ?? record.check_in ?? null;
 };
 
 const buildTitle = (name: string, status?: string): string => {
@@ -103,7 +108,6 @@ interface DashboardActivityProps {
 }
 
 export function DashboardActivity({ className = "" }: DashboardActivityProps) {
-  const { workspace } = useWorkspace();
   const { attendance, members, isLoading } = useDashboardData();
 
   // Build a lookup map from user_id -> member name
@@ -121,18 +125,25 @@ export function DashboardActivity({ className = "" }: DashboardActivityProps) {
       const userId = extractId(item.user_id);
       const workerName =
         (userId ? memberNameByUserId.get(userId) : undefined) ?? "Someone";
+
       const timestamp = getActivityTimestamp(item);
+      const safeTimestamp = timestamp
+        ? timestamp.endsWith("Z") || timestamp.includes("+")
+          ? timestamp
+          : `${timestamp}Z`
+        : null;
+
       return {
         id: item._id ?? item.id ?? `${userId ?? "row"}-${item.date ?? ""}`,
         title: buildTitle(workerName, item.status),
-        time: formatRelativeTime(timestamp),
+        time: formatRelativeTime(safeTimestamp),
         icon: getActivityIcon(item.status),
-        // raw timestamp used purely for sorting (newest first)
-        sortKey: timestamp ? new Date(timestamp).getTime() : 0,
+
+        sortKey: safeTimestamp ? new Date(safeTimestamp).getTime() : 0,
       };
     })
     .sort((a, b) => b.sortKey - a.sortKey)
-    .slice(0, 6)
+    .slice(0, 20)
     .map(({ sortKey, ...rest }) => {
       void sortKey;
       return rest;
@@ -143,11 +154,11 @@ export function DashboardActivity({ className = "" }: DashboardActivityProps) {
       <CardHeader className="border-b">
         <CardTitle>Activity</CardTitle>
 
-        <CardDescription>Latest updates for {workspace.name}.</CardDescription>
+        <CardDescription>Latest updates.</CardDescription>
       </CardHeader>
 
       <CardContent className="px-0 w-full">
-        <ul className="flex flex-col divide-y divide-border w-full">
+        <ul className="flex max-h-80 w-full flex-col divide-y divide-border overflow-y-auto">
           {isLoading && (
             <li className="flex h-16 items-center gap-3 px-6 w-full">
               <p className="text-muted-foreground text-sm">

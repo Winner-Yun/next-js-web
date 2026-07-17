@@ -7,21 +7,53 @@ const BACKEND_URL =
 export async function POST(request: Request) {
   try {
     const targetUrl = `${BACKEND_URL.replace(/\/$/, "")}/auth/refresh-token`;
-    const requestHeaders = new Headers(request.headers);
-
-    requestHeaders.delete("host");
-
+    const requestHeaders = new Headers();
     const body = await request.text();
+    let forwardedBody = body;
+    let refreshToken = "";
+
+    if (body) {
+      try {
+        const parsedBody = JSON.parse(body) as {
+          refresh_token?: string;
+          refreshToken?: string;
+          token?: string;
+        };
+
+        refreshToken =
+          parsedBody.refresh_token ??
+          parsedBody.refreshToken ??
+          parsedBody.token ??
+          "";
+
+        if (refreshToken) {
+          forwardedBody = JSON.stringify({ refresh_token: refreshToken });
+        }
+      } catch {
+        forwardedBody = body;
+      }
+    }
+
+    const requestContentType = request.headers.get("content-type");
+
+    if (requestContentType) {
+      requestHeaders.set("Content-Type", requestContentType);
+    }
+
+    if (refreshToken) {
+      requestHeaders.set("Authorization", `Bearer ${refreshToken}`);
+    }
 
     const backendResponse = await fetch(targetUrl, {
       method: "POST",
       headers: requestHeaders,
-      ...(body && { body }),
+      ...(forwardedBody && { body: forwardedBody }),
     });
 
-    const contentType = backendResponse.headers.get("content-type") ?? "";
+    const responseContentType =
+      backendResponse.headers.get("content-type") ?? "";
 
-    if (!contentType.includes("application/json")) {
+    if (!responseContentType.includes("application/json")) {
       return NextResponse.json(
         { detail: "Backend service returned an invalid response format." },
         { status: 502 },

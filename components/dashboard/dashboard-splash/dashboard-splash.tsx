@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
+import { AzureBackground } from "@/components/ui/azureBackground";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -31,9 +32,15 @@ export function DashboardSplash({ children }: { children: React.ReactNode }) {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6 }}
-            className="fixed inset-0 z-9999 flex items-center justify-center bg-slate-950"
+            className="fixed inset-0 z-9999 flex items-center justify-center"
           >
-            <div className="flex flex-col items-center gap-6">
+            {/* Background Layer */}
+            <div className="absolute inset-0 -z-10">
+              <AzureBackground />
+            </div>
+
+            {/* Content Layer */}
+            <div className="relative z-10 flex flex-col items-center gap-6">
               <motion.div
                 initial={{ scale: 0.7, rotate: -8, opacity: 0 }}
                 animate={{
@@ -80,7 +87,7 @@ export function DashboardSplash({ children }: { children: React.ReactNode }) {
               </motion.p>
 
               {/* Updated Progress Bar */}
-              <div className="h-1 w-52 overflow-hidden rounded-full bg-slate-800 flex justify-start">
+              <div className="flex h-1 w-52 justify-start overflow-hidden rounded-full bg-slate-800">
                 <motion.div
                   className="h-full rounded-full bg-blue-500"
                   initial={{ width: "0%" }}

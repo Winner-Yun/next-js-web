@@ -39,6 +39,11 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+// Helper to format dates using the browser's local timezone
+const toLocalDateString = (d: Date) => {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
 function CustomGradientBar(
   props: React.SVGProps<SVGRectElement> &
     Pick<BarProps, "dataKey"> & {
@@ -90,33 +95,39 @@ export function AttendanceChart() {
       d.setDate(today.getDate() - (6 - i));
       return {
         day: dayLabels[d.getDay()],
-        date: d.toISOString().slice(0, 10),
+        date: toLocalDateString(d),
         attendance: 0,
       };
     });
   })();
+
   const chartData = last7Days.map((slot) => {
     const presentCount = Array.isArray(attendance)
       ? attendance.filter((item: unknown) => {
-          if (
-            !item ||
-            typeof item !== "object" ||
-            (item as AttendanceItem).status !== "present"
-          ) {
-            return false;
-          }
+          if (!item || typeof item !== "object") return false;
+
           const record = item as AttendanceItem;
-          // Match by ISO date (e.g. "2026-07-06") or by timestamp
+
+          // FIX: Count 'present' OR 'late' as present
+          const isPresentOrLate =
+            record.status === "present" || record.status === "late";
+          if (!isPresentOrLate) return false;
+
+          // Match by ISO date or timestamp
           if (record.date && record.date === slot.date) return true;
           if (record.timestamp) {
-            const ts = new Date(record.timestamp);
+            const tsStr = String(record.timestamp);
+            const safeTsStr =
+              tsStr.endsWith("Z") || tsStr.includes("+") ? tsStr : `${tsStr}Z`;
+            const ts = new Date(safeTsStr);
             if (!isNaN(ts.getTime())) {
-              return ts.toISOString().slice(0, 10) === slot.date;
+              return toLocalDateString(ts) === slot.date;
             }
           }
           return false;
         }).length
       : 0;
+
     return {
       day: slot.day,
       date: slot.date,

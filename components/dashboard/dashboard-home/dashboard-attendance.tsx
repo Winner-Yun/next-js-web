@@ -18,7 +18,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
-import { useWorkspace } from "@/provider/workspace-provider";
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -42,8 +41,14 @@ type MemberRecord = {
 
 const formatTime = (value?: string | null) => {
   if (!value) return "-";
-  const date = new Date(value);
+
+  // Ensure string is treated as UTC if it lacks a timezone offset
+  const safeValue =
+    value.endsWith("Z") || value.includes("+") ? value : `${value}Z`;
+
+  const date = new Date(safeValue);
   if (Number.isNaN(date.getTime())) return "-";
+
   return date.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
@@ -74,7 +79,6 @@ const getMemberName = (member: MemberRecord): string => {
 };
 
 export function DashboardAttendance() {
-  const { workspace } = useWorkspace();
   const { attendance, members, isLoading } = useDashboardData();
 
   // Build a lookup map from user_id -> member name
@@ -86,25 +90,25 @@ export function DashboardAttendance() {
     }
   }
 
-  // Get today's date in YYYY-MM-DD format
+  // Get today's date in YYYY-MM-DD format (local time)
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(
     today.getMonth() + 1,
   ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-  // Filter attendance to today's records only, sort by latest, and limit to top 5
+  // Filter attendance records to only today's data
   const todayAttendance = (attendance as AttendanceRecord[])
     .filter((item) => {
       if (!item.date) return false;
       return item.date.substring(0, 10) === todayStr;
     })
     .sort((a, b) => {
-      // Sort in descending order to get the most recent check-ins first
+     
       const timeA = new Date(a.check_in || 0).getTime();
       const timeB = new Date(b.check_in || 0).getTime();
       return timeB - timeA;
     })
-    .slice(0, 5); // Limit to the last (most recent) 5 data points
+    .slice(0, 5); 
 
   // Map attendance records to display rows
   const rows = todayAttendance.map((item) => {
@@ -125,15 +129,14 @@ export function DashboardAttendance() {
         <CardTitle className="text-base">Recent attendance</CardTitle>
 
         <CardDescription>
-          Latest check-in log and attendance status for {workspace.name}.
+          Latest check-in log and attendance status.
         </CardDescription>
       </CardHeader>
 
       <CardContent className="mask-b-from-50% mask-b-to-100% px-0">
         <Table>
           <TableCaption className="sr-only">
-            Recent worker attendance with name, time, and status for{" "}
-            {workspace.name}.
+            Recent worker attendance with name, time, and status.
           </TableCaption>
 
           <TableHeader>

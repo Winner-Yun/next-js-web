@@ -148,10 +148,10 @@ export function GeofenceCard({
             variant={isActive ? "secondary" : "outline"}
             size="sm"
             disabled={isActive || isProcessing || hasInvalidCoordinates}
-            className={`h-8 text-xs flex-1 cursor-pointer${
+            className={`h-8 text-xs flex-1 cursor-pointer! ${
               isActive
                 ? "opacity-50 cursor-default"
-                : "hover:bg-brand hover:text-white border-brand/20"
+                : "bg-brand! hover:bg-brand/80! hover:text-white border-brand/20"
             }`}
           >
             <CheckCircle2Icon className="size-3.5 mr-1.5" />

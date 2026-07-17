@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/provider/workspace-provider";
 import { MapPinIcon, SearchIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 
@@ -25,11 +25,51 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+// How long (ms) the mouse needs to stay held down on a card before it
+// switches into "reorder" mode. Short clicks (buttons, etc.) never reach
+// this threshold, so normal interactions are unaffected.
+const LONG_PRESS_MS = 450;
+
+const getOrderStorageKey = (workspaceId: string) =>
+  `geofence-order:${workspaceId}`;
+
+const readStoredOrder = (workspaceId: string): string[] | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(getOrderStorageKey(workspaceId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeStoredOrder = (workspaceId: string, order: string[]) => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      getOrderStorageKey(workspaceId),
+      JSON.stringify(order),
+    );
+  } catch {
+    // Ignore storage failures (e.g. private browsing quota) — ordering just
+    // won't persist across reloads in that case.
+  }
+};
+
 export function GeofencingDirectory() {
   const { workspace } = useWorkspace();
   const [search, setSearch] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasShownAlert, setHasShownAlert] = useState(false);
+
+  // Card order (by zone id), driven by drag-to-reorder and persisted
+  // per-workspace so it survives reloads.
+  const [orderedIds, setOrderedIds] = useState<string[]>([]);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const orderedIdsRef = useRef<string[]>([]);
 
   const {
     data: zonesData,
@@ -42,14 +82,85 @@ export function GeofencingDirectory() {
     { revalidateOnFocus: false },
   );
 
-  const processedZones = useMemo(() => {
+  // Keep the ref in sync so the mouseup handler (attached once) always sees
+  // the latest order without needing to re-bind on every reorder.
+  useEffect(() => {
+    orderedIdsRef.current = orderedIds;
+  }, [orderedIds]);
+
+  // Whenever fresh data arrives, respect any saved order for ids we still
+  // recognize, and tack newly-created zones onto the end.
+  useEffect(() => {
+    if (!zonesData || !workspace?.id) return;
+    const currentIds = zonesData.map((z) => z.id);
+    const stored = readStoredOrder(workspace.id);
+    const validStored = stored
+      ? stored.filter((id) => currentIds.includes(id))
+      : [];
+    const missing = currentIds.filter((id) => !validStored.includes(id));
+    setOrderedIds([...validStored, ...missing]);
+  }, [zonesData, workspace?.id]);
+
+  const clearPressTimer = () => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+  };
+
+  const handleCardMouseDown = (id: string) => {
+    clearPressTimer();
+    pressTimerRef.current = setTimeout(() => {
+      setDraggingId(id);
+      pressTimerRef.current = null;
+    }, LONG_PRESS_MS);
+  };
+
+  const handleCardMouseEnter = (id: string) => {
+    if (!draggingId || draggingId === id) return;
+    setOrderedIds((prev) => {
+      const fromIndex = prev.indexOf(draggingId);
+      const toIndex = prev.indexOf(id);
+      if (fromIndex === -1 || toIndex === -1) return prev;
+      const next = [...prev];
+      next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, draggingId);
+      return next;
+    });
+  };
+
+  const finishDragging = () => {
+    clearPressTimer();
+    if (draggingId && workspace?.id) {
+      writeStoredOrder(workspace.id, orderedIdsRef.current);
+    }
+    setDraggingId(null);
+  };
+
+  // Catch mouseup anywhere (not just on a card) so a drag that ends off a
+  // card still saves and exits cleanly.
+  useEffect(() => {
+    window.addEventListener("mouseup", finishDragging);
+    return () => window.removeEventListener("mouseup", finishDragging);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draggingId, workspace?.id]);
+
+  const orderedZones = useMemo(() => {
     if (!zonesData) return [];
-    return zonesData.filter(
+    const byId = new Map(zonesData.map((z) => [z.id, z]));
+    return orderedIds
+      .map((id) => byId.get(id))
+      .filter((z): z is GeofenceZone => Boolean(z));
+  }, [zonesData, orderedIds]);
+
+  const processedZones = useMemo(() => {
+    if (!orderedZones.length) return [];
+    return orderedZones.filter(
       (zone) =>
         zone.name.toLowerCase().includes(search.toLowerCase()) ||
         zone.id.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [zonesData, search]);
+  }, [orderedZones, search]);
 
   const activePolicyName = useMemo(() => {
     return (
@@ -251,7 +362,6 @@ export function GeofencingDirectory() {
             />
           </div>
 
-       
           <div className="relative w-full sm:w-auto">
             <GeofenceMapDialog
               onAction={handleAddGeofence}
@@ -280,17 +390,26 @@ export function GeofencingDirectory() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {processedZones.map((zone) => (
-            <GeofenceCard
+            <div
               key={zone.id}
-              zone={zone}
-              onRemove={handleRemoveGeofence}
-              onActivate={handleSetActiveGeofence}
-              onUpdate={handleUpdateGeofence}
-              isProcessing={isProcessing}
-            />
+              onMouseDown={() => handleCardMouseDown(zone.id)}
+              onMouseEnter={() => handleCardMouseEnter(zone.id)}
+              className={`transition-transform duration-150 select-none ${
+                draggingId === zone.id
+                  ? "cursor-grabbing scale-[1.02] z-10 drop-shadow-lg"
+                  : "cursor-grab"
+              }`}
+            >
+              <GeofenceCard
+                zone={zone}
+                onRemove={handleRemoveGeofence}
+                onActivate={handleSetActiveGeofence}
+                onUpdate={handleUpdateGeofence}
+                isProcessing={isProcessing}
+              />
+            </div>
           ))}
 
-      
           {hasNoGeofences ? (
             <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-amber-500/30 bg-amber-500/2 flex flex-col items-center justify-center p-6 animate-in fade-in duration-200">
               <div className="rounded-full bg-amber-500/10 p-4 mb-4">
@@ -309,7 +428,6 @@ export function GeofencingDirectory() {
               />
             </div>
           ) : (
-          
             processedZones.length === 0 && (
               <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 flex flex-col items-center justify-center">
                 <div className="rounded-full bg-muted/40 p-3 mb-3">

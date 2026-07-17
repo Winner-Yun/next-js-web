@@ -159,6 +159,11 @@ export function LeaveDirectory() {
   );
   const isProcessing = isLoading || isValidating;
 
+  // Tracks the window between an approve/reject/override action succeeding
+  // and the list finishing its refetch, so we can show a skeleton instead
+  // of leaving the old rows on screen while the user waits.
+  const [isReloadingAfterAction, setIsReloadingAfterAction] = useState(false);
+
   const requests = useMemo<LeaveRequest[]>(() => {
     if (!data?.data) return [];
     return data.data.map((item: unknown) => {
@@ -188,6 +193,10 @@ export function LeaveDirectory() {
     id: string,
     nextStatus: "Approved" | "Rejected" | "Pending",
   ) => {
+    // Single toast whose state we update as each phase completes, so the
+    // user can see: submitting -> saved & reloading -> refreshed.
+    const toastId = toast.loading(`Updating status to ${nextStatus}...`);
+
     try {
       const token =
         typeof window !== "undefined"
@@ -212,14 +221,31 @@ export function LeaveDirectory() {
         throw new Error(err?.detail || "Failed to update leave status.");
       }
 
-      toast.success(`Leave request updated to ${nextStatus}.`);
-      mutate();
+      // Let the user know the save succeeded and the list is being refreshed
+      toast.loading("Saved. Refreshing list...", { id: toastId });
+
+      // Close the dialogs now and show a skeleton in the list area instead
+      // of leaving stale rows on screen while we refetch.
       setIsEditOpen(false);
       setSelectedRequest(null);
+      setIsReloadingAfterAction(true);
+
+      // Wait for the actual revalidation to finish before declaring success,
+      // so the toast (and skeleton) reflect reality rather than firing optimistically.
+      await mutate();
+
+      toast.success(`Leave request updated to ${nextStatus}. List reloaded.`, {
+        id: toastId,
+      });
     } catch (error: unknown) {
       toast.error(
-        error.message || "An error occurred while updating the status.",
+        error instanceof Error
+          ? error.message
+          : "An error occurred while updating the status.",
+        { id: toastId },
       );
+    } finally {
+      setIsReloadingAfterAction(false);
     }
   };
 
@@ -416,7 +442,7 @@ export function LeaveDirectory() {
             </p>
             <p className="text-xs opacity-80 mt-1">{error.message}</p>
           </div>
-        ) : isLoading && requests.length === 0 ? (
+        ) : (isLoading && requests.length === 0) || isReloadingAfterAction ? (
           <SkeletonLoader viewMode={viewMode} />
         ) : viewMode === "list" ? (
           <LeaveTable requests={requests} onRowClick={setSelectedRequest} />
