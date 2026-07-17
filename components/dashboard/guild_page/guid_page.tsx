@@ -19,7 +19,6 @@ import {
   UsersIcon,
 } from "lucide-react";
 
-
 interface GuideStep {
   icon: React.ElementType;
   title: string;
