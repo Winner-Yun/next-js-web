@@ -58,7 +58,7 @@ export function MobileNav() {
             )}
             data-slot="open"
           >
-            <div className="grid h gap-y-2">
+            <div className="grid gap-y-2">
               {navLinks.map((link) => (
                 <Button
                   key={link.label}
