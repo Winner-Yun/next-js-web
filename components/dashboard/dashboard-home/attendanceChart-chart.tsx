@@ -179,7 +179,7 @@ export function AttendanceChart() {
                 tickLine={false}
                 tickMargin={10}
               />
-              <ChartTooltip content={ChartTooltipContent} cursor={false} />
+              <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
               <Bar
                 dataKey="attendance"
                 className="bg-brand text-brand"

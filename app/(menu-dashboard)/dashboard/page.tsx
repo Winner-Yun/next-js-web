@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 // page.tsx
 import { AppShell } from "@/components/dashboard/appShell/app-shell";
 import { DashboardContent } from "@/components/dashboard/dashboard-home/dashboard-content";

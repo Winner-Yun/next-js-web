@@ -6,7 +6,7 @@ export type Employee = {
   avatar?: string | null;
   gender?: string | null;
   provider?: string;
-  status: "active" | "inactive";
+  status: "active" | "inactive" | "suspended";
   role: string;
   joined_at?: string | null;
   created_at?: string | null;

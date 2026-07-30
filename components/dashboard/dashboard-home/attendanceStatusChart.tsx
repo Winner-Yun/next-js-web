@@ -23,6 +23,11 @@ const VISIBLE_DAYS = 7;
 
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+// Helper to format dates using the browser's local timezone
+const toLocalDateString = (d: Date) => {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
 type AttendanceItem = {
   date?: string;
   timestamp?: string | Date;

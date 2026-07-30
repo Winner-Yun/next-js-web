@@ -5,7 +5,10 @@ import { NextResponse } from "next/server";
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "https://smart-atd-backend.vercel.app";
 
-export async function GET(request: Request, { params }: { params: unknown }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const resolvedParams = await params;
     const workspaceId = resolvedParams?.id;

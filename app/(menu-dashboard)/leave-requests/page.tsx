@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { AppShell } from "@/components/dashboard/appShell/app-shell";
 import { LeaveDirectory } from "@/components/dashboard/leave-request/leave-directory";
 

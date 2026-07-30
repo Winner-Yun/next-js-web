@@ -58,7 +58,7 @@ export function LocationPickerMap({
         `${initialLocation.lat.toFixed(5)}, ${initialLocation.lng.toFixed(5)}`,
       );
     }
-  }, [initialLocation, initialLocation.lat, initialLocation.lng]);
+  }, [initialLocation]);
 
   useEffect(() => {
     if (!isLoaded || !searchInputRef.current) return;

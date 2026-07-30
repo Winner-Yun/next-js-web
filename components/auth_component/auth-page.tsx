@@ -193,7 +193,6 @@ function AuthContent() {
                     size="large"
                     shape="rectangular"
                     text="signin_with"
-                    locale="en"
                     width={String(googleButtonWidth)}
                   />
                 </div>

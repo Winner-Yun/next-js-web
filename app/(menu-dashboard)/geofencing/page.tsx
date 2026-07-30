@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { AppShell } from "@/components/dashboard/appShell/app-shell";
 import { GeofencingDirectory } from "@/components/dashboard/geofencing-page/geofencing-directory";
 

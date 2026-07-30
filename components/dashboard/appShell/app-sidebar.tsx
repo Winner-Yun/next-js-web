@@ -25,7 +25,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import useSWR from "swr";
-import type { GeofenceZone } from "../geofencing/types";
+import type { GeofenceZone } from "../geofencing-page/types";
 
 // Standard workspace authenticated fetcher
 const fetcher = async (url: string) => {

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { AppShell } from "@/components/dashboard/appShell/app-shell";
 import { HelpGuidePage } from "@/components/dashboard/guild_page/guid_page";
 

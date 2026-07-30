@@ -47,11 +47,13 @@ const fetcher = async (url: string) => {
 };
 
 // Specialized fetcher for the public API holidays
+type PublicHoliday = { date: string; name: string };
+
 const publicHolidaysFetcher = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch public holidays");
   const data = await res.json();
-  return data.map((h: unknown) => ({
+  return (data as PublicHoliday[]).map((h) => ({
     id: `public-${h.date}`,
     workspace_id: "public",
     name: h.name,

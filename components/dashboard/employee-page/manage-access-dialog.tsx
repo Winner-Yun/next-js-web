@@ -204,9 +204,11 @@ export function ManageAccessDialog({ onSuccess }: ManageAccessDialogProps) {
       setManagementAction("suspend");
       setIsConfirming(false);
       setIsOpen(false);
-    } catch (error: unknown) {
+    } catch (error) {
       toast.error(
-        error.message || "An unexpected network sequence failure occurred.",
+        error instanceof Error
+          ? error.message
+          : "An unexpected network sequence failure occurred.",
       );
     } finally {
       setIsSubmitting(false);

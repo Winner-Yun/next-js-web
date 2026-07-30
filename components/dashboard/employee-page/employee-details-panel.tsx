@@ -36,6 +36,21 @@ const attendanceFetcher = async (url: string) => {
   return res.json();
 };
 
+// Shape of a single raw attendance log as returned by the backend.
+type AttendanceLog = {
+  user_id?: string;
+  user?: { _id?: string; email?: string; avatar?: string; gender?: string };
+  date: string;
+  status?: string;
+  check_in?: string | null;
+  check_out?: string | null;
+  face_verified?: boolean;
+  liveness_verified?: boolean;
+  mock_location_detected?: boolean;
+  latitude?: number | string;
+  longitude?: number | string;
+};
+
 export function EmployeeDetailsPanel({ employee }: { employee: Employee }) {
   const isActive = employee.status === "active";
   const { workspace } = useWorkspace();
@@ -55,7 +70,7 @@ export function EmployeeDetailsPanel({ employee }: { employee: Employee }) {
     const todayStr = new Date().toISOString().split("T")[0];
 
     return (
-      attendanceData.data.find((item: unknown) => {
+      attendanceData.data.find((item: AttendanceLog) => {
         const isSameUser =
           item.user_id === employee.id ||
           item.user?._id === employee.id ||

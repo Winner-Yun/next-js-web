@@ -204,8 +204,12 @@ export function PolicyDirectory() {
       await mutate(undefined, { revalidate: true });
       setIsFormOpen(false);
       setEditingPolicy(null);
-    } catch (error: unknown) {
-      toast.error(error.message || "Failed to process policy request.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to process policy request.",
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -225,8 +229,10 @@ export function PolicyDirectory() {
 
       toast.success("Policy permanently deleted.");
       await mutate(undefined, { revalidate: true });
-    } catch (error: unknown) {
-      toast.error(error.message || "Failed to delete policy.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete policy.",
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -253,8 +259,12 @@ export function PolicyDirectory() {
 
       toast.success("Active workspace policy updated.");
       await mutate(undefined, { revalidate: true });
-    } catch (error: unknown) {
-      toast.error(error.message || "Failed to update active policy.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update active policy.",
+      );
     } finally {
       setIsProcessing(false);
     }

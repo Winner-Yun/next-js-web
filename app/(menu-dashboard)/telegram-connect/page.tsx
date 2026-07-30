@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { AppShell } from "@/components/dashboard/appShell/app-shell";
 import { TelegramDirectory } from "@/components/dashboard/telegram-page/telegram-directory";
 

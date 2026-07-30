@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { AppShell } from "@/components/dashboard/appShell/app-shell";
 import { RequestDirectory } from "@/components/dashboard/request-page/request-directory";
 

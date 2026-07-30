@@ -14,6 +14,30 @@ import type {
   WorkspaceData,
 } from "./types";
 
+// Shape of raw records as returned by the backend, before they're mapped
+// into this page's report-friendly shapes.
+type RawAttendanceLog = {
+  _id?: string;
+  id?: string;
+  user?: { name?: string; email?: string };
+  date: string;
+  check_in?: string | null;
+  check_out?: string | null;
+  status?: string;
+};
+
+type RawLeaveRequest = {
+  _id?: string;
+  id?: string;
+  user?: { name?: string };
+  leave_type?: string;
+  start_date: string;
+  end_date: string;
+  total_days?: number;
+  status?: string;
+  attachment_url?: string;
+};
+
 const fetcher = async (url: string) => {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
@@ -65,7 +89,7 @@ export function ReportDirectory() {
     const rawAttendance = attendanceData?.data || [];
     const rawLeaves = leavesData?.data || [];
 
-    const formatTime = (dateStr: string | null) =>
+    const formatTime = (dateStr: string | null | undefined) =>
       dateStr
         ? new Date(dateStr).toLocaleTimeString([], {
             hour: "2-digit",
@@ -74,7 +98,7 @@ export function ReportDirectory() {
         : null;
 
     return {
-      attendance: rawAttendance.map((item: unknown) => ({
+      attendance: rawAttendance.map((item: RawAttendanceLog) => ({
         id: item._id || item.id,
         name: item.user?.name || "Unknown Staff",
         role: item.user?.email || "No Data",
@@ -95,7 +119,7 @@ export function ReportDirectory() {
           ? item.status.charAt(0).toUpperCase() + item.status.slice(1)
           : "Absent") as AttendanceStatus,
       })),
-      leaves: rawLeaves.map((item: unknown) => ({
+      leaves: rawLeaves.map((item: RawLeaveRequest) => ({
         id: item._id || item.id,
         name: item.user?.name || "Unknown Staff",
         type: item.leave_type || "Annual Leave",

@@ -67,6 +67,17 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+// Shape of a single raw attendance log as returned by the backend, before
+// it's mapped into the UI's `AttendanceRecord`.
+type RawAttendanceLog = {
+  _id: string;
+  check_in: string | null;
+  check_out: string | null;
+  date: string;
+  status?: string;
+  user?: { name?: string; email?: string };
+};
+
 export function AttendanceDirectory() {
   const { workspace } = useWorkspace();
 
@@ -184,7 +195,7 @@ export function AttendanceDirectory() {
 
   // Transform raw backend logs into mapped UI data elements
   const logs = useMemo<AttendanceRecord[]>(() => {
-    return (data?.data || []).map((item: unknown) => {
+    return (data?.data || []).map((item: RawAttendanceLog) => {
       let hoursWorked = 0;
       if (item.check_in && item.check_out) {
         const start = new Date(item.check_in).getTime();
@@ -214,7 +225,7 @@ export function AttendanceDirectory() {
         checkIn: formatTime(item.check_in),
         checkOut: formatTime(item.check_out),
         hoursWorked: hoursWorked > 0 ? hoursWorked : null,
-        status: (statusMap[item.status?.toLowerCase()] ||
+        status: (statusMap[item.status?.toLowerCase() ?? ""] ||
           "Absent") as AttendanceStatus,
       };
     });

@@ -24,6 +24,22 @@ import { LeaveTable } from "./leave-table";
 import { LeaveViewDialog } from "./leave-view-dialog";
 import type { LeaveRequest, LeaveStatus, LeaveType } from "./types";
 
+// Shape of a single raw leave request as returned by the backend, before
+// it's mapped into the UI's `LeaveRequest`.
+type RawLeaveRequest = {
+  _id?: string;
+  id?: string;
+  user?: { name?: string; email?: string };
+  status?: string;
+  leave_type?: string;
+  start_date: string;
+  end_date: string;
+  total_days?: number;
+  reason?: string;
+  attachment_url?: string;
+  created_at?: string;
+};
+
 const fetcher = async (url: string) => {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
@@ -166,7 +182,7 @@ export function LeaveDirectory() {
 
   const requests = useMemo<LeaveRequest[]>(() => {
     if (!data?.data) return [];
-    return data.data.map((item: unknown) => {
+    return data.data.map((item: RawLeaveRequest) => {
       const mappedStatus =
         item.status === "approved"
           ? "Approved"
@@ -343,7 +359,11 @@ export function LeaveDirectory() {
               </label>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as unknown)}
+                onChange={(e) =>
+                  setSortBy(
+                    e.target.value as "created_at" | "start_date" | "status",
+                  )
+                }
                 className="w-full h-8.5 text-xs rounded-lg border border-muted/80 bg-background px-2 font-medium"
               >
                 <option value="created_at">Created Date</option>

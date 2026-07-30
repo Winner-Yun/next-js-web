@@ -44,10 +44,10 @@ export function AppHeader() {
   }, [data]);
 
   // Fallback to array and filter for unread (is_read === false)
-  const notifications = Array.isArray(data) ? data : data?.data || [];
-  const serverUnreadCount = notifications.filter(
-    (n: unknown) => !n.is_read,
-  ).length;
+  const notifications: { is_read?: boolean }[] = Array.isArray(data)
+    ? data
+    : data?.data || [];
+  const serverUnreadCount = notifications.filter((n) => !n.is_read).length;
 
   // Combine real server unread count with any pending visual updates
   const unreadCount = serverUnreadCount + optimisticCount;

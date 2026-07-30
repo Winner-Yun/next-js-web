@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { AppShell } from "@/components/dashboard/appShell/app-shell";
 import { InviteLinkDirectory } from "@/components/dashboard/invite-link-page/invite-link-directory";
 

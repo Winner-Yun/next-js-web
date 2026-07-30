@@ -119,12 +119,12 @@ export function WorkspaceRenameDialog({
               onChange={(e) => setDescriptionValue(e.target.value)}
               maxLength={100}
               placeholder={
-                currentDescription.length == 0
+                (currentDescription ?? "").length == 0
                   ? "Description (optional)"
                   : "Description (required)"
               }
               className="text-xs h-9 bg-background"
-              required={currentDescription.length == 0 ? false : true}
+              required={(currentDescription ?? "").length == 0 ? false : true}
               disabled={isLoading}
             />
           </div>
