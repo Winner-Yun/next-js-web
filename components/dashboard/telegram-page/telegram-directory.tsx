@@ -1,14 +1,5 @@
 "use client";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,7 +49,6 @@ export function TelegramDirectory() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [connectLink, setConnectLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [showNotConnectedAlert, setShowNotConnectedAlert] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,9 +62,7 @@ export function TelegramDirectory() {
         if (cancelled) return;
         if (res.ok) {
           const profile = data as UserProfile;
-          const connected = Boolean(profile?.telegram_chat_id);
-          setIsConnected(connected);
-          if (!connected) setShowNotConnectedAlert(true);
+          setIsConnected(Boolean(profile?.telegram_chat_id));
         }
       } finally {
         if (!cancelled) setIsLoadingProfile(false);
@@ -231,26 +219,6 @@ export function TelegramDirectory() {
           )}
         </div>
       )}
-
-      <AlertDialog
-        open={showNotConnectedAlert}
-        onOpenChange={setShowNotConnectedAlert}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Telegram is not connected</AlertDialogTitle>
-            <AlertDialogDescription>
-              Generate a connect link below and open it in Telegram to start
-              receiving notifications.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setShowNotConnectedAlert(false)}>
-              Got it
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

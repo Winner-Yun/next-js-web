@@ -27,6 +27,17 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 import type { GeofenceZone } from "../geofencing-page/types";
 
+// While a workspace has no geofence and/or policy configured yet, only
+// these items stay visible — everything else needs that setup done first.
+const SETUP_GATE_ALLOWED_TITLES = new Set([
+  "Dashboard",
+  "Workspaces",
+  "Geofences",
+  "Workspaces Policies",
+  "Telegram",
+  "Settings",
+]);
+
 // Standard workspace authenticated fetcher
 const fetcher = async (url: string) => {
   const token = localStorage.getItem("accessToken");
@@ -48,6 +59,8 @@ export function AppSidebar() {
   const [isGeofenceAlertDismissed, setIsGeofenceAlertDismissed] =
     useState(false);
   const [isPolicyAlertDismissed, setIsPolicyAlertDismissed] = useState(false);
+  const [isTelegramAlertDismissed, setIsTelegramAlertDismissed] =
+    useState(false);
 
   const {
     workspaces,
@@ -56,14 +69,24 @@ export function AppSidebar() {
   } = useWorkspace();
   const hasWorkspace = workspaces && workspaces.length > 0;
 
-  const { data: zonesData } = useSWR<GeofenceZone[]>(
+  const { data: zonesData, isLoading: isZonesLoading } = useSWR<
+    GeofenceZone[]
+  >(
     workspace?.id ? `/api/workspace/${workspace.id}/geofences` : null,
     fetcher,
     { revalidateOnFocus: false },
   );
 
-  const { data: policiesData } = useSWR<unknown[]>(
+  const { data: policiesData, isLoading: isPoliciesLoading } = useSWR<
+    unknown[]
+  >(
     workspace?.id ? `/api/workspace/${workspace.id}/policies` : null,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const { data: profileData } = useSWR<{ telegram_chat_id?: string | null }>(
+    "/api/auth/me",
     fetcher,
     { revalidateOnFocus: false },
   );
@@ -84,21 +107,40 @@ export function AppSidebar() {
   const showPolicyAlert =
     isAlertAllowedRoute && hasNoPolicies && !isPolicyAlertDismissed;
 
-  const filteredNavGroups = useMemo(() => {
-    if (!searchQuery.trim()) return navGroups;
+  // Check Telegram connection status
+  const hasNoTelegram = Boolean(profileData) && !profileData?.telegram_chat_id;
+  const showTelegramAlert =
+    isAlertAllowedRoute && hasNoTelegram && !isTelegramAlertDismissed;
 
-    const query = searchQuery.toLowerCase();
+  // Until both a geofence and a policy are configured, restrict the menu
+  // to just the essentials needed to finish that setup.
+  const isSetupIncomplete = Boolean(hasWorkspace) && Boolean(hasNoGeofences || hasNoPolicies);
+
+  // While we're still fetching that geofence/policy status, treat the menu
+  // the same as the workspace-loading state instead of flashing the full
+  // menu before we know whether it should be gated.
+  const isSetupCheckLoading =
+    Boolean(workspace?.id) && (isZonesLoading || isPoliciesLoading);
+
+  const filteredNavGroups = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
 
     return navGroups
       .map((group) => {
-        const filteredItems = group.items.filter((item) =>
-          item.title.toLowerCase().includes(query),
-        );
+        const filteredItems = group.items.filter((item) => {
+          if (query && !item.title.toLowerCase().includes(query)) {
+            return false;
+          }
+          if (isSetupIncomplete && !SETUP_GATE_ALLOWED_TITLES.has(item.title)) {
+            return false;
+          }
+          return true;
+        });
 
         return { ...group, items: filteredItems };
       })
       .filter((group) => group.items.length > 0);
-  }, [searchQuery]);
+  }, [searchQuery, isSetupIncomplete]);
 
   return (
     <Sidebar
@@ -133,7 +175,7 @@ export function AppSidebar() {
           <AppSearch
             value={searchQuery}
             onChange={setSearchQuery}
-            disabled={isWorkspaceLoading}
+            disabled={isWorkspaceLoading || isSetupCheckLoading}
           />
         </SidebarGroup>
 
@@ -151,6 +193,7 @@ export function AppSidebar() {
                   // Identify target configuration items
                   const isGeofencesItem = item.title === "Geofences";
                   const isPoliciesItem = item.title === "Workspaces Policies";
+                  const isTelegramItem = item.title === "Telegram";
 
                   const isAllowedWhenEmpty =
                     item.title === "Dashboard" ||
@@ -158,12 +201,14 @@ export function AppSidebar() {
                     item.title === "Settings";
                   const isDisabled =
                     isWorkspaceLoading ||
+                    isSetupCheckLoading ||
                     (!hasWorkspace && !isAllowedWhenEmpty);
 
                   // Decide if this specific item should show an active warning style
                   const hasWarning =
                     (isGeofencesItem && hasNoGeofences) ||
-                    (isPoliciesItem && hasNoPolicies);
+                    (isPoliciesItem && hasNoPolicies) ||
+                    (isTelegramItem && hasNoTelegram);
 
                   return (
                     <SidebarMenuItem
@@ -258,6 +303,33 @@ export function AppSidebar() {
                           </div>
                         </div>
                       )}
+
+                      {/* --- INLINE TELEGRAM WARNING BOX --- */}
+                      {isTelegramItem && showTelegramAlert && (
+                        <div className="mx-2 mt-1 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg shadow-sm animate-in fade-in duration-200">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="space-y-1">
+                              <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                                Telegram Not Connected
+                              </h4>
+                              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                                You won&apos;t receive chat notifications.
+                                Click here to connect Telegram.
+                              </p>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setIsTelegramAlertDismissed(true);
+                              }}
+                              className="text-muted-foreground cursor-pointer hover:text-foreground hover:bg-accent p-0.5 rounded transition-colors shrink-0"
+                            >
+                              <XIcon className="size-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </SidebarMenuItem>
                   );
                 })}
@@ -275,7 +347,8 @@ export function AppSidebar() {
         <div
           className={cn(
             "flex items-center pt-4 pb-2",
-            isWorkspaceLoading && "pointer-events-none opacity-50",
+            (isWorkspaceLoading || isSetupCheckLoading) &&
+              "pointer-events-none opacity-50",
           )}
         >
           <ThemeSwitcher />
@@ -284,7 +357,7 @@ export function AppSidebar() {
             className="text-muted-foreground cursor-pointer"
             size="icon-sm"
             variant="ghost"
-            disabled={isWorkspaceLoading}
+            disabled={isWorkspaceLoading || isSetupCheckLoading}
           >
             <Link aria-label="Settings" href="/setting-page">
               <SettingsIcon />
