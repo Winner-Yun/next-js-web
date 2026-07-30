@@ -53,6 +53,31 @@ const formatTime12Hour = (timeStr: string): string => {
   return `${displayHours}:${minutesStr} ${ampm}`;
 };
 
+// Handles both 24-hour ("08:10") and 12-hour ("08:10 AM") backend formats.
+const timeToMinutes = (timeStr: string): number => {
+  if (!timeStr || !timeStr.includes(":")) return 0;
+  const lower = timeStr.toLowerCase();
+
+  if (lower.includes("am") || lower.includes("pm")) {
+    const [time, modifier] = timeStr.split(" ");
+    const [hoursStr, minutesStr] = time.split(":");
+    let hours = parseInt(hoursStr, 10) % 12;
+    if (modifier.toLowerCase() === "pm") hours += 12;
+    return hours * 60 + (parseInt(minutesStr, 10) || 0);
+  }
+
+  const [hoursStr, minutesStr] = timeStr.split(":");
+  return parseInt(hoursStr, 10) * 60 + (parseInt(minutesStr, 10) || 0);
+};
+
+const calculateTimeOffset = (baseTime: string, offsetMinutes: number): string => {
+  if (!baseTime) return "--:--";
+  const totalMinutes = timeToMinutes(baseTime) + offsetMinutes;
+  const targetHours = Math.floor(totalMinutes / 60) % 24;
+  const targetMinutes = ((totalMinutes % 60) + 60) % 60;
+  return `${targetHours.toString().padStart(2, "0")}:${targetMinutes.toString().padStart(2, "0")}`;
+};
+
 export function PolicyCard({
   policy,
   onEdit,
@@ -135,7 +160,11 @@ export function PolicyCard({
             </span>
             <div className="flex items-center gap-1.5 font-mono font-medium text-foreground text-[10px]">
               <LogOutIcon className="size-3 text-blue-600/70" />
-              <span>{formatTime12Hour(policy.check_out_start)}</span>
+              <span>
+                {policy.requires_check_out
+                  ? formatTime12Hour(policy.check_out_start)
+                  : "Not required"}
+              </span>
             </div>
           </div>
 
@@ -147,8 +176,26 @@ export function PolicyCard({
             <div className="flex items-center gap-1.5 font-mono font-semibold text-foreground">
               <TimerIcon className="size-3 text-muted-foreground/60" />
               <span>
-                {policy.deadline_scan_minutes}m cutoff (Late after{" "}
-                {policy.late_buffer_minutes}m)
+                Late after{" "}
+                {formatTime12Hour(
+                  calculateTimeOffset(
+                    policy.check_in_start,
+                    policy.late_buffer_minutes,
+                  ),
+                )}{" "}
+                ·{" "}
+                {policy.requires_check_out
+                  ? "Scan-out"
+                  : "Check-in"}{" "}
+                deadline{" "}
+                {formatTime12Hour(
+                  calculateTimeOffset(
+                    policy.requires_check_out
+                      ? policy.check_out_start
+                      : policy.check_in_start,
+                    policy.deadline_scan_minutes,
+                  ),
+                )}
               </span>
             </div>
           </div>

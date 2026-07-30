@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,6 +58,7 @@ export function TelegramDirectory() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [connectLink, setConnectLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showNotConnectedAlert, setShowNotConnectedAlert] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,7 +72,9 @@ export function TelegramDirectory() {
         if (cancelled) return;
         if (res.ok) {
           const profile = data as UserProfile;
-          setIsConnected(Boolean(profile?.telegram_chat_id));
+          const connected = Boolean(profile?.telegram_chat_id);
+          setIsConnected(connected);
+          if (!connected) setShowNotConnectedAlert(true);
         }
       } finally {
         if (!cancelled) setIsLoadingProfile(false);
@@ -160,20 +172,20 @@ export function TelegramDirectory() {
             </div>
           </div>
 
-          <div className="w-full h-px bg-muted/60" />
+          {!isConnected && (
+            <>
+              <div className="w-full h-px bg-muted/60" />
 
-          <Button
-            onClick={handleGenerateLink}
-            disabled={isGenerating}
-            className="h-10 cursor-pointer text-xs bg-brand text-white hover:bg-brand/90"
-          >
-            <SendIcon className="size-4 mr-1.5" />
-            {isGenerating
-              ? "Generating..."
-              : isConnected
-                ? "Generate New Connect Link"
-                : "Generate Connect Link"}
-          </Button>
+              <Button
+                onClick={handleGenerateLink}
+                disabled={isGenerating}
+                className="h-10 cursor-pointer text-xs bg-brand text-white hover:bg-brand/90"
+              >
+                <SendIcon className="size-4 mr-1.5" />
+                {isGenerating ? "Generating..." : "Generate Connect Link"}
+              </Button>
+            </>
+          )}
 
           {connectLink && (
             <div className="space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -219,6 +231,26 @@ export function TelegramDirectory() {
           )}
         </div>
       )}
+
+      <AlertDialog
+        open={showNotConnectedAlert}
+        onOpenChange={setShowNotConnectedAlert}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Telegram is not connected</AlertDialogTitle>
+            <AlertDialogDescription>
+              Generate a connect link below and open it in Telegram to start
+              receiving notifications.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowNotConnectedAlert(false)}>
+              Got it
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -55,7 +55,8 @@ export function InviteLinkDialog({ onGenerated }: InviteLinkDialogProps) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState("employee");
   const [role, setRole] = useState("member");
-  const [expireHours, setExpireHours] = useState(24);
+  const [expireValue, setExpireValue] = useState(24);
+  const [expireUnit, setExpireUnit] = useState<"hours" | "days">("hours");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedInvite, setGeneratedInvite] =
     useState<GeneratedInvite | null>(null);
@@ -66,7 +67,8 @@ export function InviteLinkDialog({ onGenerated }: InviteLinkDialogProps) {
     setGeneratedInvite(null);
     setPosition("employee");
     setRole("member");
-    setExpireHours(24);
+    setExpireValue(24);
+    setExpireUnit("hours");
     setCopied(false);
   };
 
@@ -82,7 +84,7 @@ export function InviteLinkDialog({ onGenerated }: InviteLinkDialogProps) {
         body: JSON.stringify({
           position,
           role,
-          expire_hours: expireHours,
+          expire_hours: expireUnit === "days" ? expireValue * 24 : expireValue,
         }),
       });
 
@@ -190,20 +192,49 @@ export function InviteLinkDialog({ onGenerated }: InviteLinkDialogProps) {
 
               <div className="space-y-1.5">
                 <Label htmlFor="invite-expiry" className="text-xs font-semibold">
-                  Expires in (hours)
+                  Expires in
                 </Label>
-                <Input
-                  id="invite-expiry"
-                  type="number"
-                  min={1}
-                  max={720}
-                  value={expireHours}
-                  onChange={(e) =>
-                    setExpireHours(Number(e.target.value) || 24)
-                  }
-                  className="text-xs h-9 bg-card"
-                  disabled={isGenerating}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="invite-expiry"
+                    type="number"
+                    min={1}
+                    max={expireUnit === "days" ? 30 : 720}
+                    value={expireValue}
+                    onChange={(e) =>
+                      setExpireValue(Number(e.target.value) || 1)
+                    }
+                    className="text-xs h-9 bg-card"
+                    disabled={isGenerating}
+                  />
+                  <Select
+                    value={expireUnit}
+                    onValueChange={(v) => {
+                      const unit = v as "hours" | "days";
+                      setExpireValue((prev) =>
+                        unit === "days"
+                          ? Math.max(1, Math.round(prev / 24))
+                          : prev * 24 > 720
+                            ? 720
+                            : prev * 24,
+                      );
+                      setExpireUnit(unit);
+                    }}
+                    disabled={isGenerating}
+                  >
+                    <SelectTrigger className="text-xs h-9 w-24 bg-card">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hours" className="text-xs">
+                        Hours
+                      </SelectItem>
+                      <SelectItem value="days" className="text-xs">
+                        Days
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 

@@ -63,9 +63,18 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+// Backend stores/returns timestamps in UTC without a timezone suffix
+// (e.g. "2026-07-30T10:00:00"), which JS `Date` would otherwise parse
+// as local time. Force UTC interpretation so it converts to the
+// viewer's local time correctly.
+function toUtcDate(dateStr: string): Date {
+  const hasTimezone = /[zZ]|[+-]\d{2}:?\d{2}$/.test(dateStr);
+  return new Date(hasTimezone ? dateStr : `${dateStr}Z`);
+}
+
 function formatDate(dateStr: string) {
   try {
-    return new Date(dateStr).toLocaleString([], {
+    return toUtcDate(dateStr).toLocaleString([], {
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -77,7 +86,7 @@ function formatDate(dateStr: string) {
 }
 
 function isExpired(expiresAt: string) {
-  return new Date(expiresAt).getTime() < Date.now();
+  return toUtcDate(expiresAt).getTime() < Date.now();
 }
 
 // The link people actually click is our own accept page, not whatever
@@ -102,7 +111,8 @@ export function InviteLinkDirectory() {
 
   const [position, setPosition] = useState("employee");
   const [role, setRole] = useState("member");
-  const [expireHours, setExpireHours] = useState(24);
+  const [expireValue, setExpireValue] = useState(24);
+  const [expireUnit, setExpireUnit] = useState<"hours" | "days">("hours");
   const [isGenerating, setIsGenerating] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [generatedInvite, setGeneratedInvite] = useState<InviteRecord | null>(
@@ -122,7 +132,7 @@ export function InviteLinkDirectory() {
         body: JSON.stringify({
           position,
           role,
-          expire_hours: expireHours,
+          expire_hours: expireUnit === "days" ? expireValue * 24 : expireValue,
         }),
       });
 
@@ -222,17 +232,42 @@ export function InviteLinkDirectory() {
 
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-foreground">
-            Expires in (hours)
+            Expires in
           </label>
-          <Input
-            type="number"
-            min={1}
-            max={720}
-            value={expireHours}
-            onChange={(e) => setExpireHours(Number(e.target.value) || 24)}
-            className="h-10 text-sm border-muted/60"
-            disabled={isGenerating}
-          />
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min={1}
+              max={expireUnit === "days" ? 30 : 720}
+              value={expireValue}
+              onChange={(e) => setExpireValue(Number(e.target.value) || 1)}
+              className="h-10 text-sm border-muted/60"
+              disabled={isGenerating}
+            />
+            <Select
+              value={expireUnit}
+              onValueChange={(v) => {
+                const unit = v as "hours" | "days";
+                setExpireValue((prev) =>
+                  unit === "days"
+                    ? Math.max(1, Math.round(prev / 24))
+                    : prev * 24 > 720
+                      ? 720
+                      : prev * 24,
+                );
+                setExpireUnit(unit);
+              }}
+              disabled={isGenerating}
+            >
+              <SelectTrigger className="h-10 w-28 text-sm border-muted/60">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="hours">Hours</SelectItem>
+                <SelectItem value="days">Days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="sm:col-span-3">

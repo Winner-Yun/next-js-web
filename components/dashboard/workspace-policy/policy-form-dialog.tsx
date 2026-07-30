@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { AlertTriangleIcon, InfoIcon, Loader2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { WorkspacePolicyData } from "./types";
@@ -35,6 +36,7 @@ const defaultValues = {
   deadline_scan_minutes: 30,
   annual_leave_limit: 18,
   sick_leave_limit: 6,
+  requires_check_out: true,
 };
 
 interface FormErrors {
@@ -107,12 +109,17 @@ export function PolicyFormDialog({
 
   useEffect(() => {
     if (initialData) {
+      const requiresCheckOut = initialData.requires_check_out ?? true;
       setFormData({
         ...initialData,
         work_start_time: convertTo24Hour(initialData.work_start_time),
         work_end_time: convertTo24Hour(initialData.work_end_time),
         check_in_start: convertTo24Hour(initialData.check_in_start),
-        check_out_start: convertTo24Hour(initialData.check_out_start),
+        // Without check-out there's no real check-out time to show/send.
+        check_out_start: requiresCheckOut
+          ? convertTo24Hour(initialData.check_out_start)
+          : "",
+        requires_check_out: requiresCheckOut,
       });
     } else {
       setFormData(defaultValues);
@@ -122,10 +129,16 @@ export function PolicyFormDialog({
 
   const handleChange = (
     field: keyof typeof defaultValues,
-    value: string | number,
+    value: string | number | boolean,
   ) => {
     setFormData((prev) => {
       const updated = { ...prev, [field]: value };
+
+      // No check-out step means there's no real check-out time — clear it
+      // rather than leaving stale/old data in place.
+      if (field === "requires_check_out" && !value) {
+        updated.check_out_start = "";
+      }
 
       setErrors((prevErrors) => {
         const newErrors = { ...prevErrors };
@@ -139,10 +152,15 @@ export function PolicyFormDialog({
           }
         }
 
-        if (field === "check_in_start" || field === "check_out_start") {
+        if (
+          field === "check_in_start" ||
+          field === "check_out_start" ||
+          field === "requires_check_out"
+        ) {
           if (
+            !updated.requires_check_out ||
             timeToMinutes(updated.check_in_start) <
-            timeToMinutes(updated.check_out_start)
+              timeToMinutes(updated.check_out_start)
           ) {
             delete newErrors.check_time;
           }
@@ -169,8 +187,9 @@ export function PolicyFormDialog({
     }
 
     if (
+      formData.requires_check_out &&
       timeToMinutes(formData.check_in_start) >=
-      timeToMinutes(formData.check_out_start)
+        timeToMinutes(formData.check_out_start)
     ) {
       newErrors.check_time =
         "Check-Out Start must be strictly after Check-In Start.";
@@ -182,7 +201,12 @@ export function PolicyFormDialog({
     }
 
     setErrors({});
-    onSave(formData);
+    onSave({
+      ...formData,
+      check_out_start: formData.requires_check_out
+        ? formData.check_out_start
+        : "",
+    });
   };
 
   return (
@@ -261,7 +285,25 @@ export function PolicyFormDialog({
                 </p>
               )}
             </div>
-
+            <div className="flex items-center justify-between rounded-xl border border-muted/70 bg-muted/30 p-3.5">
+              <div className="space-y-0.5 pr-3">
+                <Label className="text-xs font-semibold text-foreground">
+                  Requires Check-Out
+                </Label>
+                <p className="text-[11px] text-muted-foreground leading-normal">
+                  {formData.requires_check_out
+                    ? "Employees must scan both check-in and check-out."
+                    : "Employees only need to scan check-in."}
+                </p>
+              </div>
+              <Switch
+                checked={formData.requires_check_out}
+                onCheckedChange={(checked) =>
+                  handleChange("requires_check_out", checked)
+                }
+                disabled={isProcessing}
+              />
+            </div>
             <div>
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1.5">
@@ -285,12 +327,12 @@ export function PolicyFormDialog({
                   </Label>
                   <Input
                     type="time"
-                    required
+                    required={formData.requires_check_out}
                     value={formData.check_out_start}
                     onChange={(e) =>
                       handleChange("check_out_start", e.target.value)
                     }
-                    disabled={isProcessing}
+                    disabled={isProcessing || !formData.requires_check_out}
                     className={`h-9 text-xs ${errors.check_time ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   />
                 </div>
@@ -366,7 +408,7 @@ export function PolicyFormDialog({
                   <span className="font-semibold text-amber-600 w-16">
                     {formatTime12Hour(
                       calculateTimeOffset(
-                        formData.work_start_time,
+                        formData.check_in_start,
                         formData.late_buffer_minutes,
                       ),
                     )}
@@ -379,13 +421,18 @@ export function PolicyFormDialog({
                   <span className="font-semibold text-destructive w-16">
                     {formatTime12Hour(
                       calculateTimeOffset(
-                        formData.check_out_start,
+                        formData.requires_check_out
+                          ? formData.check_out_start
+                          : formData.check_in_start,
                         formData.deadline_scan_minutes,
                       ),
                     )}
                   </span>
                   <span className="text-muted-foreground text-[11px]">
-                    - Scan Out Deadline
+                    -{" "}
+                    {formData.requires_check_out
+                      ? "Scan Out Deadline"
+                      : "Check-In Deadline"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -393,13 +440,18 @@ export function PolicyFormDialog({
                     After{" "}
                     {formatTime12Hour(
                       calculateTimeOffset(
-                        formData.check_out_start,
+                        formData.requires_check_out
+                          ? formData.check_out_start
+                          : formData.check_in_start,
                         formData.deadline_scan_minutes,
                       ),
                     )}
                   </span>
                   <span className="text-muted-foreground text-[11px]">
-                    - Missed Check-Out
+                    -{" "}
+                    {formData.requires_check_out
+                      ? "Missed Check-Out"
+                      : "Missed Check-In"}
                   </span>
                 </div>
               </div>

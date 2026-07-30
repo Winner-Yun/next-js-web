@@ -9,5 +9,6 @@ export interface WorkspacePolicyData {
   deadline_scan_minutes: number;
   annual_leave_limit: number;
   sick_leave_limit: number;
+  requires_check_out: boolean;
   status: "active" | "inactive";
 }
