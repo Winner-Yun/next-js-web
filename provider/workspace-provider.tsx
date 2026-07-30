@@ -11,11 +11,16 @@ import {
   useState,
 } from "react";
 
-type Workspace = {
+export type Workspace = {
   id: string;
   workspace_name: string;
   description?: string;
   status?: string;
+  has_password?: boolean;
+  // Not returned by the backend — derived client-side from which filtered
+  // /workspace/me call (only_owner vs only_member) a workspace came back in.
+  role?: "owner" | "member";
+  memberCount?: number;
 };
 
 type WorkspaceContextType = {
@@ -23,6 +28,9 @@ type WorkspaceContextType = {
   setWorkspace: (workspace: Workspace) => void;
   workspaces: Workspace[];
   isLoading: boolean;
+  sharedWorkspaces: Workspace[];
+  isSharedLoading: boolean;
+  fetchSharedWorkspaces: () => Promise<void>;
   createWorkspace: (name: string) => void;
   renameWorkspace: (id: string, newName: string) => void;
   fetchWorkspaces: () => Promise<void>; // Added to Context
@@ -34,9 +42,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [workspace, setWorkspaceState] = useState<Workspace | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sharedWorkspaces, setSharedWorkspaces] = useState<Workspace[]>([]);
+  const [isSharedLoading, setIsSharedLoading] = useState(false);
   const router = useRouter();
 
-  // Extracted into a useCallback so it can be exposed and manually called
+  // Default view: only workspaces this account owns (only_owner=true is the
+  // backend's own default). Shared-with-me workspaces are a separate, opt-in
+  // fetch — see fetchSharedWorkspaces — not merged in here.
   const fetchWorkspaces = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -48,30 +60,70 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const res = await fetch(`/api/workspace/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `/api/workspace/me?only_owner=true&only_member=false`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       const data = await res.json();
 
       if (data.workspaces && Array.isArray(data.workspaces)) {
-        setWorkspaces(data.workspaces);
+        const owned: Workspace[] = data.workspaces.map((w: Workspace) => ({
+          ...w,
+          role: "owner" as const,
+        }));
+
+        setWorkspaces(owned);
 
         const savedWorkspaceId = localStorage.getItem("selected_workspace_id");
-        const found = data.workspaces.find(
-          (w: Workspace) => w.id === savedWorkspaceId,
-        );
+        const found = owned.find((w) => w.id === savedWorkspaceId);
 
-        setWorkspaceState(found || data.workspaces[0] || null);
+        setWorkspaceState(found || owned[0] || null);
       }
     } catch (error) {
     } finally {
       setIsLoading(false);
     }
   }, [router]);
+
+  // Opt-in fetch for the "Shared Contexts" view — only called when the user
+  // actually asks to see workspaces they're a member of, not owner of.
+  const fetchSharedWorkspaces = useCallback(async () => {
+    try {
+      setIsSharedLoading(true);
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      const res = await fetch(
+        `/api/workspace/me?only_owner=false&only_member=true`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      const data = await res.json();
+
+      if (data.workspaces && Array.isArray(data.workspaces)) {
+        setSharedWorkspaces(
+          data.workspaces.map((w: Workspace) => ({
+            ...w,
+            role: "member" as const,
+          })),
+        );
+      }
+    } catch (error) {
+    } finally {
+      setIsSharedLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchWorkspaces();
@@ -108,6 +160,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         setWorkspace,
         workspaces,
         isLoading,
+        sharedWorkspaces,
+        isSharedLoading,
+        fetchSharedWorkspaces,
         createWorkspace,
         renameWorkspace,
         fetchWorkspaces, // Exported to provider consumers

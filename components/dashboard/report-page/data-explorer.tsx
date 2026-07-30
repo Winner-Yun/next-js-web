@@ -30,7 +30,7 @@ export function DataExplorer({
           <div className="flex items-center gap-2">
             <CalendarDaysIcon className="size-4 text-brand print:text-black" />
             <h3 className="text-sm font-bold text-foreground">
-              Raw Data Explorer
+              Detailed Records
             </h3>
           </div>
 
@@ -72,7 +72,7 @@ export function DataExplorer({
                   ) : workspaceData.attendance.length === 0 ? (
                     <EmptyRow
                       colSpan={4}
-                      message="No attendance records synchronized."
+                      message="No attendance records found."
                     />
                   ) : (
                     workspaceData.attendance.map((a) => (
@@ -152,7 +152,7 @@ export function DataExplorer({
                   ) : workspaceData.leaves.length === 0 ? (
                     <EmptyRow
                       colSpan={6}
-                      message="No leave applications compiled."
+                      message="No leave applications found."
                     />
                   ) : (
                     workspaceData.leaves.map((l, index) => (

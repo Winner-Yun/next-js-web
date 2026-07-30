@@ -20,7 +20,7 @@ export async function PATCH(
 
     const { id: workspaceId } = await params;
 
-    const { workspace_name, description } = await request.json();
+    const { workspace_name, description, password } = await request.json();
 
     if (!workspaceId) {
       return NextResponse.json(
@@ -29,11 +29,11 @@ export async function PATCH(
       );
     }
 
-    if (!workspace_name && !description) {
+    if (!workspace_name && !description && !password) {
       return NextResponse.json(
         {
           detail:
-            "At least one of workspace_name or description is required for update.",
+            "At least one of workspace_name, description, or password is required for update.",
         },
         { status: 400 },
       );
@@ -43,9 +43,14 @@ export async function PATCH(
 
     const targetUrl = `${cleanUrl}/workspace/${workspaceId}`;
 
-    const payload: { workspace_name?: string; description?: string } = {};
+    const payload: {
+      workspace_name?: string;
+      description?: string;
+      password?: string;
+    } = {};
     if (workspace_name) payload.workspace_name = workspace_name;
     if (description) payload.description = description;
+    if (password) payload.password = password;
 
     const backendResponse = await fetch(targetUrl, {
       method: "PATCH",

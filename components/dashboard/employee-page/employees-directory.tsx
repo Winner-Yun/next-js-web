@@ -2,15 +2,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -21,23 +12,26 @@ import {
 } from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWorkspace } from "@/provider/workspace-provider";
 import {
-  AlertTriangleIcon,
   ArrowDownUpIcon,
-  Loader2Icon,
+  LayoutGridIcon,
   SearchIcon,
+  TableIcon,
   UsersIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 import useSWR from "swr";
 
 import { EmployeeCard } from "@/components/dashboard/employee-page/employee-card";
 import { EmployeeDetailsPanel } from "@/components/dashboard/employee-page/employee-details-panel";
-import { InviteEmployeeDialog } from "@/components/dashboard/employee-page/invite-employee-dialog";
+import { EmployeeTable } from "@/components/dashboard/employee-page/employee-table";
+import { InviteLinkDialog } from "@/components/dashboard/employee-page/invite-link-dialog";
 import { ManageAccessDialog } from "@/components/dashboard/employee-page/manage-access-dialog";
 import type { Employee } from "@/components/dashboard/employee-page/types";
+
+type ViewMode = "grid" | "table";
 
 const apiFetcher = async (url: string) => {
   const token = localStorage.getItem("accessToken");
@@ -62,22 +56,18 @@ export function EmployeesDirectory() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null,
   );
-
-  const [inviteToRevoke, setInviteToRevoke] = useState<Employee | null>(null);
-  const [isRevoking, setIsRevoking] = useState(false);
-
-  const [showPending, setShowPending] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   useEffect(() => {
-    const savedPreference = localStorage.getItem("showPendingUsersPreference");
-    if (savedPreference !== null) {
-      setShowPending(savedPreference === "true");
+    const savedMode = localStorage.getItem("employeeViewMode");
+    if (savedMode === "grid" || savedMode === "table") {
+      setViewMode(savedMode);
     }
   }, []);
 
-  const handleTogglePending = (checked: boolean) => {
-    setShowPending(checked);
-    localStorage.setItem("showPendingUsersPreference", String(checked));
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem("employeeViewMode", mode);
   };
 
   // Fetch real-time active workspace members
@@ -92,43 +82,13 @@ export function EmployeesDirectory() {
     { revalidateOnFocus: false },
   );
 
-  // Fetch pending invites only if the toggle is enabled
-  const {
-    data: invitesData,
-    isLoading: invitesLoading,
-    mutate: mutateInvites,
-  } = useSWR(
-    workspace?.id && showPending
-      ? `/api/workspace/${workspace.id}/invites?status=pending`
-      : null,
-    apiFetcher,
-    { revalidateOnFocus: false },
-  );
-
+  // Owners are the workspace creators, not regular staff — keep this list to members only.
   const employeesList: Employee[] = useMemo(() => {
-    const activeMembers = membersData?.members || [];
-
-    const rawInvites =
-      invitesData?.invites ||
-      invitesData?.data ||
-      invitesData?.items ||
-      invitesData;
-
-    const pendingInvites = Array.isArray(rawInvites) ? rawInvites : [];
-
-    const formattedInvites: Employee[] = showPending
-      ? pendingInvites.map((inv: unknown) => ({
-          id: inv.id || inv._id,
-          name: "Pending User",
-          email: inv.email,
-          role: inv.role || "Member",
-          status: "inactive",
-          is_pending: true,
-        }))
-      : [];
-
-    return [...activeMembers, ...formattedInvites];
-  }, [membersData, invitesData, showPending]);
+    const activeMembers: Employee[] = membersData?.members || [];
+    return activeMembers.filter(
+      (member) => member.role?.toLowerCase() !== "owner",
+    );
+  }, [membersData]);
 
   const processedEmployees = useMemo(() => {
     let result = [...employeesList];
@@ -156,44 +116,9 @@ export function EmployeesDirectory() {
 
   const handleReload = async () => {
     await mutateMembers(undefined, { revalidate: true });
-    if (showPending) await mutateInvites(undefined, { revalidate: true });
   };
 
-  const handleRevokeClick = (employee: Employee, e: React.MouseEvent) => {
-    e.preventDefault();
-    setInviteToRevoke(employee);
-  };
-
-  const handleFinalRevoke = async () => {
-    if (!inviteToRevoke) return;
-
-    setIsRevoking(true);
-    try {
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(`/api/workspace/invite/${inviteToRevoke.id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (res.ok) {
-        toast.success("Invitation successfully revoked.");
-        await mutateInvites();
-        setInviteToRevoke(null);
-      } else {
-        const errData = await res.json().catch(() => ({}));
-        toast.error(errData.detail || "Failed to cancel invitation context.");
-      }
-    } catch (error) {
-      toast.error("An error occurred during revocation handling.");
-    } finally {
-      setIsRevoking(false);
-    }
-  };
-
-  const isLoading = membersLoading || (showPending && invitesLoading);
+  const isLoading = membersLoading;
   const error = membersError;
 
   return (
@@ -229,31 +154,30 @@ export function EmployeesDirectory() {
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
-          <label
-            htmlFor="show-pending"
-            className="flex items-center space-x-2 border border-border rounded-lg px-3 h-9 bg-muted/40 cursor-pointer select-none"
+          <Tabs
+            value={viewMode}
+            onValueChange={(v) => handleViewModeChange(v as ViewMode)}
+            className="h-9 shrink-0"
           >
-            <div className="relative">
-              <input
-                id="show-pending"
-                type="checkbox"
-                className="peer sr-only"
-                disabled={isRevoking}
-                checked={showPending}
-                // Hook up the custom handle change function
-                onChange={(e) => handleTogglePending(e.target.checked)}
-              />
-              <div className="h-4 w-8 rounded-full bg-muted-foreground/30 transition-colors peer-checked:bg-brand"></div>
-              <div className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-background shadow-xs transition-transform peer-checked:translate-x-4"></div>
-            </div>
-            <span className="text-xs font-medium text-foreground">
-              Show Pending
-            </span>
-          </label>
+            <TabsList className="h-9 p-1 bg-muted/30 border border-muted/60">
+              <TabsTrigger
+                value="grid"
+                className="text-xs h-7 px-3 data-[state=active]:bg-background"
+              >
+                <LayoutGridIcon className="size-3.5 mr-1.5" /> Grid
+              </TabsTrigger>
+              <TabsTrigger
+                value="table"
+                className="text-xs h-7 px-3 data-[state=active]:bg-background"
+              >
+                <TableIcon className="size-3.5 mr-1.5" /> Table
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           <div className="flex items-center gap-2">
             <ManageAccessDialog onSuccess={handleReload} />
-            <InviteEmployeeDialog onInviteSuccess={handleReload} />
+            <InviteLinkDialog onGenerated={handleReload} />
           </div>
         </div>
       </div>
@@ -268,32 +192,36 @@ export function EmployeesDirectory() {
         <div className="py-16 text-center text-xs text-destructive bg-destructive/5 rounded-xl border border-destructive/20">
           Failed to load workspace members. Please verify session context.
         </div>
+      ) : viewMode === "table" ? (
+        <EmployeeTable
+          employees={processedEmployees}
+          onRowClick={setSelectedEmployee}
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {processedEmployees.map((emp) => (
-            <EmployeeCard
-              key={`${emp.is_pending ? "inv-" : "usr-"}${emp.id}`}
-              employee={emp}
-              onClick={() => {
-                if (!emp.is_pending) setSelectedEmployee(emp);
-              }}
-              onRevokeInvite={(id, e) => handleRevokeClick(emp, e)}
-            />
-          ))}
+        <div className="max-h-[65vh] overflow-y-auto pr-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {processedEmployees.map((emp) => (
+              <EmployeeCard
+                key={emp.id}
+                employee={emp}
+                onClick={() => setSelectedEmployee(emp)}
+              />
+            ))}
 
-          {processedEmployees.length === 0 && (
-            <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 flex flex-col items-center justify-center">
-              <div className="rounded-full bg-muted/40 p-3 mb-3">
-                <UsersIcon className="size-5 text-muted-foreground/70" />
+            {processedEmployees.length === 0 && (
+              <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 flex flex-col items-center justify-center">
+                <div className="rounded-full bg-muted/40 p-3 mb-3">
+                  <UsersIcon className="size-5 text-muted-foreground/70" />
+                </div>
+                <p className="text-sm font-medium text-foreground">
+                  No records located
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  No employees match your criteria.
+                </p>
               </div>
-              <p className="text-sm font-medium text-foreground">
-                No records located
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                No employees or pending invites match your criteria.
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
@@ -307,69 +235,6 @@ export function EmployeesDirectory() {
           )}
         </SheetContent>
       </Sheet>
-
-      <Dialog
-        open={!!inviteToRevoke}
-        onOpenChange={(open) => {
-          if (isRevoking) return;
-          if (!open) setInviteToRevoke(null);
-        }}
-      >
-        <DialogContent
-          className="sm:max-w-md"
-          onInteractOutside={(e) => {
-            if (isRevoking) e.preventDefault();
-          }}
-          onEscapeKeyDown={(e) => {
-            if (isRevoking) e.preventDefault();
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold tracking-tight text-destructive flex items-center gap-2">
-              <AlertTriangleIcon className="size-4 shrink-0 animate-pulse" />
-              Revoke Pending Access
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground leading-normal pt-1">
-              You are terminating an active system authorization sequence. This
-              will instantly expire all tracking logs linked with the email
-              address:{" "}
-              <span className="font-semibold text-foreground block mt-1 select-all bg-muted border rounded px-1.5 py-0.5 font-mono text-[11px] w-fit">
-                {inviteToRevoke?.email}
-              </span>
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter className="pt-4 flex-row justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="text-xs h-9 cursor-pointer"
-              disabled={isRevoking}
-              onClick={() => setInviteToRevoke(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              className="text-xs h-9 gap-1.5 min-w-32.5 cursor-pointer"
-              disabled={isRevoking}
-              onClick={handleFinalRevoke}
-            >
-              {isRevoking ? (
-                <>
-                  <Loader2Icon className="size-3.5 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                "Confirm Revocation"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

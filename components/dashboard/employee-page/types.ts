@@ -8,7 +8,6 @@ export type Employee = {
   provider?: string;
   status: "active" | "inactive";
   role: string;
-  is_pending?: boolean;
   joined_at?: string | null;
   created_at?: string | null;
   updated_at?: string | null;

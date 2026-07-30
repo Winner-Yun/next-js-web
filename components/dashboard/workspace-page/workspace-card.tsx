@@ -15,6 +15,7 @@ import {
   AlertCircleIcon,
   Building2Icon,
   Loader2Icon,
+  LockIcon,
   PencilIcon,
   ShieldIcon,
   Trash2Icon,
@@ -23,7 +24,9 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { WorkspaceConfirmDialog } from "./workspace-confirm-dialog";
+import { WorkspacePasswordPromptDialog } from "./workspace-password-prompt-dialog";
 import { WorkspaceRenameDialog } from "./workspace-rename-dialog";
+import { WorkspaceSetPasswordDialog } from "./workspace-set-password-dialog";
 
 type WorkspaceCardProps = {
   workspaceItem: {
@@ -32,6 +35,7 @@ type WorkspaceCardProps = {
     role: "owner" | "member";
     memberCount?: number;
     description?: string;
+    has_password?: boolean;
   };
 };
 
@@ -43,21 +47,58 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
   } = useWorkspace();
 
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
 
   const isActive = activeWorkspace?.id === workspaceItem.id;
   const isOwner = workspaceItem.role === "owner";
 
-  const handleSwitch = () => {
-    if (!isOwner) {
-      toast.error("Only workspace owners can switch workspaces.");
-      return;
-    }
+  const performSwitch = () => {
     setWorkspace({
       id: workspaceItem.id,
       workspace_name: workspaceItem.name,
       description: workspaceItem.description,
     });
     toast.success(`Switched context to ${workspaceItem.name}`);
+  };
+
+  const handleSwitch = () => {
+    if (!isOwner) {
+      toast.error("Only workspace owners can switch workspaces.");
+      return;
+    }
+    if (workspaceItem.has_password) {
+      setShowPasswordPrompt(true);
+      return;
+    }
+    performSwitch();
+  };
+
+  const handleSetPassword = async (password: string) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch(
+        `/api/workspace/${workspaceItem.id}/update-workspace`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ password }),
+        },
+      );
+
+      if (!res.ok) throw new Error("Failed to update password");
+
+      toast.success(
+        workspaceItem.has_password
+          ? "Workspace password updated."
+          : "Workspace password set.",
+      );
+      await fetchWorkspaces();
+    } catch (error) {
+      toast.error("Failed to save workspace password.");
+    }
   };
 
   const handleRename = async (
@@ -209,6 +250,36 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
+                    <div>
+                      <WorkspaceSetPasswordDialog
+                        hasPassword={!!workspaceItem.has_password}
+                        onSave={handleSetPassword}
+                      >
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className={`size-8 cursor-pointer border bg-muted ${
+                            workspaceItem.has_password
+                              ? "text-brand border-brand/30"
+                              : ""
+                          }`}
+                        >
+                          <LockIcon className="size-3.5" />
+                        </Button>
+                      </WorkspaceSetPasswordDialog>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">
+                    {workspaceItem.has_password
+                      ? "Update workspace password"
+                      : "Set workspace password"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <div
                       className={
                         isActive || isDeleting ? "cursor-not-allowed" : ""
@@ -254,6 +325,17 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
           )}
         </div>
       </CardContent>
+
+      <WorkspacePasswordPromptDialog
+        open={showPasswordPrompt}
+        workspaceId={workspaceItem.id}
+        workspaceName={workspaceItem.name}
+        onOpenChange={setShowPasswordPrompt}
+        onVerified={() => {
+          setShowPasswordPrompt(false);
+          performSwitch();
+        }}
+      />
     </DashboardCard>
   );
 }

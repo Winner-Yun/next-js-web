@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/provider/auth-provider";
 import { ThemeProvider } from "@/provider/theme-provider";
@@ -36,6 +37,7 @@ export default function RootLayout({
           <AuthProvider>
             <TooltipProvider>{children}</TooltipProvider>
           </AuthProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

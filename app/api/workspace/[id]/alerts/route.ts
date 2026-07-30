@@ -11,7 +11,7 @@ async function proxyRequest(
   const authHeader = request.headers.get("authorization");
 
   const url = new URL(request.url);
-  const targetUrl = `${BACKEND_URL}/workspaces/${workspaceId}/alerts${
+  const targetUrl = `${BACKEND_URL}/workspaces/${workspaceId}/alerts/${
     method === "GET" && url.search ? `?${url.searchParams.toString()}` : ""
   }`;
 

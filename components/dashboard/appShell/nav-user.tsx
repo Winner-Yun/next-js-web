@@ -72,24 +72,19 @@ export function NavUser() {
 
   const handleConfirmLogout = async () => {
     setIsLoggingOut(true);
-    const refreshToken = localStorage.getItem("refreshToken");
 
-    if (refreshToken) {
-      try {
-        await fetch("/api/auth/logout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refresh_token: refreshToken }),
-        });
-      } catch (error) {
-        console.error("Failed to call logout API:", error);
-      }
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    } catch (error) {
+      console.error("Failed to call logout API:", error);
     }
 
     localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
 
     window.location.replace("/");
   };

@@ -4,79 +4,23 @@ import { ChevronLeftIcon, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import useMeasure from "react-use-measure";
 
-import {
-  CredentialResponse,
-  GoogleLogin,
-  GoogleOAuthProvider,
-} from "@react-oauth/google";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 
 import { AzureBackground } from "@/components/ui/azureBackground";
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { Particles } from "@/components/ui/particles";
+import { useGoogleAuth } from "@/components/auth_component/use-google-auth";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
-const BACKEND_AUTH_URL = "/api/auth/google/callback";
 
 function AuthContent() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+  const { isLoading, errorMsg, handleGoogleSuccess, handleGoogleError } =
+    useGoogleAuth();
   const [buttonRef, buttonBounds] = useMeasure();
   const googleButtonWidth = Math.max(320, Math.round(buttonBounds.width || 0));
-
-  const handleGoogleSuccess = async (
-    credentialResponse: CredentialResponse,
-  ) => {
-    if (!credentialResponse.credential) {
-      setErrorMsg("Google did not return an ID token.");
-      return;
-    }
-
-    setIsLoading(true);
-    setErrorMsg("");
-
-    try {
-      const response = await fetch(BACKEND_AUTH_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: credentialResponse.credential,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Authentication failed.");
-      }
-
-      // Save your backend JWTs
-      localStorage.setItem("accessToken", data.access_token);
-
-      if (data.refresh_token) {
-        localStorage.setItem("refreshToken", data.refresh_token);
-      }
-      // Set a flag in sessionStorage to show the dashboard splash screen
-      sessionStorage.setItem("showDashboardSplash", "true");
-
-      router.push("/dashboard");
-    } catch (error) {
-      setErrorMsg(
-        error instanceof Error
-          ? error.message
-          : "Unable to connect to the server.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <AzureBackground>
@@ -240,9 +184,7 @@ function AuthContent() {
                   </Button>
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
-                    onError={() =>
-                      setErrorMsg("Google login was unsuccessful or canceled.")
-                    }
+                    onError={handleGoogleError}
                     containerProps={{
                       className:
                         "absolute inset-0 z-20 h-full w-full opacity-0",

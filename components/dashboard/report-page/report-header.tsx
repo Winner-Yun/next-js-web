@@ -9,13 +9,26 @@ interface ReportHeaderProps {
   onExport: () => void;
 }
 
-export function ReportHeader({ activeTab, onExport }: ReportHeaderProps) {
+export function ReportHeader({
+  workspaceName,
+  activeTab,
+  onExport,
+}: ReportHeaderProps) {
+  const generatedOn = new Date().toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-muted/60 pb-5 print:border-b-2 print:border-black">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground print:text-black print:text-3xl">
-          Workspace Master Report
+          Attendance &amp; Leave Report
         </h1>
+        <p className="text-xs text-muted-foreground mt-1 print:text-black">
+          {workspaceName || "Workspace"} &middot; Generated {generatedOn}
+        </p>
       </div>
 
       <div className="flex items-center gap-2 self-stretch sm:self-auto print:hidden">

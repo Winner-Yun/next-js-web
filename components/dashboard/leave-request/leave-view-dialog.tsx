@@ -14,6 +14,7 @@ import {
   CalendarDaysIcon,
   CheckIcon,
   Edit2Icon,
+  ExternalLinkIcon,
   FileTextIcon,
   Loader2,
   XIcon,
@@ -42,6 +43,7 @@ export function LeaveViewDialog({
   const [loadingAction, setLoadingAction] = useState<
     "Approved" | "Rejected" | null
   >(null);
+  const [isImageOpen, setIsImageOpen] = useState(false);
 
   const isProcessing = loadingAction !== null;
 
@@ -158,18 +160,22 @@ export function LeaveViewDialog({
 
             <DialogFooter className="p-4 bg-muted/20 flex items-center justify-between gap-2 shrink-0">
               {selectedRequest.attachmentUrl && (
-                <div className=" p-3 bg-muted/30 rounded-md border border-muted">
-                  <a
-                    href={selectedRequest.attachmentUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`text-xs text-brand hover:underline flex items-center gap-1 ${
-                      isProcessing ? "pointer-events-none opacity-50" : ""
-                    }`}
-                  >
-                    Click to view attachment
-                  </a>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsImageOpen(true)}
+                  disabled={isProcessing}
+                  className="flex items-center gap-2 p-1.5 pr-3 bg-muted/30 rounded-md border border-muted cursor-pointer hover:bg-muted/50 transition-colors disabled:pointer-events-none disabled:opacity-50"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={selectedRequest.attachmentUrl}
+                    alt="Leave attachment preview"
+                    className="size-9 rounded-sm object-cover border border-muted-foreground/10 shrink-0"
+                  />
+                  <span className="text-xs text-brand font-medium">
+                    View attachment
+                  </span>
+                </button>
               )}
 
               <div className="flex items-center gap-2">
@@ -235,6 +241,41 @@ export function LeaveViewDialog({
           </div>
         )}
       </DialogContent>
+
+      {selectedRequest?.attachmentUrl && (
+        <Dialog open={isImageOpen} onOpenChange={setIsImageOpen}>
+          <DialogContent className="sm:max-w-3xl p-2 bg-background">
+            <DialogHeader className="px-3 pt-2">
+              <DialogTitle className="text-sm font-bold">
+                Leave Attachment
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                Proof submitted by {selectedRequest.employeeName}.
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={selectedRequest.attachmentUrl}
+              alt="Leave attachment full view"
+              className="w-full max-h-[75vh] object-contain rounded-md"
+            />
+
+            <DialogFooter className="px-3 pb-2 flex-row justify-end gap-2!">
+              <Button asChild variant="outline" size="sm" className="text-xs h-9 cursor-pointer">
+                <a
+                  href={selectedRequest.attachmentUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ExternalLinkIcon className="size-3.5 mr-1.5" />
+                  Open Original
+                </a>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 }

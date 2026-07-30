@@ -181,14 +181,18 @@ export function ReportDirectory() {
   if (attErr || lvErr) {
     return (
       <div className="p-8 text-center border border-destructive/20 bg-destructive/5 text-destructive rounded-xl text-sm font-semibold">
-        Failed to dynamically process synchronized backend report metrics logs.
+        Failed to load report data. Please try again.
       </div>
     );
   }
 
   return (
     <div className="w-full space-y-6 p-px animate-in fade-in duration-300 text-foreground">
-      <ReportHeader activeTab={activeTab} onExport={handleExportCSV} />
+      <ReportHeader
+        workspaceName={workspace?.workspace_name || ""}
+        activeTab={activeTab}
+        onExport={handleExportCSV}
+      />
       <DataExplorer
         activeTab={activeTab}
         onTabChange={setActiveTab}

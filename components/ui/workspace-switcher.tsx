@@ -1,5 +1,6 @@
 "use client";
 
+import { WorkspacePasswordPromptDialog } from "@/components/dashboard/workspace-page/workspace-password-prompt-dialog";
 import {
   Select,
   SelectContent,
@@ -9,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { useWorkspace } from "@/provider/workspace-provider";
 import { Building2 } from "lucide-react";
+import { useState } from "react";
 
 // (Optional) Import Skeleton if you want a loading placeholder
 // import { Skeleton } from "@/components/ui/skeleton";
@@ -43,6 +45,9 @@ function getWorkspaceColor(id: string) {
 
 export function WorkspaceSwitcher() {
   const { workspace, setWorkspace, workspaces, isLoading } = useWorkspace();
+  const [pendingWorkspace, setPendingWorkspace] = useState<
+    (typeof workspaces)[number] | null
+  >(null);
 
   // 1. Prevent crash while API is loading
   if (isLoading) {
@@ -56,32 +61,52 @@ export function WorkspaceSwitcher() {
   }
 
   return (
-    <Select
-      value={workspace.id}
-      onValueChange={(value) => {
-        const selected = workspaces.find((w) => w.id === value);
-        if (selected) {
+    <>
+      <Select
+        value={workspace.id}
+        onValueChange={(value) => {
+          const selected = workspaces.find((w) => w.id === value);
+          if (!selected) return;
+          if (selected.has_password) {
+            setPendingWorkspace(selected);
+            return;
+          }
           setWorkspace(selected);
-        }
-      }}
-    >
-      <SelectTrigger className="w-62.5 rounded-xl">
-        <div className="flex items-center gap-2.5">
-          <SelectValue placeholder="Select a workspace" />
-        </div>
-      </SelectTrigger>
+        }}
+      >
+        <SelectTrigger className="w-62.5 rounded-xl">
+          <div className="flex items-center gap-2.5">
+            <SelectValue placeholder="Select a workspace" />
+          </div>
+        </SelectTrigger>
 
-      <SelectContent className="rounded-xl">
-        {workspaces.map((w) => (
-          <SelectItem key={w.id} value={w.id}>
-            <div className="flex items-center gap-2.5">
-              <Building2 className={`h-4 w-4 ${getWorkspaceColor(w.id)}`} />
-              {/* 3. Updated to match your API's "workspace_name" key */}
-              {w.workspace_name}
-            </div>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        <SelectContent className="rounded-xl">
+          {workspaces.map((w) => (
+            <SelectItem key={w.id} value={w.id}>
+              <div className="flex items-center gap-2.5">
+                <Building2 className={`h-4 w-4 ${getWorkspaceColor(w.id)}`} />
+                {/* 3. Updated to match your API's "workspace_name" key */}
+                {w.workspace_name}
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {pendingWorkspace && (
+        <WorkspacePasswordPromptDialog
+          open={!!pendingWorkspace}
+          workspaceId={pendingWorkspace.id}
+          workspaceName={pendingWorkspace.workspace_name}
+          onOpenChange={(open) => {
+            if (!open) setPendingWorkspace(null);
+          }}
+          onVerified={() => {
+            setWorkspace(pendingWorkspace);
+            setPendingWorkspace(null);
+          }}
+        />
+      )}
+    </>
   );
 }

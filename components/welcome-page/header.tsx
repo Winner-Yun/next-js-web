@@ -1,11 +1,11 @@
 "use client";
 
+import { ThemeSwitcher } from "@/components/dashboard/appShell/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/welcome-page/mobile-nav";
 import { useScroll } from "@/hooks/use-scroll";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import Link from "next/link";
 
 export const navLinks = [
   {
@@ -15,6 +15,10 @@ export const navLinks = [
   {
     label: "Features",
     id: "features",
+  },
+  {
+    label: "How to Use",
+    id: "how-to-use",
   },
   {
     label: "Contacts",
@@ -73,9 +77,9 @@ export function Header() {
           <span className="text-xl font-bold tracking-tight">Work Smart</span>
         </button>
 
-        {/* Desktop */}
-        <div className="hidden items-center gap-6 md:flex">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          {/* Desktop */}
+          <div className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => (
               <Button
                 key={link.label}
@@ -89,30 +93,12 @@ export function Header() {
             ))}
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3 border-l border-border pl-6">
-            <Button
-              asChild
-              className="cursor-pointer"
-              size="sm"
-              variant="ghost"
-            >
-              <Link href="/auth">Sign In</Link>
-            </Button>
+          <ThemeSwitcher />
 
-            <Button
-              asChild
-              size="sm"
-              className="cursor-pointer bg-brand text-white shadow-sm hover:bg-brand-hover"
-            >
-              <Link href="/auth">Get Started</Link>
-            </Button>
+          {/* Mobile */}
+          <div className="md:hidden">
+            <MobileNav />
           </div>
-        </div>
-
-        {/* Mobile */}
-        <div className="md:hidden">
-          <MobileNav />
         </div>
       </nav>
     </header>

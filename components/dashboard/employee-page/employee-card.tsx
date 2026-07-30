@@ -3,27 +3,20 @@
 import { DashboardCard } from "@/components/dashboard/dashboard-home/dashboard-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   BriefcaseIcon,
   ChevronRightIcon,
   CircleIcon,
   MailIcon,
-  UserXIcon,
 } from "lucide-react";
 import type { Employee } from "./types";
 
 interface EmployeeCardProps {
   employee: Employee;
   onClick: () => void;
-  onRevokeInvite?: (id: string, e: React.MouseEvent) => void;
 }
 
-export function EmployeeCard({
-  employee,
-  onClick,
-  onRevokeInvite,
-}: EmployeeCardProps) {
+export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
   const isActive = employee.status === "active";
   const isSuspended = employee.status === "suspended";
   const initials = employee.name ? employee.name[0].toUpperCase() : "?";
@@ -61,10 +54,14 @@ export function EmployeeCard({
         </div>
 
         <Badge
-          variant={
-            isActive ? "success" : isSuspended ? "destructive" : "secondary"
-          }
-          className="text-[10px] px-2 py-0.5 rounded-md font-semibold tracking-wide shrink-0 shadow-xs"
+          variant="outline"
+          className={`text-[10px] px-2 py-0.5 rounded-md font-semibold tracking-wide shrink-0 shadow-xs ${
+            isActive
+              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+              : isSuspended
+                ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                : ""
+          }`}
         >
           <CircleIcon
             className={`mr-1 size-1.5 fill-current ${
@@ -75,13 +72,7 @@ export function EmployeeCard({
                   : "text-muted-foreground"
             }`}
           />
-          {employee.is_pending
-            ? "Pending"
-            : isActive
-              ? "Active"
-              : isSuspended
-                ? "Suspended"
-                : "Inactive"}
+          {isActive ? "Active" : isSuspended ? "Suspended" : "Inactive"}
         </Badge>
       </div>
 
@@ -108,23 +99,9 @@ export function EmployeeCard({
           </span>
         </span>
 
-        {employee.is_pending ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 px-2 z-10 relative"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRevokeInvite?.(employee.id, e);
-            }}
-          >
-            <UserXIcon className="size-3.5 mr-1" /> Revoke
-          </Button>
-        ) : (
-          <div className="flex size-7 cursor-pointer items-center justify-center rounded-lg border border-transparent transition-all duration-300 group-hover:border-muted group-hover:bg-muted/40">
-            <ChevronRightIcon className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-          </div>
-        )}
+        <div className="flex size-7 cursor-pointer items-center justify-center rounded-lg border border-transparent transition-all duration-300 group-hover:border-muted group-hover:bg-muted/40">
+          <ChevronRightIcon className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        </div>
       </div>
     </DashboardCard>
   );

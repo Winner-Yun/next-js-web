@@ -5,7 +5,6 @@ import { navLinks } from "@/components/welcome-page/header";
 import { Portal, PortalBackdrop } from "@/components/welcome-page/portal";
 import { cn } from "@/lib/utils";
 import { MenuIcon, XIcon } from "lucide-react";
-import Link from "next/link";
 import React from "react";
 
 export function MobileNav() {
@@ -73,18 +72,10 @@ export function MobileNav() {
 
             <div className="mt-12 flex flex-col gap-2">
               <Button
-                asChild
-                variant="outline"
-                className="w-full bg-transparent cursor-pointer"
-              >
-                <Link href="/auth">Sign In</Link>
-              </Button>
-
-              <Button
-                asChild
                 className="w-full bg-brand cursor-pointer text-white hover:bg-brand-hover"
+                onClick={() => scrollToSection("hero")}
               >
-                <Link href="/auth">Get Started</Link>
+                Continue with Google
               </Button>
             </div>
           </div>

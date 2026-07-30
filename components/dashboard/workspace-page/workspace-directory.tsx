@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { useWorkspace } from "@/provider/workspace-provider";
+import { useWorkspace, type Workspace } from "@/provider/workspace-provider";
 import {
   ArrowUpDownIcon,
   SearchIcon,
@@ -24,9 +24,42 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 type SortOption = "name-asc" | "name-desc" | "members-desc";
 
+function filterAndSort(
+  list: Workspace[],
+  searchQuery: string,
+  sortBy: SortOption,
+) {
+  let result = [...list];
+
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase().trim();
+    result = result.filter(
+      (w) =>
+        w.workspace_name.toLowerCase().includes(query) ||
+        w.description?.toLowerCase().includes(query),
+    );
+  }
+
+  return result.sort((a, b) => {
+    if (sortBy === "name-asc")
+      return a.workspace_name.localeCompare(b.workspace_name);
+    if (sortBy === "name-desc")
+      return b.workspace_name.localeCompare(a.workspace_name);
+    if (sortBy === "members-desc")
+      return (b.memberCount || 0) - (a.memberCount || 0);
+    return 0;
+  });
+}
+
 export function WorkspacesDirectory() {
   // 1. Hook directly into the central Provider
-  const { workspaces, isLoading: isWorkspacesLoading } = useWorkspace();
+  const {
+    workspaces,
+    isLoading: isWorkspacesLoading,
+    sharedWorkspaces,
+    isSharedLoading,
+    fetchSharedWorkspaces,
+  } = useWorkspace();
 
   const [sortBy, setSortBy] = useState<SortOption>("name-asc");
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,43 +75,21 @@ export function WorkspacesDirectory() {
     return () => window.clearTimeout(id);
   }, []);
 
+  // Shared workspaces are fetched on demand — only while the toggle is on —
+  // not merged into the primary owned-only `workspaces` list.
+  useEffect(() => {
+    if (showShared) fetchSharedWorkspaces();
+  }, [showShared, fetchSharedWorkspaces]);
+
   // 2. Perform local filtering and sorting on the Provider's global data
-  const filteredAndSortedWorkspaces = useMemo(() => {
-    let result = [...workspaces];
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        (w) =>
-          w.workspace_name.toLowerCase().includes(query) ||
-          w.description?.toLowerCase().includes(query),
-      );
-    }
-
-    return result.sort((a, b) => {
-      if (sortBy === "name-asc")
-        return a.workspace_name.localeCompare(b.workspace_name);
-      if (sortBy === "name-desc")
-        return b.workspace_name.localeCompare(a.workspace_name);
-      if (sortBy === "members-desc")
-        return ((b as unknown).memberCount || 0) - ((a as unknown).memberCount || 0);
-      return 0;
-    });
-  }, [workspaces, sortBy, searchQuery]);
-
-  // 3. Split into Owned and Shared based on the normalized role
   const ownedWorkspaces = useMemo(
-    () =>
-      filteredAndSortedWorkspaces.filter(
-        (w) => ((w as unknown).role ?? "owner") === "owner",
-      ),
-    [filteredAndSortedWorkspaces],
+    () => filterAndSort(workspaces, searchQuery, sortBy),
+    [workspaces, sortBy, searchQuery],
   );
 
   const memberWorkspaces = useMemo(
-    () =>
-      filteredAndSortedWorkspaces.filter((w) => (w as unknown).role === "member"),
-    [filteredAndSortedWorkspaces],
+    () => filterAndSort(sharedWorkspaces, searchQuery, sortBy),
+    [sharedWorkspaces, sortBy, searchQuery],
   );
 
   const WorkspaceGrid = useCallback(
@@ -102,9 +113,10 @@ export function WorkspacesDirectory() {
             workspaceItem={{
               id: w.id,
               name: w.workspace_name, // Map API payload to card prop
-              role: ((w as unknown).role ?? "owner") as "owner" | "member",
-              memberCount: (w as unknown).memberCount,
+              role: w.role ?? "owner",
+              memberCount: w.memberCount,
               description: w.description,
+              has_password: w.has_password,
             }}
           />
         ))}
@@ -235,7 +247,13 @@ export function WorkspacesDirectory() {
                   Shared Contexts
                 </h2>
               </div>
-              {memberWorkspaces.length > 0 ? (
+              {isSharedLoading ? (
+                <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <Skeleton className="h-40 w-full" key={i} />
+                  ))}
+                </div>
+              ) : memberWorkspaces.length > 0 ? (
                 <WorkspaceGrid workspaceList={memberWorkspaces} />
               ) : (
                 <p className="text-xs text-muted-foreground py-8 text-center border border-dashed rounded-lg bg-muted/20">

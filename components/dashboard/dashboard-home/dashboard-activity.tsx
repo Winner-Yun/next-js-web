@@ -11,6 +11,7 @@ import { useDashboardData } from "@/hooks/use-dashboard-data";
 import {
   ClockIcon,
   FileTextIcon,
+  LogOutIcon,
   UserCheckIcon,
   UserXIcon,
 } from "lucide-react";
@@ -100,7 +101,20 @@ const getActivityIcon = (status?: string) => {
   const normalized = (status ?? "").toLowerCase();
   if (normalized === "late") return <ClockIcon />;
   if (normalized === "absent") return <UserXIcon />;
+  if (normalized === "left" || normalized === "checked_out")
+    return <LogOutIcon />;
   return <UserCheckIcon />;
+};
+
+const getActivityColorClasses = (status?: string) => {
+  const normalized = (status ?? "").toLowerCase();
+  if (normalized === "late")
+    return { bg: "bg-amber-500/10", text: "text-amber-600" };
+  if (normalized === "absent")
+    return { bg: "bg-red-500/10", text: "text-red-600" };
+  if (normalized === "left" || normalized === "checked_out")
+    return { bg: "bg-blue-500/10", text: "text-blue-600" };
+  return { bg: "bg-emerald-500/10", text: "text-emerald-600" };
 };
 
 interface DashboardActivityProps {
@@ -138,12 +152,13 @@ export function DashboardActivity({ className = "" }: DashboardActivityProps) {
         title: buildTitle(workerName, item.status),
         time: formatRelativeTime(safeTimestamp),
         icon: getActivityIcon(item.status),
+        color: getActivityColorClasses(item.status),
 
         sortKey: safeTimestamp ? new Date(safeTimestamp).getTime() : 0,
       };
     })
     .sort((a, b) => b.sortKey - a.sortKey)
-    .slice(0, 20)
+    .slice(0, 5)
     .map(({ sortKey, ...rest }) => {
       void sortKey;
       return rest;
@@ -158,7 +173,7 @@ export function DashboardActivity({ className = "" }: DashboardActivityProps) {
       </CardHeader>
 
       <CardContent className="px-0 w-full">
-        <ul className="flex max-h-80 w-full flex-col divide-y divide-border overflow-y-auto">
+        <ul className="flex w-full flex-col divide-y divide-border/60">
           {isLoading && (
             <li className="flex h-16 items-center gap-3 px-6 w-full">
               <p className="text-muted-foreground text-sm">
@@ -171,15 +186,7 @@ export function DashboardActivity({ className = "" }: DashboardActivityProps) {
             <li className="flex h-16 items-center gap-3 px-6 w-full">
               <span
                 aria-hidden="true"
-                className="
-                  flex
-                  size-10
-                  shrink-0
-                  items-center
-                  justify-center
-                  [&_svg]:size-4
-                  text-muted-foreground
-                "
+                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted [&_svg]:size-4 text-muted-foreground"
               >
                 <FileTextIcon />
               </span>
@@ -200,32 +207,17 @@ export function DashboardActivity({ className = "" }: DashboardActivityProps) {
             activeItems.map((item) => (
               <li
                 key={item.id}
-                className="flex h-16 items-center gap-3 px-6 w-full"
+                className="flex items-center gap-3 px-6 py-3.5 w-full transition-colors hover:bg-muted/30"
               >
                 <span
                   aria-hidden="true"
-                  className="
-                    flex
-                    size-10
-                    shrink-0
-                    items-center
-                    justify-center
-                    [&_svg]:size-4
-                  "
+                  className={`flex size-10 shrink-0 items-center justify-center rounded-full [&_svg]:size-4 ${item.color.bg} ${item.color.text}`}
                 >
                   {item.icon}
                 </span>
 
-                <div className="min-w-0 flex-1 space-y-1">
-                  <p
-                    className="
-                      line-clamp-1
-                      text-pretty
-                      text-foreground
-                      text-sm
-                      leading-snug
-                    "
-                  >
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <p className="line-clamp-1 text-pretty text-foreground text-sm font-medium leading-snug">
                     {item.title}
                   </p>
 

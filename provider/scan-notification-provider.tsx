@@ -6,7 +6,9 @@ import {
   AlertCircleIcon,
   CalendarClockIcon,
   CheckCircle2Icon,
+  ListTodoIcon,
   LogOutIcon,
+  MessageSquareWarningIcon,
   XIcon,
 } from "lucide-react";
 import React, {
@@ -37,11 +39,29 @@ export interface LeaveNotificationData {
   date: string;
 }
 
-// Discriminated union so a single "active notification" slot can display
-// either a scan event or a new leave request.
+export interface TaskNotificationData {
+  kind: "task";
+  taskTitle: string;
+  status: string;
+  time: string;
+  date: string;
+}
+
+export interface RequestNotificationData {
+  kind: "request";
+  requesterName: string;
+  requestTitle: string;
+  time: string;
+  date: string;
+}
+
+// Discriminated union so a single "active notification" slot can display a
+// scan event, a new leave request, a task status update, or a new request.
 type NotificationItem =
   | (ScanNotificationData & { kind: "scan" })
-  | LeaveNotificationData;
+  | LeaveNotificationData
+  | TaskNotificationData
+  | RequestNotificationData;
 
 type ScanLog = {
   _id: string;
@@ -53,6 +73,7 @@ type ScanLog = {
   date?: string;
   user?: {
     name?: string;
+    email?: string;
   };
 };
 
@@ -67,6 +88,29 @@ type LeaveLog = {
     name?: string;
   };
 };
+
+type TaskLog = {
+  id: string;
+  title: string;
+  status?: string;
+};
+
+type RequestLog = {
+  id: string;
+  title?: string;
+  created_at?: string;
+  date?: string;
+  user?: {
+    name?: string;
+  };
+};
+
+function formatStatusLabel(status: string) {
+  return status
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
 
 interface ScanNotificationContextType {
   triggerScanNotification: (data: ScanNotificationData) => void;
@@ -127,6 +171,12 @@ export function ScanNotificationProvider({
   const previousLeaveIdsRef = useRef<Set<string>>(new Set());
   const initialLeaveLoadRef = useRef(true);
 
+  const previousTaskStatusRef = useRef<Record<string, string>>({});
+  const initialTaskLoadRef = useRef(true);
+
+  const previousRequestIdsRef = useRef<Set<string>>(new Set());
+  const initialRequestLoadRef = useRef(true);
+
   const { data } = useSWR(
     workspaceId
       ? `/api/workspace/${workspaceId}/attendance?limit=5&sort_by=created_at&sort_order=desc`
@@ -144,6 +194,27 @@ export function ScanNotificationProvider({
     workspaceId
       ? `/api/workspace/${workspaceId}/leaves?status=pending&limit=5&sort_by=created_at&sort_order=desc`
       : null,
+    fetcher,
+    {
+      refreshInterval: 5000,
+      revalidateOnFocus: true,
+    },
+  );
+
+  // Poll tasks so status changes (pending -> in_progress -> completed) alert
+  // the same way attendance/leave events do.
+  const { data: taskData } = useSWR(
+    workspaceId ? `/api/workspace/${workspaceId}/tasks?limit=20` : null,
+    fetcher,
+    {
+      refreshInterval: 5000,
+      revalidateOnFocus: true,
+    },
+  );
+
+  // Poll for newly submitted requests.
+  const { data: requestData } = useSWR(
+    workspaceId ? `/api/request/${workspaceId}?limit=5` : null,
     fetcher,
     {
       refreshInterval: 5000,
@@ -254,6 +325,76 @@ export function ScanNotificationProvider({
     [workspaceId, enqueueNotification],
   );
 
+  const triggerTaskNotification = useCallback(
+    async (data: Omit<TaskNotificationData, "kind">) => {
+      window.dispatchEvent(new Event("notification-optimistic-add"));
+
+      setTimeout(() => {
+        enqueueNotification({ ...data, kind: "task" });
+      }, 300);
+
+      const payload = {
+        title: data.taskTitle,
+        message: `Task status updated to ${formatStatusLabel(data.status)}`,
+        type: "TASK_UPDATE",
+      };
+
+      if (workspaceId) {
+        try {
+          const token = localStorage.getItem("accessToken");
+          await fetch(`/api/workspace/${workspaceId}/alerts`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          window.dispatchEvent(new Event("notifications-updated"));
+        } catch (error) {
+          console.error("Failed to save task alert to database", error);
+        }
+      }
+    },
+    [workspaceId, enqueueNotification],
+  );
+
+  const triggerRequestNotification = useCallback(
+    async (data: Omit<RequestNotificationData, "kind">) => {
+      window.dispatchEvent(new Event("notification-optimistic-add"));
+
+      setTimeout(() => {
+        enqueueNotification({ ...data, kind: "request" });
+      }, 300);
+
+      const payload = {
+        title: data.requesterName,
+        message: data.requestTitle || "New request submitted",
+        type: "NEW_REQUEST",
+      };
+
+      if (workspaceId) {
+        try {
+          const token = localStorage.getItem("accessToken");
+          await fetch(`/api/workspace/${workspaceId}/alerts`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          window.dispatchEvent(new Event("notifications-updated"));
+        } catch (error) {
+          console.error("Failed to save request alert to database", error);
+        }
+      }
+    },
+    [workspaceId, enqueueNotification],
+  );
+
   // Detect new / changed attendance scans
   useEffect(() => {
     const logs = data?.data || [];
@@ -269,7 +410,6 @@ export function ScanNotificationProvider({
     const alertsToQueue: ScanNotificationData[] = [];
 
     [...logs].reverse().forEach((log: ScanLog) => {
-      const logId = log._id;
       const scanStatus =
         (log.status?.toLowerCase() as "present" | "late" | "absent") ||
         "present";
@@ -288,12 +428,17 @@ export function ScanNotificationProvider({
       };
 
       const checkInTime = formatTime(log.check_in);
-      const checkOutTime = formatTime(log.check_out);
       const systemTime = formatTime(log.created_at);
       const dateStr =
         log.date ||
         new Date().toLocaleDateString([], { month: "short", day: "numeric" });
       const employeeName = log.user?.name || "Unknown User";
+
+      // Keyed by person + day, not the raw record _id — the backend can
+      // (re)create a new attendance document for the same person's same-day
+      // status (e.g. re-flagging an absence), which would otherwise look
+      // like a brand-new record every time and duplicate the alert.
+      const logId = `${log.user?.email || employeeName}::${dateStr}`;
 
       const prevLog = previousLogsRef.current[logId];
 
@@ -303,18 +448,21 @@ export function ScanNotificationProvider({
         prevLog && log.check_out && prevLog.checkOut !== log.check_out;
 
       if (isNewLog || isStatusChanged || isCheckOutUpdated) {
-        const logTimeRaw = log.updated_at || log.created_at;
-        const safeLogTimeStr = logTimeRaw
-          ? logTimeRaw.endsWith("Z") || logTimeRaw.includes("+")
-            ? logTimeRaw
-            : `${logTimeRaw}Z`
-          : new Date().toISOString();
+        // Only newly-assigned attendance records alert — a status
+        // recalculation or a later check-out is an update to the same
+        // record, not new data, so it stays silent.
+        if (isNewLog) {
+          const logTimeRaw = log.updated_at || log.created_at;
+          const safeLogTimeStr = logTimeRaw
+            ? logTimeRaw.endsWith("Z") || logTimeRaw.includes("+")
+              ? logTimeRaw
+              : `${logTimeRaw}Z`
+            : new Date().toISOString();
 
-        const logTime = new Date(safeLogTimeStr).getTime();
-        const isRecent = Date.now() - logTime < 15000;
+          const logTime = new Date(safeLogTimeStr).getTime();
+          const isRecent = Date.now() - logTime < 15000;
 
-        if (!initialLoadRef.current || isRecent) {
-          if (isNewLog || isStatusChanged) {
+          if (!initialLoadRef.current || isRecent) {
             if (checkInTime || scanStatus === "absent") {
               alertsToQueue.push({
                 employeeName,
@@ -324,14 +472,6 @@ export function ScanNotificationProvider({
                 date: dateStr,
               });
             }
-          } else if (isCheckOutUpdated && checkOutTime) {
-            alertsToQueue.push({
-              employeeName,
-              type: "out",
-              status: scanStatus,
-              time: checkOutTime,
-              date: dateStr,
-            });
           }
         }
         currentLogsMap[logId] = {
@@ -407,6 +547,107 @@ export function ScanNotificationProvider({
     });
   }, [leaveData, triggerLeaveNotification]);
 
+  // Detect task status changes — a brand new task doesn't alert, only a
+  // status transition on a task we've already seen (e.g. pending -> completed).
+  useEffect(() => {
+    const tasks: TaskLog[] = Array.isArray(taskData)
+      ? taskData
+      : taskData?.data || [];
+    if (tasks.length === 0) return;
+
+    const currentMap: Record<string, string> = {
+      ...previousTaskStatusRef.current,
+    };
+    const alertsToQueue: Omit<TaskNotificationData, "kind">[] = [];
+
+    tasks.forEach((task) => {
+      const taskId = task.id;
+      const status = task.status || "pending";
+      const prevStatus = previousTaskStatusRef.current[taskId];
+      const isChanged = prevStatus !== undefined && prevStatus !== status;
+
+      if (isChanged && !initialTaskLoadRef.current) {
+        alertsToQueue.push({
+          taskTitle: task.title,
+          status,
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          date: new Date().toLocaleDateString([], {
+            month: "short",
+            day: "numeric",
+          }),
+        });
+      }
+
+      currentMap[taskId] = status;
+    });
+
+    previousTaskStatusRef.current = currentMap;
+    initialTaskLoadRef.current = false;
+
+    alertsToQueue.forEach((alert) => {
+      queueMicrotask(() => {
+        triggerTaskNotification(alert);
+      });
+    });
+  }, [taskData, triggerTaskNotification]);
+
+  // Detect newly submitted requests
+  useEffect(() => {
+    const requests: RequestLog[] = Array.isArray(requestData)
+      ? requestData
+      : requestData?.data || [];
+    if (requests.length === 0) return;
+
+    const knownIds = previousRequestIdsRef.current;
+    const newAlerts: Omit<RequestNotificationData, "kind">[] = [];
+
+    [...requests].reverse().forEach((req) => {
+      const reqId = req.id;
+      if (knownIds.has(reqId)) return;
+
+      const createdRaw = req.created_at;
+      const safeCreatedStr = createdRaw
+        ? createdRaw.endsWith("Z") || createdRaw.includes("+")
+          ? createdRaw
+          : `${createdRaw}Z`
+        : new Date().toISOString();
+
+      const createdTime = new Date(safeCreatedStr).getTime();
+      const isRecent = Date.now() - createdTime < 15000;
+
+      // Mark as known regardless, so it's never re-alerted on a later poll.
+      knownIds.add(reqId);
+
+      if (!initialRequestLoadRef.current || isRecent) {
+        newAlerts.push({
+          requesterName: req.user?.name || "Unknown User",
+          requestTitle: req.title || "New request submitted",
+          time: new Date(safeCreatedStr).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          date:
+            req.date ||
+            new Date(safeCreatedStr).toLocaleDateString([], {
+              month: "short",
+              day: "numeric",
+            }),
+        });
+      }
+    });
+
+    initialRequestLoadRef.current = false;
+
+    newAlerts.forEach((alert) => {
+      queueMicrotask(() => {
+        triggerRequestNotification(alert);
+      });
+    });
+  }, [requestData, triggerRequestNotification]);
+
   const closeNotification = useCallback(() => {
     showNextNotification();
   }, [showNextNotification]);
@@ -475,6 +716,24 @@ export function ScanNotificationProvider({
     label: "New Leave Request",
   };
 
+  const taskConfig = {
+    borderColor: "border-l-violet-500/80",
+    iconColor: "text-violet-500",
+    barColor: "bg-violet-500",
+    cardBg:
+      "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+    label: "Task Updated",
+  };
+
+  const requestConfig = {
+    borderColor: "border-l-orange-500/80",
+    iconColor: "text-orange-500",
+    barColor: "bg-orange-500",
+    cardBg:
+      "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+    label: "New Request",
+  };
+
   return (
     <ScanNotificationContext.Provider
       value={{ triggerScanNotification, triggerLeaveNotification }}
@@ -484,10 +743,50 @@ export function ScanNotificationProvider({
       <div className="fixed bottom-6 right-6 z-100 w-full max-w-85 pointer-events-none px-4 sm:px-0">
         {activeNotification &&
           (() => {
-            const isLeave = activeNotification.kind === "leave";
-            const config = isLeave
-              ? leaveConfig
-              : getStatusConfig(activeNotification.status);
+            const kind = activeNotification.kind;
+            const config =
+              kind === "leave"
+                ? leaveConfig
+                : kind === "task"
+                  ? taskConfig
+                  : kind === "request"
+                    ? requestConfig
+                    : getStatusConfig(activeNotification.status);
+
+            const icon =
+              kind === "leave" ? (
+                <CalendarClockIcon className="size-4" />
+              ) : kind === "task" ? (
+                <ListTodoIcon className="size-4" />
+              ) : kind === "request" ? (
+                <MessageSquareWarningIcon className="size-4" />
+              ) : activeNotification.status === "absent" ? (
+                <AlertCircleIcon className="size-4" />
+              ) : activeNotification.type === "in" ? (
+                <CheckCircle2Icon className="size-4" />
+              ) : (
+                <LogOutIcon className="size-4" />
+              );
+
+            const primaryText =
+              kind === "task"
+                ? activeNotification.taskTitle
+                : kind === "request"
+                  ? activeNotification.requesterName
+                  : activeNotification.employeeName;
+
+            const secondaryText =
+              kind === "leave" ? (
+                activeNotification.reason
+              ) : kind === "task" ? (
+                formatStatusLabel(activeNotification.status)
+              ) : kind === "request" ? (
+                activeNotification.requestTitle
+              ) : activeNotification.type === "in" ? (
+                "Check-In"
+              ) : (
+                "Check-Out"
+              );
 
             return (
               <div
@@ -501,39 +800,17 @@ export function ScanNotificationProvider({
                 <div className="flex items-center justify-between gap-3 px-3.5 py-3">
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <div className={cn("shrink-0", config.iconColor)}>
-                      {isLeave ? (
-                        <CalendarClockIcon className="size-4" />
-                      ) : activeNotification.status === "absent" ? (
-                        <AlertCircleIcon className="size-4" />
-                      ) : activeNotification.type === "in" ? (
-                        <CheckCircle2Icon className="size-4" />
-                      ) : (
-                        <LogOutIcon className="size-4" />
-                      )}
+                      {icon}
                     </div>
 
                     <div className="min-w-0 flex-1 flex flex-col">
                       <span className="text-sm font-semibold text-foreground truncate">
-                        {activeNotification.employeeName}
+                        {primaryText}
                       </span>
                       <span className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                        {isLeave ? (
-                          <>
-                            <span className="truncate">
-                              {activeNotification.reason}
-                            </span>
-                            <span className="text-[10px] shrink-0">•</span>
-                            <span className="shrink-0">{config.label}</span>
-                          </>
-                        ) : (
-                          <>
-                            {activeNotification.type === "in"
-                              ? "Check-In"
-                              : "Check-Out"}
-                            <span className="text-[10px]">•</span>
-                            {config.label}
-                          </>
-                        )}
+                        <span className="truncate">{secondaryText}</span>
+                        <span className="text-[10px] shrink-0">•</span>
+                        <span className="shrink-0">{config.label}</span>
                       </span>
                     </div>
                   </div>
