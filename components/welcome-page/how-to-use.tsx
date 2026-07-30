@@ -70,9 +70,9 @@ export function HowToUseSection() {
       {/* Header */}
       <div className="mb-16 max-w-2xl space-y-4">
         <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-5xl">
-          How It <br />
+          How To <t></t>
           <span className="bg-linear-to-r from-brand to-cyan-400 bg-clip-text text-transparent">
-            Works
+            Use
           </span>
         </h2>
 

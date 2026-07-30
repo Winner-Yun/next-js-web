@@ -3,6 +3,7 @@
 const navLinks = [
   { id: "about", label: "About" },
   { id: "features", label: "Features" },
+  { id: "how-to-use", label: "How to Use" },
   { id: "contact", label: "Contacts" },
 ];
 
