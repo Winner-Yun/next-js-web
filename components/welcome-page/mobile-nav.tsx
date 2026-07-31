@@ -68,16 +68,7 @@ export function MobileNav() {
                   {link.label}
                 </Button>
               ))}
-            </div>
-
-            <div className="mt-12 flex flex-col gap-2">
-              <Button
-                className="w-full bg-brand cursor-pointer text-white hover:bg-brand-hover"
-                onClick={() => scrollToSection("hero")}
-              >
-                Continue with Google
-              </Button>
-            </div>
+            </div>{" "}
           </div>
         </Portal>
       )}
