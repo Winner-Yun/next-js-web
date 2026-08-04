@@ -2,20 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   CalendarIcon,
   PencilIcon,
   Trash2Icon,
   UsersIcon,
 } from "lucide-react";
 import { TaskPriorityBadge, TaskStatusBadge } from "./task-status-badge";
-import type { Task, TaskStatus } from "./types";
+import type { Task } from "./types";
 
 function formatDate(dateStr?: string | null) {
   if (!dateStr) return "No deadline";
@@ -32,17 +25,11 @@ function formatDate(dateStr?: string | null) {
 
 interface TaskCardProps {
   task: Task;
-  onStatusChange: (task: Task, status: TaskStatus) => void;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
 }
 
-export function TaskCard({
-  task,
-  onStatusChange,
-  onEdit,
-  onDelete,
-}: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
   return (
     <div className="flex flex-col gap-3 p-4 border border-muted/60 rounded-xl bg-background hover:shadow-sm transition-shadow">
       <div className="flex items-start justify-between gap-2">
@@ -95,20 +82,6 @@ export function TaskCard({
             : `${task.assigned_to.length} assignee(s)`}
         </span>
       </div>
-
-      <Select
-        value={task.status}
-        onValueChange={(v) => onStatusChange(task, v as TaskStatus)}
-      >
-        <SelectTrigger className="h-8 w-full text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="pending">Pending</SelectItem>
-          <SelectItem value="in_progress">In Progress</SelectItem>
-          <SelectItem value="completed">Completed</SelectItem>
-        </SelectContent>
-      </Select>
     </div>
   );
 }

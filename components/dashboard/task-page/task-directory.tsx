@@ -132,28 +132,6 @@ export function TaskDirectory() {
     }
   };
 
-  const handleStatusChange = async (task: Task, status: TaskStatus) => {
-    const toastId = toast.loading(`Updating status...`);
-    try {
-      const res = await fetch(`/api/workspace/task/${task.id}/status`, {
-        method: "PATCH",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ status }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => null);
-        throw new Error(err?.detail || "Failed to update status.");
-      }
-      await mutate();
-      toast.success("Task status updated.", { id: toastId });
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update status.",
-        { id: toastId },
-      );
-    }
-  };
-
   const handleDelete = async () => {
     if (!taskToDelete) return;
     try {
@@ -237,7 +215,6 @@ export function TaskDirectory() {
             <TaskCard
               key={task.id}
               task={task}
-              onStatusChange={handleStatusChange}
               onEdit={(t) => {
                 setTaskToEdit(t);
                 setIsCreateOpen(true);
