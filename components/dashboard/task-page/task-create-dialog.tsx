@@ -77,9 +77,14 @@ export function TaskCreateDialog({
     membersFetcher,
   );
 
-  const members: WorkspaceMember[] = Array.isArray(membersData)
+  const allMembers: WorkspaceMember[] = Array.isArray(membersData)
     ? membersData
     : membersData?.members || membersData?.data || [];
+
+  // Owners are the workspace creators, not regular staff — keep task assignment to members only.
+  const members = allMembers.filter(
+    (m) => m.role?.toLowerCase() !== "owner",
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -227,23 +232,6 @@ export function TaskCreateDialog({
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="task-deadline"
-                className="text-xs font-semibold text-foreground"
-              >
-                Deadline
-              </Label>
-              <Input
-                id="task-deadline"
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className="text-xs h-9 bg-background/50"
-                disabled={isSaving}
-              />
-            </div>
-
             {visibility === "private" && (
               <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
                 <Label className="text-xs font-semibold text-foreground">
@@ -285,6 +273,23 @@ export function TaskCreateDialog({
                 </div>
               </div>
             )}
+
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="task-deadline"
+                className="text-xs font-semibold text-foreground"
+              >
+                Deadline
+              </Label>
+              <Input
+                id="task-deadline"
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="text-xs h-9 bg-background/50"
+                disabled={isSaving}
+              />
+            </div>
           </div>
 
           <DialogFooter className="p-4 bg-muted/20 flex items-center justify-end gap-2 shrink-0">
