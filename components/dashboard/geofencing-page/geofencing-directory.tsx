@@ -172,10 +172,7 @@ export function GeofencingDirectory() {
   useEffect(() => {
     if (zonesData && !hasShownAlert) {
       const requiresUpdate = zonesData.some(
-        (zone) =>
-          (zone.latitude === 0 && zone.longitude === 0) ||
-          !zone.updated_at ||
-          zone.created_at === zone.updated_at,
+        (zone) => zone.latitude === 0 && zone.longitude === 0,
       );
 
       if (requiresUpdate) {
