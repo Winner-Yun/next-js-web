@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Noto_Sans_Khmer } from "next/font/google";
 import "./globals.css";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
   },
 };
 
-const poppins = Poppins({
-  subsets: ["latin"],
+const notoSansKhmer = Noto_Sans_Khmer({
+  subsets: ["khmer", "latin"],
   weight: ["300", "400", "500", "600", "700"],
 });
 
@@ -27,7 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={poppins.className}>
+      <body className={notoSansKhmer.className}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

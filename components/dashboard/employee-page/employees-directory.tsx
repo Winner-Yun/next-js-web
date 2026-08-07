@@ -20,7 +20,7 @@ import {
   TableIcon,
   UsersIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 
 import { EmployeeCard } from "@/components/dashboard/employee-page/employee-card";
@@ -31,6 +31,8 @@ import { ManageAccessDialog } from "@/components/dashboard/employee-page/manage-
 import type { Employee } from "@/components/dashboard/employee-page/types";
 
 type ViewMode = "grid" | "table";
+
+const ROLE_ORDER: Record<string, number> = { owner: 0, admin: 1, member: 2 };
 
 const apiFetcher = async (url: string) => {
   const token = localStorage.getItem("accessToken");
@@ -81,13 +83,22 @@ export function EmployeesDirectory() {
     { revalidateOnFocus: false },
   );
 
-  // Owners are the workspace creators, not regular staff — keep this list to members only.
-  const employeesList: Employee[] = useMemo(() => {
-    const activeMembers: Employee[] = membersData?.members || [];
-    return activeMembers.filter(
-      (member) => member.role?.toLowerCase() !== "owner",
-    );
-  }, [membersData]);
+  // Shared cache with NavUser's "/api/auth/me" call — no extra request.
+  const { data: currentUser } = useSWR("/api/auth/me", apiFetcher, {
+    revalidateOnFocus: false,
+  });
+
+  const isSelf = useCallback(
+    (employee: Employee) =>
+      !!currentUser?.email &&
+      employee.email?.toLowerCase() === currentUser.email.toLowerCase(),
+    [currentUser],
+  );
+
+  const employeesList: Employee[] = useMemo(
+    () => membersData?.members || [],
+    [membersData],
+  );
 
   const processedEmployees = useMemo(() => {
     let result = [...employeesList];
@@ -103,18 +114,34 @@ export function EmployeesDirectory() {
     }
 
     result.sort((a, b) => {
-      if (sortBy === "name-asc")
+      // You always show up first, regardless of the chosen sort.
+      const aSelf = isSelf(a) ? 0 : 1;
+      const bSelf = isSelf(b) ? 0 : 1;
+      if (aSelf !== bSelf) return aSelf - bSelf;
+
+      if (sortBy === "role") {
+        const aOrder = ROLE_ORDER[a.role?.toLowerCase() ?? ""] ?? 99;
+        const bOrder = ROLE_ORDER[b.role?.toLowerCase() ?? ""] ?? 99;
+        if (aOrder !== bOrder) return aOrder - bOrder;
         return (a.name || "").localeCompare(b.name || "");
+      }
       if (sortBy === "name-desc")
-        return (b.name || "").localeCompare(b.name || "");
-      return 0;
+        return (b.name || "").localeCompare(a.name || "");
+      return (a.name || "").localeCompare(b.name || "");
     });
 
     return result;
-  }, [employeesList, searchQuery, sortBy]);
+  }, [employeesList, searchQuery, sortBy, isSelf]);
 
   const handleReload = async () => {
     await mutateMembers(undefined, { revalidate: true });
+  };
+
+  // Owners don't have attendance/geofencing history to show, so their row
+  // isn't clickable to a detail sheet.
+  const handleSelectEmployee = (employee: Employee) => {
+    if (employee.role?.toLowerCase() === "owner") return;
+    setSelectedEmployee(employee);
   };
 
   const isLoading = membersLoading;
@@ -147,6 +174,9 @@ export function EmployeesDirectory() {
               </SelectItem>
               <SelectItem value="name-desc" className="text-xs">
                 Name (Z - A)
+              </SelectItem>
+              <SelectItem value="role" className="text-xs">
+                Role
               </SelectItem>
             </SelectContent>
           </Select>
@@ -194,7 +224,8 @@ export function EmployeesDirectory() {
       ) : viewMode === "table" ? (
         <EmployeeTable
           employees={processedEmployees}
-          onRowClick={setSelectedEmployee}
+          onRowClick={handleSelectEmployee}
+          isSelf={isSelf}
         />
       ) : (
         <div className="max-h-[65vh] overflow-y-auto pr-1">
@@ -203,7 +234,8 @@ export function EmployeesDirectory() {
               <EmployeeCard
                 key={emp.id}
                 employee={emp}
-                onClick={() => setSelectedEmployee(emp)}
+                isYou={isSelf(emp)}
+                onClick={() => handleSelectEmployee(emp)}
               />
             ))}
 

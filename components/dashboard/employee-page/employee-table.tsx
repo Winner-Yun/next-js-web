@@ -21,9 +21,14 @@ function formatDate(dateStr?: string | null) {
 interface EmployeeTableProps {
   employees: Employee[];
   onRowClick: (employee: Employee) => void;
+  isSelf?: (employee: Employee) => boolean;
 }
 
-export function EmployeeTable({ employees, onRowClick }: EmployeeTableProps) {
+export function EmployeeTable({
+  employees,
+  onRowClick,
+  isSelf,
+}: EmployeeTableProps) {
   return (
     <div className="border border-muted/60 rounded-xl bg-background overflow-hidden">
       <div className="max-h-[65vh] overflow-y-auto">
@@ -66,13 +71,24 @@ export function EmployeeTable({ employees, onRowClick }: EmployeeTableProps) {
               employees.map((emp) => {
                 const isActive = emp.status === "active";
                 const isSuspended = (emp.status as string) === "suspended";
-                const initials = emp.name ? emp.name[0].toUpperCase() : "?";
+                const isOwner = emp.role?.toLowerCase() === "owner";
+                const isYou = isSelf?.(emp) ?? false;
+                const displayName = isYou ? "You" : emp.name || "Unnamed";
+                const initials = isYou
+                  ? "Y"
+                  : emp.name
+                    ? emp.name[0].toUpperCase()
+                    : "?";
 
                 return (
                   <tr
                     key={emp.id}
                     onClick={() => onRowClick(emp)}
-                    className="hover:bg-muted/5 transition-colors cursor-pointer"
+                    className={`transition-colors ${
+                      isOwner
+                        ? "cursor-default"
+                        : "hover:bg-muted/5 cursor-pointer"
+                    }`}
                   >
                     <td className="p-3">
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -90,7 +106,7 @@ export function EmployeeTable({ employees, onRowClick }: EmployeeTableProps) {
                         </Avatar>
                         <div className="min-w-0">
                           <p className="font-bold text-foreground truncate">
-                            {emp.name || "Unnamed"}
+                            {displayName}
                           </p>
                           <p className="text-[10px] text-muted-foreground truncate">
                             {emp.email}

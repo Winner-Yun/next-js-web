@@ -13,17 +13,28 @@ import type { Employee } from "./types";
 
 interface EmployeeCardProps {
   employee: Employee;
+  isYou?: boolean;
   onClick: () => void;
 }
 
-export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
+export function EmployeeCard({ employee, isYou, onClick }: EmployeeCardProps) {
   const isActive = employee.status === "active";
   const isSuspended = employee.status === "suspended";
-  const initials = employee.name ? employee.name[0].toUpperCase() : "?";
+  const isOwner = employee.role?.toLowerCase() === "owner";
+  const displayName = isYou ? "You" : employee.name || "Pending User";
+  const initials = isYou
+    ? "Y"
+    : employee.name
+      ? employee.name[0].toUpperCase()
+      : "?";
 
   return (
     <DashboardCard
-      className="group relative cursor-pointer overflow-hidden border border-muted/60 bg-card p-5 transition-all duration-300 hover:border-brand/40 hover:bg-muted/5 hover:shadow-lg hover:shadow-brand/5 flex flex-col justify-between min-h-52.5 rounded-xl"
+      className={`group relative overflow-hidden border border-muted/60 bg-card p-5 transition-all duration-300 flex flex-col justify-between min-h-52.5 rounded-xl ${
+        isOwner
+          ? ""
+          : "cursor-pointer hover:border-brand/40 hover:bg-muted/5 hover:shadow-lg hover:shadow-brand/5"
+      }`}
       onClick={onClick}
     >
       <div className="flex items-start justify-between gap-3">
@@ -45,7 +56,7 @@ export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
 
           <div className="min-w-0 flex flex-col">
             <h3 className="truncate font-bold text-sm text-foreground tracking-tight group-hover:text-brand transition-colors">
-              {employee.name || "Pending User"}
+              {displayName}
             </h3>
             <span className="text-[11px] font-medium text-muted-foreground capitalize">
               {employee.role}
@@ -99,9 +110,11 @@ export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
           </span>
         </span>
 
-        <div className="flex size-7 cursor-pointer items-center justify-center rounded-lg border border-transparent transition-all duration-300 group-hover:border-muted group-hover:bg-muted/40">
-          <ChevronRightIcon className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-        </div>
+        {!isOwner && (
+          <div className="flex size-7 cursor-pointer items-center justify-center rounded-lg border border-transparent transition-all duration-300 group-hover:border-muted group-hover:bg-muted/40">
+            <ChevronRightIcon className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </div>
+        )}
       </div>
     </DashboardCard>
   );
