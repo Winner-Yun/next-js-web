@@ -21,6 +21,7 @@ import {
   UsersIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
 
 type SortOption = "name-asc" | "name-desc" | "members-desc";
 
@@ -28,6 +29,7 @@ function filterAndSort(
   list: Workspace[],
   searchQuery: string,
   sortBy: SortOption,
+  memberCounts: Record<string, number>,
 ) {
   let result = [...list];
 
@@ -46,9 +48,40 @@ function filterAndSort(
     if (sortBy === "name-desc")
       return b.workspace_name.localeCompare(a.workspace_name);
     if (sortBy === "members-desc")
-      return (b.memberCount || 0) - (a.memberCount || 0);
+      return (
+        (memberCounts[b.id] ?? b.memberCount ?? 0) -
+        (memberCounts[a.id] ?? a.memberCount ?? 0)
+      );
     return 0;
   });
+}
+
+// Member counts aren't included in the /workspace/me payload, so the
+// directory fetches them itself (keyed on the workspace id set) to make
+// "Most Members" sorting possible.
+function useWorkspaceMemberCounts(ids: string[]) {
+  const key = ids.length > 0 ? `workspace-member-counts:${ids.join(",")}` : null;
+
+  const { data } = useSWR(key, async () => {
+    const token = localStorage.getItem("accessToken");
+    const entries = await Promise.all(
+      ids.map(async (id) => {
+        try {
+          const res = await fetch(`/api/workspace/${id}/members`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) return [id, 0] as const;
+          const json = await res.json();
+          return [id, typeof json.total === "number" ? json.total : 0] as const;
+        } catch {
+          return [id, 0] as const;
+        }
+      }),
+    );
+    return Object.fromEntries(entries) as Record<string, number>;
+  });
+
+  return data ?? {};
 }
 
 export function WorkspacesDirectory() {
@@ -81,15 +114,21 @@ export function WorkspacesDirectory() {
     if (showShared) fetchSharedWorkspaces();
   }, [showShared, fetchSharedWorkspaces]);
 
+  const allWorkspaceIds = useMemo(
+    () => [...workspaces, ...sharedWorkspaces].map((w) => w.id),
+    [workspaces, sharedWorkspaces],
+  );
+  const memberCounts = useWorkspaceMemberCounts(allWorkspaceIds);
+
   // 2. Perform local filtering and sorting on the Provider's global data
   const ownedWorkspaces = useMemo(
-    () => filterAndSort(workspaces, searchQuery, sortBy),
-    [workspaces, sortBy, searchQuery],
+    () => filterAndSort(workspaces, searchQuery, sortBy, memberCounts),
+    [workspaces, sortBy, searchQuery, memberCounts],
   );
 
   const memberWorkspaces = useMemo(
-    () => filterAndSort(sharedWorkspaces, searchQuery, sortBy),
-    [sharedWorkspaces, sortBy, searchQuery],
+    () => filterAndSort(sharedWorkspaces, searchQuery, sortBy, memberCounts),
+    [sharedWorkspaces, sortBy, searchQuery, memberCounts],
   );
 
   const WorkspaceGrid = useCallback(
@@ -114,7 +153,7 @@ export function WorkspacesDirectory() {
               id: w.id,
               name: w.workspace_name, // Map API payload to card prop
               role: w.role ?? "owner",
-              memberCount: w.memberCount,
+              memberCount: memberCounts[w.id] ?? w.memberCount,
               description: w.description,
               has_password: w.has_password,
             }}
@@ -122,7 +161,7 @@ export function WorkspacesDirectory() {
         ))}
       </div>
     ),
-    [showShared],
+    [showShared, memberCounts],
   );
 
   // Prevent Hydration Mismatch: Render skeleton identically to SSR until mounted

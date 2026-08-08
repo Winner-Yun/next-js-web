@@ -15,7 +15,6 @@ import {
   AlertCircleIcon,
   Building2Icon,
   Loader2Icon,
-  LockIcon,
   PencilIcon,
   ShieldIcon,
   Trash2Icon,
@@ -27,7 +26,6 @@ import useSWR from "swr";
 import { WorkspaceConfirmDialog } from "./workspace-confirm-dialog";
 import { WorkspacePasswordPromptDialog } from "./workspace-password-prompt-dialog";
 import { WorkspaceRenameDialog } from "./workspace-rename-dialog";
-import { WorkspaceSetPasswordDialog } from "./workspace-set-password-dialog";
 
 const membersCountFetcher = async (url: string) => {
   const token = localStorage.getItem("accessToken");
@@ -93,34 +91,6 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
       return;
     }
     performSwitch();
-  };
-
-  const handleSetPassword = async (password: string) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        `/api/workspace/${workspaceItem.id}/update-workspace`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ password }),
-        },
-      );
-
-      if (!res.ok) throw new Error("Failed to update password");
-
-      toast.success(
-        workspaceItem.has_password
-          ? "Workspace password updated."
-          : "Workspace password set.",
-      );
-      await fetchWorkspaces();
-    } catch (error) {
-      toast.error("Failed to save workspace password.");
-    }
   };
 
   const handleRename = async (
@@ -270,36 +240,6 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
                   </Button>
                 </WorkspaceRenameDialog>
               </div>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <WorkspaceSetPasswordDialog
-                        hasPassword={!!workspaceItem.has_password}
-                        onSave={handleSetPassword}
-                      >
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className={`size-8 cursor-pointer border bg-muted ${
-                            workspaceItem.has_password
-                              ? "text-brand border-brand/30"
-                              : ""
-                          }`}
-                        >
-                          <LockIcon className="size-3.5" />
-                        </Button>
-                      </WorkspaceSetPasswordDialog>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">
-                    {workspaceItem.has_password
-                      ? "Update workspace password"
-                      : "Set workspace password"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
 
               <TooltipProvider>
                 <Tooltip>
