@@ -3,13 +3,14 @@
 import { CredentialResponse } from "@react-oauth/google";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
-
-import { joinWorkspaceInvite } from "@/lib/invite";
 
 const BACKEND_AUTH_URL = "/api/auth/google/callback";
 
-export function useGoogleAuth() {
+interface UseGoogleAuthOptions {
+  onLoginSuccess?: (accessToken: string) => void | Promise<void>;
+}
+
+export function useGoogleAuth(options?: UseGoogleAuthOptions) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -42,27 +43,13 @@ export function useGoogleAuth() {
         throw new Error(data.detail || "Authentication failed.");
       }
 
-      // Save the access token only — refresh tokens are never persisted
-      // client-side for security.
       localStorage.setItem("accessToken", data.access_token);
 
-      // If the user arrived via an invite link, finish joining that
-      // workspace now that we have a token, before landing on the dashboard.
-      const pendingInviteCode = sessionStorage.getItem("pendingInviteCode");
-      if (pendingInviteCode) {
-        sessionStorage.removeItem("pendingInviteCode");
-        const joinResult = await joinWorkspaceInvite(
-          pendingInviteCode,
-          data.access_token,
-        );
-        if (joinResult.ok) {
-          toast.success("You've joined the workspace.");
-        } else {
-          toast.error(joinResult.detail);
-        }
+      if (options?.onLoginSuccess) {
+        await options.onLoginSuccess(data.access_token);
+        return;
       }
 
-      // Set a flag in sessionStorage to show the dashboard splash screen
       sessionStorage.setItem("showDashboardSplash", "true");
 
       router.push("/dashboard");

@@ -10,7 +10,9 @@ import { useGoogleAuth } from "@/components/auth_component/use-google-auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type GoogleAuthButtonProps = React.ComponentProps<typeof Button>;
+type GoogleAuthButtonProps = React.ComponentProps<typeof Button> & {
+  onLoginSuccess?: (accessToken: string) => void | Promise<void>;
+};
 
 // Wraps `children` in the visible button styling while an invisible
 // GoogleLogin overlay (sized to match) handles the real click, so one
@@ -19,10 +21,11 @@ export function GoogleAuthButton({
   children,
   className,
   disabled,
+  onLoginSuccess,
   ...props
 }: GoogleAuthButtonProps) {
   const { isLoading, errorMsg, handleGoogleSuccess, handleGoogleError } =
-    useGoogleAuth();
+    useGoogleAuth({ onLoginSuccess });
   const [buttonRef, buttonBounds] = useMeasure();
   const googleButtonWidth = Math.max(80, Math.round(buttonBounds.width || 0));
 
