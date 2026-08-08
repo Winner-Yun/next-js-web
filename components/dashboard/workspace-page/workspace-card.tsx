@@ -23,10 +23,20 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import useSWR from "swr";
 import { WorkspaceConfirmDialog } from "./workspace-confirm-dialog";
 import { WorkspacePasswordPromptDialog } from "./workspace-password-prompt-dialog";
 import { WorkspaceRenameDialog } from "./workspace-rename-dialog";
 import { WorkspaceSetPasswordDialog } from "./workspace-set-password-dialog";
+
+const membersCountFetcher = async (url: string) => {
+  const token = localStorage.getItem("accessToken");
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to fetch members");
+  return res.json();
+};
 
 type WorkspaceCardProps = {
   workspaceItem: {
@@ -48,6 +58,18 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+
+  const { data: membersData, isLoading: isMembersLoading } = useSWR(
+    `/api/workspace/${workspaceItem.id}/members`,
+    membersCountFetcher,
+    { revalidateOnFocus: false },
+  );
+  const memberCount: number | null =
+    typeof membersData?.total === "number"
+      ? membersData.total
+      : typeof workspaceItem.memberCount === "number"
+        ? workspaceItem.memberCount
+        : null;
 
   const isActive = activeWorkspace?.id === workspaceItem.id;
   const isOwner = workspaceItem.role === "owner";
@@ -192,7 +214,9 @@ export function WorkspaceCard({ workspaceItem }: WorkspaceCardProps) {
 
           <div className="flex items-center gap-1.5 mt-2 text-[11px] text-muted-foreground font-medium">
             <UsersIcon className="size-3" />
-            {workspaceItem.memberCount || 1} members
+            {isMembersLoading && memberCount === null
+              ? "Loading members..."
+              : `${memberCount ?? "—"} member${memberCount === 1 ? "" : "s"}`}
           </div>
         </div>
 
