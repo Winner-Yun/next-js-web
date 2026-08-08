@@ -31,6 +31,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import { InviteConfirmDialog } from "./invite-confirm-dialog";
 
 type InviteRecord = {
   id: string;
@@ -349,21 +350,27 @@ export function InviteLinkDirectory() {
                       <QrCodeIcon className="size-3.5 mr-1.5" />
                       View
                     </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="cursor-pointer text-red-500 hover:text-red-600 hover:bg-red-500/10"
-                      disabled={revokingId === invite.id}
-                      onClick={() => handleRevoke(invite.id)}
+                    <InviteConfirmDialog
+                      title="Revoke invite link?"
+                      description={`This will immediately invalidate the link for code "${invite.code}". Anyone who hasn't used it yet won't be able to join with it anymore.`}
+                      confirmText="Revoke"
+                      onConfirm={() => handleRevoke(invite.id)}
                     >
-                      {revokingId === invite.id ? (
-                        <Loader2Icon className="size-3.5 mr-1.5 animate-spin" />
-                      ) : (
-                        <Trash2Icon className="size-3.5 mr-1.5" />
-                      )}
-                      Revoke
-                    </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="cursor-pointer text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                        disabled={revokingId === invite.id}
+                      >
+                        {revokingId === invite.id ? (
+                          <Loader2Icon className="size-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <Trash2Icon className="size-3.5 mr-1.5" />
+                        )}
+                        Revoke
+                      </Button>
+                    </InviteConfirmDialog>
                   </div>
                 </div>
               );

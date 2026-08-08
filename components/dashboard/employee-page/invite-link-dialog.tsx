@@ -129,7 +129,7 @@ export function InviteLinkDialog({ onGenerated }: InviteLinkDialogProps) {
       <DialogTrigger asChild>
         <Button
           size="sm"
-          className="h-9 text-xs cursor-pointer gap-1.5 bg-brand hover:bg-brand/90 font-medium"
+          className="h-9 text-xs text-white cursor-pointer gap-1.5 bg-brand hover:bg-brand/90 font-medium"
         >
           <SendHorizonalIcon className="size-3.5" /> Invite Link
         </Button>
@@ -147,14 +147,17 @@ export function InviteLinkDialog({ onGenerated }: InviteLinkDialogProps) {
                 Generate Invite Link
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground leading-normal">
-                Create a shareable link so a new person can join this
-                workspace directly.
+                Create a shareable link so a new person can join this workspace
+                directly.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-2">
               <div className="space-y-1.5">
-                <Label htmlFor="invite-position" className="text-xs font-semibold">
+                <Label
+                  htmlFor="invite-position"
+                  className="text-xs font-semibold"
+                >
                   Position
                 </Label>
                 <Input
@@ -176,7 +179,10 @@ export function InviteLinkDialog({ onGenerated }: InviteLinkDialogProps) {
                   onValueChange={setRole}
                   disabled={isGenerating}
                 >
-                  <SelectTrigger id="invite-role" className="text-xs h-9 bg-card">
+                  <SelectTrigger
+                    id="invite-role"
+                    className="text-xs h-9 bg-card"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -191,7 +197,10 @@ export function InviteLinkDialog({ onGenerated }: InviteLinkDialogProps) {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="invite-expiry" className="text-xs font-semibold">
+                <Label
+                  htmlFor="invite-expiry"
+                  className="text-xs font-semibold"
+                >
                   Expires in
                 </Label>
                 <div className="flex gap-2">
@@ -238,7 +247,7 @@ export function InviteLinkDialog({ onGenerated }: InviteLinkDialogProps) {
               </div>
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-0 pt-2">
+            <DialogFooter className="gap-2! sm:gap-0 pt-2">
               <Button
                 type="button"
                 variant="outline"
@@ -252,7 +261,7 @@ export function InviteLinkDialog({ onGenerated }: InviteLinkDialogProps) {
               <Button
                 type="submit"
                 size="sm"
-                className="text-xs cursor-pointer h-9 min-w-30 bg-brand hover:bg-brand/90"
+                className="text-xs text-white cursor-pointer h-9 min-w-30 bg-brand hover:bg-brand/90"
                 disabled={isGenerating}
               >
                 {isGenerating ? (
