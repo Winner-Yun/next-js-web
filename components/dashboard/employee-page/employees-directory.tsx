@@ -228,31 +228,29 @@ export function EmployeesDirectory() {
           isSelf={isSelf}
         />
       ) : (
-        <div className="max-h-[65vh] overflow-y-auto pr-1">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {processedEmployees.map((emp) => (
-              <EmployeeCard
-                key={emp.id}
-                employee={emp}
-                isYou={isSelf(emp)}
-                onClick={() => handleSelectEmployee(emp)}
-              />
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {processedEmployees.map((emp) => (
+            <EmployeeCard
+              key={emp.id}
+              employee={emp}
+              isYou={isSelf(emp)}
+              onClick={() => handleSelectEmployee(emp)}
+            />
+          ))}
 
-            {processedEmployees.length === 0 && (
-              <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 flex flex-col items-center justify-center">
-                <div className="rounded-full bg-muted/40 p-3 mb-3">
-                  <UsersIcon className="size-5 text-muted-foreground/70" />
-                </div>
-                <p className="text-sm font-medium text-foreground">
-                  No records located
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  No employees match your criteria.
-                </p>
+          {processedEmployees.length === 0 && (
+            <div className="col-span-full py-16 text-center rounded-xl border border-dashed border-muted-foreground/25 bg-muted/5 flex flex-col items-center justify-center">
+              <div className="rounded-full bg-muted/40 p-3 mb-3">
+                <UsersIcon className="size-5 text-muted-foreground/70" />
               </div>
-            )}
-          </div>
+              <p className="text-sm font-medium text-foreground">
+                No records located
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                No employees match your criteria.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
