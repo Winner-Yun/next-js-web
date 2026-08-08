@@ -30,6 +30,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { mutate } from "swr";
 
+import { CropAvatarDialog } from "./crop-avatar-dialog";
+
 type Gender = "" | "male" | "female" | "other";
 
 const GENDER_OPTIONS: { value: Gender; label: string }[] = [
@@ -47,6 +49,11 @@ export function ProfileSettings() {
   const [gender, setGender] = useState<Gender>("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarSuccessUrl, setAvatarSuccessUrl] = useState<string | null>(null);
+  const [pendingCrop, setPendingCrop] = useState<{
+    src: string;
+    fileType: string;
+    fileName: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isProcessing = isSaving || isUploadingAvatar;
@@ -111,7 +118,7 @@ export function ProfileSettings() {
     fileInputRef.current?.click();
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
 
@@ -127,6 +134,21 @@ export function ProfileSettings() {
       return;
     }
 
+    // Open the cropper on the picked image; the actual upload happens once
+    // the user confirms the crop in handleCropConfirm.
+    setPendingCrop({
+      src: URL.createObjectURL(file),
+      fileType: file.type,
+      fileName: file.name,
+    });
+  };
+
+  const handleCropCancel = () => {
+    if (pendingCrop) URL.revokeObjectURL(pendingCrop.src);
+    setPendingCrop(null);
+  };
+
+  const handleCropConfirm = async (blob: Blob) => {
     const token = localStorage.getItem("accessToken");
 
     if (!token) {
@@ -138,8 +160,14 @@ export function ProfileSettings() {
     window.dispatchEvent(new Event("profile-updating"));
 
     try {
+      const croppedFile = new File(
+        [blob],
+        pendingCrop?.fileName || "avatar.jpg",
+        { type: blob.type },
+      );
+
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("image", croppedFile);
 
       const res = await fetch("/api/auth/me/profile-image", {
         method: "PATCH",
@@ -168,6 +196,8 @@ export function ProfileSettings() {
     } catch (error) {
       toast.error("Failed to update profile picture.");
     } finally {
+      if (pendingCrop) URL.revokeObjectURL(pendingCrop.src);
+      setPendingCrop(null);
       setIsUploadingAvatar(false);
       window.dispatchEvent(new Event("profile-updated"));
     }
@@ -390,6 +420,17 @@ export function ProfileSettings() {
             </Button>
           </div>
         </form>
+      )}
+
+      {/* Crop Dialog */}
+      {pendingCrop && (
+        <CropAvatarDialog
+          imageSrc={pendingCrop.src}
+          fileType={pendingCrop.fileType}
+          onCancel={handleCropCancel}
+          onConfirm={handleCropConfirm}
+          isSaving={isUploadingAvatar}
+        />
       )}
 
       {/* Success Dialog */}

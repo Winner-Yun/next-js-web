@@ -60,7 +60,7 @@ export function AttendanceStatusChart() {
       d.setDate(today.getDate() - (VISIBLE_DAYS - 1 - i));
       return {
         day: dayLabels[d.getDay()],
-        date: d.toISOString().slice(0, 10),
+        date: toLocalDateString(d),
         present: 0,
         absent: 0,
       };
@@ -86,7 +86,8 @@ export function AttendanceStatusChart() {
 
             if (!matchesStatus) return false;
 
-            if (record.date && record.date === slot.date) return true;
+            if (record.date && record.date.substring(0, 10) === slot.date)
+              return true;
 
             if (record.timestamp) {
               const tsStr = String(record.timestamp);

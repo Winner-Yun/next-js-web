@@ -113,8 +113,10 @@ export function AttendanceChart() {
             record.status === "present" || record.status === "late";
           if (!isPresentOrLate) return false;
 
-          // Match by ISO date or timestamp
-          if (record.date && record.date === slot.date) return true;
+          // Match by ISO date or timestamp (normalize record.date in case it
+          // includes a time component, e.g. "2026-08-02T00:00:00.000Z")
+          if (record.date && record.date.substring(0, 10) === slot.date)
+            return true;
           if (record.timestamp) {
             const tsStr = String(record.timestamp);
             const safeTsStr =

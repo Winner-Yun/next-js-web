@@ -26,7 +26,9 @@ export function useDashboardData() {
   );
 
   const { data: attendance, isLoading: attendanceLoading } = useSWR(
-    workspaceId ? `/api/workspace/${workspaceId}/attendance` : null,
+    workspaceId
+      ? `/api/workspace/${workspaceId}/attendance?limit=500&sort_by=date&sort_order=desc`
+      : null,
     fetcher,
   );
 
